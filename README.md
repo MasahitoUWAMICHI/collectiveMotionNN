@@ -1,1 +1,1 @@
-# collectiveMotionGNN
+# collectiveMotionNN
