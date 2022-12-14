@@ -9,24 +9,49 @@ from dgl.dataloading import GraphDataLoader
 class graphDataset(Dataset):
     '''
     This Dataset makes radius graph from dataset when loading. This feature suppresses memory usage.
+    
+    dataDictList: List of dictionalies.
+    
     '''
-    def __init__(self, dataDict, radius_edge, periodic=False, periodicLength=None, addSelfLoop=False, MinkowskiMetric=2):
+    def __init__(self, dataDictList, radiusEdge, delayData=0, delayTruth=1, 
+                 keyToCalcDistance='x', keyToStoreData=['x'], keyToStoreTruth=['x'], 
+                 periodic=False, periodicLength=None, addSelfLoop=False, MinkowskiMetric=2):
         super().__init__()
-        self.dataDict = dataDict
+        self.dataDictList = dataDictList
+        
         self.periodic = periodic
         self.periodicLength = periodicLength
         
         self.addSelfLoop = addSelfLoop
-        self.radius_edge = radius_edge
+        self.radiusEdge = radiusEdge
         self.MinkowskiMetric = MinkowskiMetric
 
-        self.data_len = len(dataDict['x'])
-        self.t_yseq = t_yseq
+        self.delayData = delayData
+        self.delayTruth = delayTruth
+        self.keyToCalcDistance = keyToCalcDistance
+        self.keyToStoreData = keyToStoreData
+        self.keyToStoreTruth = keyToStoreTruth
         
-        self.data_len_cumsum = np.cumsum(self.data_len - (self.t_yseq - 1))
+        self.set_delays()
+        
+    def set_delays(self):
+        if type(self.delayData) is int:
+            self.maxDelayData = self.delayData
+        else:
+            self.maxDelayData = max(self.delayData)
+
+        if type(self.delayTruth) is int:
+            self.maxDelayTruth = self.delayTruth
+        else:
+            self.maxDelayTruth = max(self.delayTruth)
+
+        self.maxItersData = [[self.dataDictList[i][key_x].size(0) - self.maxDelayData for key_x in self.keyToStoreData]\
+                             for i in len(self.dataDictList)]
+        self.maxItersTruth = [[self.dataDictList[i][key_y].size(0) - self.maxDelayTruth for key_y in self.keyToStoreData]\
+                              for i in len(self.dataDictList)]
         
     def calc_dr_periodic(self, r1, r2):
-        dr = (r1 - r2) % self.periodicLength
+        dr = torch.remainder(r1 - r2, self.periodicLength)
         dr[dr > self.periodicLength/2] = dr[dr > self.periodicLength/2] - self.periodicLength
         return dr
     
@@ -34,16 +59,17 @@ class graphDataset(Dataset):
         if self.periodic:
             Ndata = x.size(0)
             dr = self.calc_dr_periodic(x, x.T)
-            drsq = np.linalg.norm(dr, ord=self.MinkowskiMetric, axis=-1, keepdims=False)
+            drsq = torch.norm(dr, p=self.MinkowskiMetric, dim=-1, keepdim=False)
             if self.addSelfLoop:
-                edges = np.argwhere(drsq < self.radius_edge)
+                edges = torch.argwhere(drsq < self.radius_edge)
             else:
-                edges = np.argwhere(np.logical_and(drsq > 0, drsq < self.radius_edge))
+                edges = torch.argwhere(torch.logical_and(drsq > 0, drsq < self.radius_edge))
             return dgl.graph((edges[:,0], edges[:,1]), num_nodes=Ndata)
         else:
             return dgl.radius_graph(x, self.radius_edge, p=self.MinkowskiMetric, self_loop=self.addSelfLoop)
       
     def __len__(self):
+        
         return (self.data_len - (self.t_yseq - 1)).sum()
     
     def __getitem__(self, index):
@@ -55,14 +81,7 @@ class graphDataset(Dataset):
             id_tensor = index
         
         return self.data_x[id_List][id_tensor], self.data_x[id_List][id_tensor:(id_tensor+self.t_yseq)], self.celltype_List[id_List]  
-    
-class myDataset(Dataset):
-    def __init__(self, dataDict):
-        super().__init__()
-        
-        #self.data_y = data_y
-        self.celltype_List = celltype_List
-        
+            
         
    
     
