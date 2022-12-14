@@ -6,18 +6,35 @@ import dgl
 import dgl.function as fn
 
 
-class graphDatasetMaker(fun, periodic=False, periodicLength=None):
+class graphDataLoader(fun, radius_edge, periodic=False, periodicLength=None, addSelfLoop=False, MinkowskiMetric=2):
+    '''
+    This DataLoader makes radius graph from dataset when loading. This feature suppresses memory usage.
+    '''
     def __init__(self):
         self.periodic = periodic
-        self.periodicLength=periodicLength
+        self.periodicLength = periodicLength
         
-    def calc_dr(r1, r2):
-        if self.periodic:
-            dr = (r1 - r2) % self.periodicLength
-            dr[dr > self.periodicLength/2] = dr[dr > self.periodicLength/2] - self.periodicLength
-        else:
-            dr = r1 - r2
+        self.addSelfLoop = addSelfLoop
+        self.radius_edge = radius_edge
+        self.MinkowskiMetric = MinkowskiMetric
+        
+    def calc_dr_periodic(self, r1, r2):
+        dr = (r1 - r2) % self.periodicLength
+        dr[dr > self.periodicLength/2] = dr[dr > self.periodicLength/2] - self.periodicLength
         return dr
+    
+    def make_graph(self, x):
+        if self.periodic:
+            Ndata = x.size(0)
+            dr = self.calc_dr_periodic(x, x.T)
+            drsq = np.linalg.norm(dr, ord=self.MinkowskiMetric, axis=-1, keepdims=False)
+            if self.addSelfLoop:
+                edges = np.argwhere(drsq < self.radius_edge)
+            else:
+                edges = np.argwhere(np.logical_and(drsq > 0, drsq < self.radius_edge))
+            return dgl.graph((edges[:,0], edges[:,1]), num_nodes=Ndata)
+        else:
+            return dgl.radius_graph(x, self.radius_edge, p=self.MinkowskiMetric, self_loop=self.addSelfLoop)
       
     
 
