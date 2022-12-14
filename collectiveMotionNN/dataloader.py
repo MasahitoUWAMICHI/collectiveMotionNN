@@ -4,19 +4,26 @@ from torch.utils.data import Dataset
 
 import dgl
 import dgl.function as fn
+from dgl.dataloading import GraphDataLoader
 
-
-class graphDataLoader(fun, radius_edge, periodic=False, periodicLength=None, addSelfLoop=False, MinkowskiMetric=2):
+class graphDataset(Dataset):
     '''
-    This DataLoader makes radius graph from dataset when loading. This feature suppresses memory usage.
+    This Dataset makes radius graph from dataset when loading. This feature suppresses memory usage.
     '''
-    def __init__(self):
+    def __init__(self, dataDict, radius_edge, periodic=False, periodicLength=None, addSelfLoop=False, MinkowskiMetric=2):
+        super().__init__()
+        self.dataDict = dataDict
         self.periodic = periodic
         self.periodicLength = periodicLength
         
         self.addSelfLoop = addSelfLoop
         self.radius_edge = radius_edge
         self.MinkowskiMetric = MinkowskiMetric
+
+        self.data_len = len(dataDict['x'])
+        self.t_yseq = t_yseq
+        
+        self.data_len_cumsum = np.cumsum(self.data_len - (self.t_yseq - 1))
         
     def calc_dr_periodic(self, r1, r2):
         dr = (r1 - r2) % self.periodicLength
@@ -36,8 +43,30 @@ class graphDataLoader(fun, radius_edge, periodic=False, periodicLength=None, add
         else:
             return dgl.radius_graph(x, self.radius_edge, p=self.MinkowskiMetric, self_loop=self.addSelfLoop)
       
+    def __len__(self):
+        return (self.data_len - (self.t_yseq - 1)).sum()
     
-
+    def __getitem__(self, index):
+        id_List = np.argwhere(index<self.data_len_cumsum)[0,0]
+        
+        if id_List:
+            id_tensor = index - self.data_len_cumsum[id_List-1]
+        else:
+            id_tensor = index
+        
+        return self.data_x[id_List][id_tensor], self.data_x[id_List][id_tensor:(id_tensor+self.t_yseq)], self.celltype_List[id_List]  
+    
+class myDataset(Dataset):
+    def __init__(self, dataDict):
+        super().__init__()
+        
+        #self.data_y = data_y
+        self.celltype_List = celltype_List
+        
+        
+   
+    
+    
 def graphDataSet(fun_data, vars_fun, indices):
     '''
     '''
