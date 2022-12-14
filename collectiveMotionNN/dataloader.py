@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 from torch import nn
 from torch.utils.data import Dataset
@@ -45,10 +47,13 @@ class graphDataset(Dataset):
         else:
             self.maxDelayTruth = max(self.delayTruth)
 
-        self.maxItersData = [[self.dataDictList[i][key_x].size(0) - self.maxDelayData for key_x in self.keyToStoreData]\
-                             for i in len(self.dataDictList)]
-        self.maxItersTruth = [[self.dataDictList[i][key_y].size(0) - self.maxDelayTruth for key_y in self.keyToStoreData]\
-                              for i in len(self.dataDictList)]
+        self.maxItersData = np.array([dataDict[self.keyToStoreData[0]].size(0) - self.maxDelayData for dataDict in len(self.dataDictList)])
+        self.maxItersTruth = np.array([dataDict[self.keyToStoreTruth[0]].size(0) - self.maxDelayTruth for dataDict in len(self.dataDictList)])
+        
+        self.maxIters = np.minimum(self.maxItersData, self.maxItersTruth)
+        self.maxItersCumsum = np.cumsum(self.maxIters)
+        
+        self.len = self.maxIters.sum()
         
     def calc_dr_periodic(self, r1, r2):
         dr = torch.remainder(r1 - r2, self.periodicLength)
@@ -69,16 +74,19 @@ class graphDataset(Dataset):
             return dgl.radius_graph(x, self.radius_edge, p=self.MinkowskiMetric, self_loop=self.addSelfLoop)
       
     def __len__(self):
-        
-        return (self.data_len - (self.t_yseq - 1)).sum()
+        return self.len
     
     def __getitem__(self, index):
-        id_List = np.argwhere(index<self.data_len_cumsum)[0,0]
+        id_List = np.argwhere(index<self.maxItersCumsum)[0,0]
         
         if id_List:
             id_tensor = index - self.data_len_cumsum[id_List-1]
         else:
             id_tensor = index
+            
+        #### How can graph with sequence of data be constructed?  How can it be batched? Use edge type?
+            
+        dict
         
         return self.data_x[id_List][id_tensor], self.data_x[id_List][id_tensor:(id_tensor+self.t_yseq)], self.celltype_List[id_List]  
             
