@@ -8,6 +8,8 @@ import dgl
 import dgl.function as fn
 from dgl.dataloading import GraphDataLoader
 
+from collectiveMotionNN import graph_utils
+
 class graphDataset(Dataset):
     '''
     This Dataset makes radius graph from dataset when loading. This feature suppresses memory usage.
@@ -16,7 +18,7 @@ class graphDataset(Dataset):
     
     '''
     def __init__(self, dataDictList, radiusEdge, delayData=0, delayTruth=1, 
-                 keyToCalcDistance='x', keyToStoreData=['x'], keyToStoreTruth=['x'], 
+                 keyToCalcDistance='x', keyToStoreDataSequence=['x'], keyToStoreData=[], keyToStoreTruth=['x'], 
                  periodic=False, periodicLength=None, addSelfLoop=False, MinkowskiMetric=2):
         super().__init__()
         self.dataDictList = dataDictList
@@ -37,6 +39,10 @@ class graphDataset(Dataset):
         self.set_delays()
         
     def set_delays(self):
+        '''
+
+        If delayData or/and delayTruth were changed, this function should be called once.
+        '''
         if type(self.delayData) is int:
             self.maxDelayData = self.delayData
         else:
@@ -55,6 +61,13 @@ class graphDataset(Dataset):
         
         self.len = self.maxIters.sum()
         
+    def change_delays(self, delayData=None, delayTruth=None):
+        if not(delayData is None):
+            self.delayData = delayData
+        if not(delayTruth is None):
+            self.delayTruth = delayTruth
+        self.set_delays()
+
     def calc_dr_periodic(self, r1, r2):
         dr = torch.remainder(r1 - r2, self.periodicLength)
         dr[dr > self.periodicLength/2] = dr[dr > self.periodicLength/2] - self.periodicLength
@@ -72,7 +85,7 @@ class graphDataset(Dataset):
             return dgl.graph((edges[:,0], edges[:,1]), num_nodes=Ndata)
         else:
             return dgl.radius_graph(x, self.radius_edge, p=self.MinkowskiMetric, self_loop=self.addSelfLoop)
-      
+    
     def __len__(self):
         return self.len
     
@@ -83,16 +96,17 @@ class graphDataset(Dataset):
             id_tensor = index - self.data_len_cumsum[id_List-1]
         else:
             id_tensor = index
+
+        
             
         #### How can graph with sequence of data be constructed?  How can it be batched? Use edge type?
+
+        self.data_x[id_List][id_tensor], self.data_x[id_List][id_tensor:(id_tensor+self.t_yseq)], self.celltype_List[id_List] 
             
         dict
         
-        return self.data_x[id_List][id_tensor], self.data_x[id_List][id_tensor:(id_tensor+self.t_yseq)], self.celltype_List[id_List]  
-            
-        
-   
-    
+        return  
+
     
 def graphDataSet(fun_data, vars_fun, indices):
     '''
