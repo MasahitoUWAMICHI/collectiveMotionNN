@@ -77,4 +77,7 @@ class J_contactInhibitionOfLocomotion(nn.Module):
     def forward(self,xy, d):
         return ((self.r/d) - 1) * xy
     
-
+def periodic_distance(x, y, L):
+    dr = torch.remainder((x - y), L)
+    dr[dr > L/2] = dr[dr > L/2] - L
+    return dr
