@@ -9,7 +9,7 @@ import dgl.function as fn
 import collectiveMotionNN.graph.graph_utils as gu
 import collectiveMotionNN.simulator.multitypedCollectiveMotionFunctions as mcmf
 
-class SDE(torch.nn.Module):
+class multitypedCollectiveMotionSDE(torch.nn.Module):
     def __init__(self, L, periodic, v0, beta, A_CF, A_CIL, r, A, D, noise_type = 'scalar', sde_type = 'ito'):
         super().__init__()
         
@@ -28,8 +28,18 @@ class SDE(torch.nn.Module):
         self.sigma = torch.zeros((batch_size, state_size, 1), device=device)
         self.sigma[:, 2, 0] = np.sqrt(2*D)
         
+        if self.periodic:
+            self.custom_distance = lambda x : mcmf.periodic_distance(torch.unsqueeze(x, 0), torch.unsqueeze(x, 1), self.L)
+                
     # Drift
     def f(self, t, y):
+        if self.periodic:
+            rg = gu.make_RadiusGraph(y[:, :2], self.r, flg_selfloop=False, flg_custom=True, func_custom_distance=self.custom_distance)
+        else:
+            rg = gu.make_RadiusGraph(y[:, :2], self.r, flg_selfloop=False)
+        
+        
+        
 #        print(y.shape)
         xy = y[:, :2]
 #        if self.periodic:
