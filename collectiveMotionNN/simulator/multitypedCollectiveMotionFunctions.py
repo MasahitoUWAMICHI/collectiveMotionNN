@@ -49,7 +49,7 @@ class torch_kn_cutoff(nn.Module):
     def forward(self, input):
         return self.cutoff_module(torch_knFunction.apply(input, self.n) - self.cutoff_val)
 
-class torque_chemotaxis2D(nn.Module):
+class J_chemoattractant2D(nn.Module):
     def __init__(self, kappa, cutoff):
         super().__init__()
         self.kappa = nn.Parameter(torch.tensor(kappa, requires_grad=True))
@@ -62,3 +62,20 @@ class torque_chemotaxis2D(nn.Module):
     
     def forward(self, input):
         return self.k1(self.kappa * input) * (self.kappa/(2*np.pi))
+    
+class J_contactFollowing(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, xy, p):
+        return (1 + xy[...,:1] * p[..., :1] + xy[...,1:2] * p[..., 1:2]) * xy / 2
+
+class J_contactInhibitionOfLocomotion(nn.Module):
+    def __init__(self, r):
+        super().__init__()
+        self.r = nn.Parameter(torch.tensor(r, requires_grad=True))
+    
+    def forward(self,xy, d):
+        return ((self.r/d) - 1) * xy
+    
+
