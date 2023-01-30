@@ -1,13 +1,32 @@
 import dgl
 import dgl.function as fn
 
-
+def makeRadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None):
+    '''
+    x : torch.Tensor. The shape must be [N_nodes, N_dimensions].
+    r : real number or torch.Tensor. Two nodes will be linked with edge if the distance is smaller than r. If torch.Tensor, this must be able to broadcast to [N_nodes, N_nodes, N_dimensions].
+    flg_selfloop (optional) : boolean. If True, the graph will include selfloops.
+    flg_custom (optional) : boolean. If True, custom function will be used to calculate distance. If False, euclidean distance will be used.
+    func_custom_distance (optional) : callable. Function to calculate distance from x.
+    This returns a DGL graph.
+    '''
+    if flg_custom:
+        Ndata = x.size(0)
+        dx = func_custom_distance(x)
+        if flg_selfloop:
+            edges = torch.argwhere(dx < r)
+        else:
+            edges = torch.argwhere(torch.logical_and(dx > 0, dx < r))
+        out = dgl.graph((edges[:,0], edges[:,1]), num_nodes=Ndata)
+    else:
+        out = dgl.radius_graph(x, r, p=2, self_loop=flg_selfloop)
+    return out
 
 def make_heterograph(data_dict, future_edge_types=[]):
     '''
     data_dict: dictionary. Keys are the string indicating edge type, 
                 values are tuples including two tensors indicating source and destination nodes.
-    future_edge_types (optional): list. Edge types to be used in future should be included.
+    future_edge_types (optional): list of strings. Edge type to be used in future should be included.
     '''
     edge_types_not_found = [etype for etype in future_edge_types if not(etype in data_dict)]
 
