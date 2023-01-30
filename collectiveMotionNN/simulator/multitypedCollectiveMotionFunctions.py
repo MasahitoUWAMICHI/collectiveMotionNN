@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torch import nn
-from torchsde import BrownianInterval, sdeint
 
 from scipy import special
 from torch.autograd import Function
