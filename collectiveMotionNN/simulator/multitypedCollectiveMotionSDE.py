@@ -30,7 +30,10 @@ class multitypedCollectiveMotionSDE(torch.nn.Module):
         
         if self.periodic:
             self.custom_distance = lambda x : mcmf.periodic_distance(torch.unsqueeze(x, 0), torch.unsqueeze(x, 1), self.L)
-                
+        
+        self.J_chem = mcmf.J_chemoattractant2D(kappa, cutoff)
+        self.J_CF = mcmf.J_contactFollowing()
+        
     # Drift
     def f(self, t, y):
         if self.periodic:
