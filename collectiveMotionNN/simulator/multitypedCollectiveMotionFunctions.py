@@ -42,12 +42,23 @@ class torch_kn_cutoff(nn.Module):
         self.n = n
         self.cutoff = cutoff
         
-        self.kn = torch_kn(self.n)
-        self.cutoff_val = self.kn(self.cutoff)
+        self.cutoff_val = torch_knFunction.apply(self.cutoff, self.n)
         
         self.cutoff_module = nn.ReLU()
         
     def forward(self, input):
-        return self.cutoff_module(self.kn(input) - self.cutoff_val)
+        return self.cutoff_module(torch_knFunction.apply(input, self.n) - self.cutoff_val)
 
-
+class torque_chemotaxis2D(nn.Module):
+    def __init__(self, kappa, cutoff):
+        super().__init__()
+        self.kappa = nn.Parameter(torch.tensor(kappa, requires_grad=True))
+        
+        self.cutoff = cutoff
+        if self.cutoff > 0:
+            self.k1 = torch_kn_cutoff(1, self.cutoff)
+        else:
+            self.k1 = torch_kn(1)
+    
+    def forward(self, input):
+        return self.k1(self.kappa * input) * (self.kappa/(2*np.pi))
