@@ -1,7 +1,7 @@
 import dgl
 import dgl.function as fn
 
-def makeRadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None):
+def make_RadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None):
     '''
     x : torch.Tensor. The shape must be [N_nodes, N_dimensions].
     r : real number or torch.Tensor. Two nodes will be linked with edge if the distance is smaller than r. If torch.Tensor, this must be able to broadcast to [N_nodes, N_nodes, N_dimensions].
