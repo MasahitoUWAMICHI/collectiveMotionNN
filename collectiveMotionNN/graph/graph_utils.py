@@ -1,9 +1,14 @@
 import dgl
 import dgl.function as fn
 
+def update_edges(g, edges):
+    g.remove_edges(g, g.edge_ids(g.edges()[0], g.edges()[1]))
+    g.add_edges(edges)
+    return g
+
 def make_RadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None):
     '''
-    x : torch.Tensor. The shape must be [N_nodes, N_dimensions].
+    x : list of torch.Tensor. The shape must be [N_nodes, N_dimensions].
     r : real number or torch.Tensor. Two nodes will be linked with edge if the distance is smaller than r. If torch.Tensor, this must be able to broadcast to [N_nodes, N_nodes, N_dimensions].
     flg_selfloop (optional) : boolean. If True, the graph will include selfloops.
     flg_custom (optional) : boolean. If True, custom function will be used to calculate distance. If False, euclidean distance will be used.
@@ -11,7 +16,7 @@ def make_RadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_dis
     This returns a DGL graph.
     '''
     if flg_custom:
-        Ndata = x.size(0)
+        Ndata = x[0].size(0)
         dx = func_custom_distance(x)
         if flg_selfloop:
             edges = torch.argwhere(dx < r)
@@ -19,7 +24,7 @@ def make_RadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_dis
             edges = torch.argwhere(torch.logical_and(dx > 0, dx < r))
         out = dgl.graph((edges[:,0], edges[:,1]), num_nodes=Ndata)
     else:
-        out = dgl.radius_graph(x, r, p=2, self_loop=flg_selfloop)
+        out = dgl.radius_graph(x[0], r, p=2, self_loop=flg_selfloop)
     return out
 
 def make_heterograph(data_dict, future_edge_types=[]):
@@ -39,6 +44,16 @@ def make_heterograph(data_dict, future_edge_types=[]):
         hg.remove_edges(0, etype=etype)
 
     return hg
+
+def update_RadiusGraph(g, xy_list, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None)
+
+    x = [g[xy_name] for xy_name in xy_list]
+
+    newgraph = make_RadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None)
+    update_edges(g, newgraph.adj_sparse('coo'))
+    
+    return g
+    
 
 def add_graph2heterograph(heterograph, graph, etype):
     '''
