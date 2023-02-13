@@ -31,15 +31,40 @@ class multitypedCollectiveMotionSDE(nn.Module):
         if self.periodic:
             self.custom_distance = lambda x : mcmf.periodic_distance(torch.unsqueeze(x, 0), torch.unsqueeze(x, 1), self.L)
         
-        self.J_chem = mcmf.J_chemoattractant2D(kappa, cutoff)
-        self.J_CF = mcmf.J_contactFollowing()
+        
+        self.xy_list = ['x']
+        
+        self.y_names = {'x': [0,1],
+                        'v': [2,3],
+                        'theta': [4]}
+        
+        self.calc_message = mcmf.mainModule()
+    
+        
+    def init_graph(self, data_dict):
+        if self.periodic:
+            self.graph = gu.make_RadiusGraph(data_dict[self.xy_list], self.r, flg_selfloop=False, flg_custom=True, func_custom_distance=self.custom_distance)
+        else:
+            self.graph = gu.make_RadiusGraph(data_dict[self.xy_list], self.r, flg_selfloop=False)
+        for data_key in data_dict.keys():
+            self.graph.ndata[data_key] = data_dict[data_key]
+        
+    def refresh_graph(self):
+        if self.periodic:
+            update_RadiusGraph(self.graph, self.xy_list, self.r, flg_selfloop=False, flg_custom=True, func_custom_distance=self.custom_distance)
+        else:
+            update_RadiusGraph(self.graph, self.xy_list, self.r, flg_selfloop=False)
         
     # Drift
     def f(self, t, y):
-        if self.periodic:
-            rg = gu.make_RadiusGraph(y[:, :2], self.r, flg_selfloop=False, flg_custom=True, func_custom_distance=self.custom_distance)
-        else:
-            rg = gu.make_RadiusGraph(y[:, :2], self.r, flg_selfloop=False)
+        
+        for y_name in self.y_names.keys():
+            self.graph.ndata[y_name] = y[:, self.ynames[y_name]]
+            
+        self.refresh_graph()
+        
+        self.graph.update_all(self.calc_message, fn.sum('m', 'a'))
+        
         
         
         
