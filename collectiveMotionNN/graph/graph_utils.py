@@ -27,6 +27,15 @@ def make_RadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_dis
         out = dgl.radius_graph(x[0], r, p=2, self_loop=flg_selfloop)
     return out
 
+def update_RadiusGraph(g, xy_list, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None):
+
+    x = [g[xy_name] for xy_name in xy_list]
+
+    newgraph = make_RadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None)
+    update_edges(g, newgraph.adj_sparse('coo'))
+    
+    return g
+
 def make_heterograph(data_dict, future_edge_types=[]):
     '''
     data_dict: dictionary. Keys are the string indicating edge type, 
@@ -45,15 +54,6 @@ def make_heterograph(data_dict, future_edge_types=[]):
 
     return hg
 
-def update_RadiusGraph(g, xy_list, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None):
-
-    x = [g[xy_name] for xy_name in xy_list]
-
-    newgraph = make_RadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None)
-    update_edges(g, newgraph.adj_sparse('coo'))
-    
-    return g
-    
 
 def add_graph2heterograph(heterograph, graph, etype):
     '''
