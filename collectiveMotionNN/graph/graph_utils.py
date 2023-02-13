@@ -4,7 +4,7 @@ import dgl.function as fn
 def update_edges(g, edges):
     g.remove_edges(g, g.edge_ids(g.edges()[0], g.edges()[1]))
     g.add_edges(edges)
-    return g
+    return None
 
 def make_RadiusGraph(x, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None):
     '''
