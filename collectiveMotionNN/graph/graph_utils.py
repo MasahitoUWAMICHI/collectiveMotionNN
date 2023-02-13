@@ -45,7 +45,7 @@ def make_heterograph(data_dict, future_edge_types=[]):
 
     return hg
 
-def update_RadiusGraph(g, xy_list, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None)
+def update_RadiusGraph(g, xy_list, r, flg_selfloop=False, flg_custom=False, func_custom_distance=None):
 
     x = [g[xy_name] for xy_name in xy_list]
 
