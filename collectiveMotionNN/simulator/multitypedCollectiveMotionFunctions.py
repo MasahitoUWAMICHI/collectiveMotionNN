@@ -81,3 +81,36 @@ def periodic_distance(x, y, L):
     dr = torch.remainder((x - y), L)
     dr[dr > L/2] = dr[dr > L/2] - L
     return dr
+
+class mainModule(nn.Module):
+    def __init__(self, r, kappa, cutoff):
+        super().__init__()
+
+        self.J_chem = J_chemoattractant2D(kappa, cutoff)
+        self.J_CF = J_contactFollowing()
+        self.J_CIL = J_contactInhibitionOfLocomotion(r)
+        
+    def forward(self, edges):
+        dx = calc_dr(edges.dst['x'], edges.src['x'])
+
+        costheta = torch.cos(edges.dst['theta'])
+        sintheta = torch.sin(edges.dst['theta'])
+
+        dx_para = costheta * dx[..., :1] + sintheta * dx[..., 1:]
+        dx_perp = costheta * dx[..., 1:] - sintheta * dx[..., :1]
+
+        p_para_src = torch.cos(edges.src['theta'] - edges.dst['theta'])
+        p_perp_src = torch.sin(edges.src['theta'] - edges.dst['theta'])
+
+        rot_m_v = self.interactNN(torch.concat((dx_para, dx_perp, 
+                                                p_para_src, p_perp_src,
+                                                edges.dst['type'], edges.src['type']), -1))
+
+        m_v = torch.concat((costheta * rot_m_v[..., :1] - sintheta * rot_m_v[..., 1:],
+                            costheta * rot_m_v[..., 1:] + sintheta * rot_m_v[..., :1]), -1)
+
+        m_theta = self.thetaDotNN(torch.concat((dx_para, dx_perp, 
+                                                p_para_src, p_perp_src, 
+                                                edges.dst['type'], edges.src['type']), -1))
+        
+        return {'m': torch.concat((m_v, m_theta), -1)}
