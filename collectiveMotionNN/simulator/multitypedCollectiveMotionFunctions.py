@@ -83,12 +83,25 @@ def periodic_distance(x, y, L):
     return dr
 
 class mainModule(nn.Module):
-    def __init__(self, r, kappa, cutoff):
+    def __init__(self, params):
         super().__init__()
 
         self.J_chem = J_chemoattractant2D(kappa, cutoff)
         self.J_CF = J_contactFollowing()
         self.J_CIL = J_contactInhibitionOfLocomotion(r)
+
+        self.v0 = nn.Parameter(torch.tensor(v0, requires_grad=True))
+        self.beta = nn.Parameter(torch.tensor(beta, requires_grad=True))
+        
+        self.A_CFs = nn.Parameter(torch.tensor(A_CFs, requires_grad=True))
+        self.A_CIL = nn.Parameter(torch.tensor(A_CIL, requires_grad=True))
+        self.A_chem = nn.Parameter(torch.tensor(A_chem, requires_grad=True))
+
+        self.A_ext = nn.Parameter(torch.tensor(A_ext, requires_grad=True))
+
+        self.periodic = periodic
+        self.L = L
+        self.D = D
         
     def forward(self, edges):
         dx = calc_dr(edges.dst['x'], edges.src['x'])
