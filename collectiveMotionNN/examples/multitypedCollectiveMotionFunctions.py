@@ -5,6 +5,11 @@ from torch import nn
 from scipy import special
 from torch.autograd import Function
 
+import collectiveMotionNN.graph_utils as gu
+import collectiveMotionNN.module as mo
+
+## prepare functions
+
 class torch_knFunction(Function):
     @staticmethod
     def forward(ctx, input, n):
@@ -77,34 +82,38 @@ class J_contactInhibitionOfLocomotion(nn.Module):
     def forward(self,xy, d):
         return ((self.r/d) - 1) * xy
     
+
+## prepare distance metric
+
 def periodic_distance(x, y, L):
     dr = torch.remainder((x - y), L)
     dr[dr > L/2] = dr[dr > L/2] - L
     return dr
 
-class mainModule(nn.Module):
+## make module
+
+class multitypedCMsimulate(mo.dynamicGNDEmodule):
     def __init__(self, params):
         super().__init__()
 
-        self.J_chem = J_chemoattractant2D(kappa, cutoff)
+        self.J_chem = J_chemoattractant2D(params['kappa'], params['cutoff'])
         self.J_CF = J_contactFollowing()
-        self.J_CIL = J_contactInhibitionOfLocomotion(r)
+        self.J_CIL = J_contactInhibitionOfLocomotion(params['r'])
 
-        self.v0 = nn.Parameter(torch.tensor(v0, requires_grad=True))
-        self.beta = nn.Parameter(torch.tensor(beta, requires_grad=True))
+        self.v0 = nn.Parameter(torch.tensor(params['v0'], requires_grad=True))
+        self.beta = nn.Parameter(torch.tensor(params['beta'], requires_grad=True))
         
-        self.A_CFs = nn.Parameter(torch.tensor(A_CFs, requires_grad=True))
-        self.A_CIL = nn.Parameter(torch.tensor(A_CIL, requires_grad=True))
-        self.A_chem = nn.Parameter(torch.tensor(A_chem, requires_grad=True))
+        self.A_CFs = nn.Parameter(torch.tensor(params['A_CFs'], requires_grad=True))
+        self.A_CIL = nn.Parameter(torch.tensor(params['A_CIL'], requires_grad=True))
+        self.A_chem = nn.Parameter(torch.tensor(params['A_chem'], requires_grad=True))
 
-        self.A_ext = nn.Parameter(torch.tensor(A_ext, requires_grad=True))
+        self.A_ext = nn.Parameter(torch.tensor(params['A_ext'], requires_grad=True))
 
-        self.periodic = periodic
-        self.L = L
-        self.D = D
+        self.L = params['L']
+        self.D = params['D']
         
     def forward(self, edges):
-        dx = calc_dr(edges.dst['x'], edges.src['x'])
+        dx = periodic_distance(edges.dst['x'], edges.src['x'], self.L)
 
         costheta = torch.cos(edges.dst['theta'])
         sintheta = torch.sin(edges.dst['theta'])
@@ -127,3 +136,10 @@ class mainModule(nn.Module):
                                                 edges.dst['type'], edges.src['type']), -1))
         
         return {'m': torch.concat((m_v, m_theta), -1)}
+
+    def f(self, t, y, gr, dynamicName, batchIDName):
+        return None
+
+    def g(self, t, y, gr, dynamicName, batchIDName):
+        return None
+

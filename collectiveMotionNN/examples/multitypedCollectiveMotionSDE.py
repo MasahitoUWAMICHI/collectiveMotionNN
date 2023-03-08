@@ -6,8 +6,9 @@ from torchsde import BrownianInterval, sdeint
 import dgl
 import dgl.function as fn
 
-import collectiveMotionNN.graph.graph_utils as gu
-import collectiveMotionNN.simulator.multitypedCollectiveMotionFunctions as mcmf
+import collectiveMotionNN.graph_utils as gu
+import collectiveMotionNN.module as mo
+import collectiveMotionNN.examples.multitypedCollectiveMotionFunctions as mcmf
 
 class multitypedCollectiveMotionSDE(nn.Module):
     def __init__(self, L, periodic, v0, beta, A_CF, A_CIL, r, A, D, noise_type = 'scalar', sde_type = 'ito'):
