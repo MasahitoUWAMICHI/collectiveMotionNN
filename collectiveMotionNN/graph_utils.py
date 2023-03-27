@@ -13,10 +13,14 @@ def calc_adjacency(g, edgeConditionFunc):
 def update_adjacency(g, edgeConditionFunc):
     edges = calc_adjacency(g, edgeConditionFunc)
     update_edges(g, edges)
-    return None
+    return g
 
-def update_adjacency_batch(g, edgeConditionFunc, batchIDName):
-
+def update_adjacency_batch(bg, edgeConditionFunc):
+    gs = list(dgl.unbatch(bg))
+    for i in range(len(gs)):
+        gs[i] = update_adjacency(gs[i], edgeConditionFunc)
+    bg = dgl.batch(gs)
+    return bg
 
 def judge_skipUpdate(g, dynamicVariable, dynamicName):
     return torch.allclose(g.ndata[dynamicName], dynamicVariable)
