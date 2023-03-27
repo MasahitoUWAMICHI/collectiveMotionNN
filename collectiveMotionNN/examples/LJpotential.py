@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from torch import nn
 
+import dgl.nn as gnn
+
 import collectiveMotionNN.graph_utils as gu
 import collectiveMotionNN.module as mo
 
@@ -14,9 +16,16 @@ class LJpotential(nn.Module):
         self.q = q
         
     def potential(self, r):
-        return self.c * (self.sigma/r)**(self.q) * ((self.sigma/r)**(self.p-self.q) - 1)
+        return 4 * self.c * (self.sigma/r)**(self.q) * ((self.sigma/r)**(self.p-self.q) - 1)
 
     def force(self, r):
-        return self.c * (self.sigma/r)**(self.q) * (self.p * (self.sigma/r)**(self.p-self.q) - self.q) / r
+        return 4 * self.c * (self.sigma/r)**(self.q) * (self.p * (self.sigma/r)**(self.p-self.q) - self.q) / r
     
 
+class MessagePasser(gnn):
+    
+
+
+    
+dynamicGODEwrapper(nn.Module):
+    def __init__(self, module_f)    
