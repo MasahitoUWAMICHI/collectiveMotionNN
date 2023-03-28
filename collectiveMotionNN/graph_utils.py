@@ -7,46 +7,26 @@ def update_edges(g, edges):
     g.add_edges(edges[0], edges[1])
     return g
 
-def update_adjacency(g, edgeConditionFunc):
-    edges = edgeConditionFunc(g)
+def update_adjacency(g, edgeCondtionModule):
+    edges = edgeCondtionModule(g)
     update_edges(g, edges)
     return g
 
-def update_adjacency_batch(bg, edgeConditionFunc):
+def update_adjacency_batch(bg, edgeCondtionModule):
     gs = dgl.unbatch(bg)
     for g in gs:
-        update_adjacency(g, edgeConditionFunc)
+        update_adjacency(g, edgeCondtionModule)
     bg = dgl.batch(gs)
     return bg
 
 def judge_skipUpdate(g, dynamicVariable, dynamicName):
     return torch.allclose(g.ndata[dynamicName], dynamicVariable)
 
-def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeConditionFunc):
+def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeCondtionModule):
     gr.ndata[dynamicName] = dynamicVariable
-    gr = update_adjacency_batch(gr, edgeConditionFunc)
+    gr = update_adjacency_batch(gr, edgeCondtionModule)
     return gr
 
-class edgeRefresh_judgeSkip(nn.Module):
-    def __init__(self, edgeCondtionModule):
-        super().__init__()
-        
-        self.edgeConditionModule = edgeConditionModule
-        
-    def forward(self, gr, dynamicVariable, dynamicName):
-        if judge_skipUpdate(gr, dynamicVariable, dynamicName):
-            return gr
-        else:
-            return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
-
-class edgeRefresh_forceUpdate(nn.Module):
-    def __init__(self, edgeCondtionModule):
-        super().__init__()
-        
-        self.edgeConditionModule = edgeConditionModule
-        
-    def forward(self, gr, dynamicVariable, dynamicName):
-        return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
 
 
     
