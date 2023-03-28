@@ -32,29 +32,41 @@ class edgeRefresh_forceUpdate(nn.Module):
 
 
 class dynamicGODEwrapper(nn.Module):
-    def __init__(self, dynamicGNDEmodule, graph=None):
+    def __init__(self, dynamicGNDEmodule, graph=None, dynamicName=None):
         super().__init__()
 
         self.dynamicGNDEmodule = dynamicGNDEmodule
 
         self.graph = graph
         
-    def loadGraph(self, dynamicVariable, staticVariables, dynamicName='y'):
-        self.graph, self.dynamicName = gu.make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName=dynamicName)
+        if dynamicName is None:
+            self.dynamicName = 'y'
+        else:
+            self.dynamicName = dynamicName
+        
+    def loadGraph(self, dynamicVariable, staticVariables, dynamicName=None):
+        self.graph = gu.make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName=dynamicName)
+        if dynamicName is None:
+            return None
+        else:
+            self.dynamicName = dynamicName
+            return None
 
     def f(self, t, y):
-        return self.dynamicGNDEmodule.f(t, y, self.graph, self.dynamicName)
+        out, self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.dynamicName)
+        return out
 
 
 class dynamicGSDEwrapper(dynamicGODEwrapper):
-    def __init__(self, dynamicGNDEmodule, noise_type, sde_type, graph=None):
+    def __init__(self, dynamicGNDEmodule, noise_type, sde_type, graph=None, dynamicName=None):
         super().__init__(dynamicGNDEmodule, graph)
 
         self.noise_type = noise_type
         self.sde_type = sde_type
         
     def g(self, t, y):
-        return self.dynamicGNDEmodule.g(t, y, self.graph, self.dynamicName)
+        out, self.graph = self.dynamicGNDEmodule.g(t, y, self.graph, self.dynamicName)
+        return out
 
 
 
@@ -90,8 +102,8 @@ class dynamicGNDEmodule(nn.Module):
     # f and g should be updated in user-defined class
     def f(self, t, y, gr, dynamicName):
         gr = self.edgeRefresher(gr, y, dynamicName)
-        return self.calc_module.f(t, gr, dynamicName)
+        return self.calc_module.f(t, gr, dynamicName), gr
 
     def g(self, t, y, gr, dynamicName):
         gr = self.edgeRefresher(gr, y, dynamicName)
-        return self.calc_module.g(t, gr, dynamicName)
+        return self.calc_module.g(t, gr, dynamicName), gr
