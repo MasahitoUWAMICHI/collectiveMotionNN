@@ -82,28 +82,40 @@ class edgeCalculator(nn.Module):
         self.selfLoop = selfLoop
         
         self.def_dr()
-           
-    def def_dr(self):
-        if self.periodic is None:
-            self.def_nonPeriodic()
-        else:
-            self.def_periodic(periodic)
         
+        self.def_distance2edge()
+        
+           
     def def_nonPeriodic(self):
         self.distanceCalc = dr_nonPeriodic()
         
     def def_periodic(self):
         self.distanceCalc = dr_periodic(self.periodic)
         
+    def def_dr(self):
+        if self.periodic is None:
+            self.def_nonPeriodic()
+        else:
+            self.def_periodic(periodic)
+        
+
+    def def_noSelfLoop(self):
+        self.distance2edge = gu.distance2edge_noSelfLoop(self.r0)
+        
+    def def_selfLoop(self):
+        self.distance2edge = gu.distance2edge_selfLoop(self.r0)
+        
+    def def_distance2edge(self):
+        if self.selfLoop:
+            self.def_selfLoop()
+        else:
+            self.def_noSelfLoop()
+            
+        
     def calc_adjacencyMatrix(self, r):
         dr = self.distanceCalc.calc(torch.unsqueeze(r, 0), torch.unsqueeze(r, 1))
         dr = torch.norm(dr, dim=-1)
-        if self.selfLoop:
-            return dr < self.r0
-        else:
-            dr.fill_diagonal_(self.r0+1)
-            return dr < self.r0
-        
+        return self.distance2edge(dr)        
     
     
 class dynamicGODEwrapper(mo.dynamicGNDEmodule):
