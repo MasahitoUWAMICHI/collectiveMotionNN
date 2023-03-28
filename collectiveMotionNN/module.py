@@ -4,35 +4,29 @@ import graph_utils as gu
 
 
 class dynamicGODEwrapper(nn.Module):
-    def __init__(self, module_f):
+    def __init__(self, module_f, graph=None):
         super().__init__()
 
         self.module_f = module_f
 
-    def loadGraph(self, dynamicVariable, staticVariables, dynamicName='y', batchID=None):
-        self.graph, self.dynamicName, self.isBatched = gu.make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName=dynamicName, batchIDName=batchIDName)
+        self.graph = graph
+        
+    def loadGraph(self, dynamicVariable, staticVariables, dynamicName='y'):
+        self.graph, self.dynamicName = gu.make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName=dynamicName)
 
     def f(self, t, y):
         return self.module_f.f(t, y, self.graph, self.dynamicName, self.isBatched)
 
 
-class dynamicGSDEwrapper(nn.Module):
-    def __init__(self, module_fg, noise_type, sde_type):
-        super().__init__()
-
-        self.module_fg = module_fg
+class dynamicGSDEwrapper(dynamicGODEwrapper):
+    def __init__(self, module_f, noise_type, sde_type, graph=None):
+        super().__init__(module_f, graph)
 
         self.noise_type = noise_type
         self.sde_type = sde_type
-
-    def loadGraph(self, dynamicVariable, staticVariables, dynamicName='y', batchID=None):
-        self.graph, self.dynamicName, self.isBatched = gu.make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName=dynamicName, batchID=batchID)
-
-    def f(self, t, y):
-        return self.module_fg.f(t, y, self.graph, self.dynamicName, self.isBatched)
-
+        
     def g(self, t, y):
-        return self.module_fg.g(t, y, self.graph, self.dynamicName, self.isBatched)
+        return self.module_f.g(t, y, self.graph, self.dynamicName, self.isBatched)
 
 
 
