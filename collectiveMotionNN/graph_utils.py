@@ -28,6 +28,29 @@ def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeCondtionModule):
     return gr
 
 
+class edgeRefresh_noForceUpdate(nn.Module):
+    def __init__(self, edgeCondtionModule):
+        super().__init__()
+        
+        self.edgeConditionModule = edgeConditionModule
+        
+    def forward(self, gr, dynamicVariable, dynamicName):
+        if judge_skipUpdate(gr, dynamicVariable, dynamicName):
+            return gr
+        else:
+            return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
+
+class edgeRefresh_forceUpdate(nn.Module):
+    def __init__(self, edgeCondtionModule):
+        super().__init__()
+        
+        self.edgeConditionModule = edgeConditionModule
+        
+    def forward(self, gr, dynamicVariable, dynamicName):
+        return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
+
+
+
 
     
 
