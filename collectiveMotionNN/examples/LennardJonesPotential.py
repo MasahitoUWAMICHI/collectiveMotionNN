@@ -48,8 +48,8 @@ class interactionModule(nn.Module):
         
         return {'m': self.LJ.force(abs_dr) * unit_dr}
         
-    def forward(self, g):
-        g.update_all(self.calc_message, fn.sum('m', 'v'))
+    def f(self, t, g, derivativeName='v'):
+        g.update_all(self.calc_message, fn.sum('m', derivativeName))
         return g
 
     
