@@ -112,7 +112,7 @@ class edgeCalculator(nn.Module):
             self.def_noSelfLoop()
             
         
-    def calc_adjacencyMatrix(self, r):
+    def forward(self, r):
         dr = self.distanceCalc.calc(torch.unsqueeze(r, 0), torch.unsqueeze(r, 1))
         dr = torch.norm(dr, dim=-1)
         return self.distance2edge(dr)        
