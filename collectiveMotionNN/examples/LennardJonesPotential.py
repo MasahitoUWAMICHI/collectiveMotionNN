@@ -6,9 +6,9 @@ from torchdyn.core import NeuralODE
 
 import dgl.function as fn
 
-import ..utils as ut
-import ..graph_utils as gu
-import ..module as mo
+import collectiveMotionNN.utils as ut
+import collectiveMotionNN.graph_utils as gu
+import collectiveMotionNN.module as mo
 
 from distutils.util import strtobool
 
