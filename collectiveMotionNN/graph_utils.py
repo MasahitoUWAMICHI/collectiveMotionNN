@@ -17,7 +17,7 @@ def update_adjacency(g, edgeConditionFunc):
     return g
 
 def update_adjacency_batch(bg, edgeConditionFunc):
-    gs = list(dgl.unbatch(bg))
+    gs = dgl.unbatch(bg)
     for g in gs:
         update_adjacency(g, edgeConditionFunc)
     bg = dgl.batch(gs)
