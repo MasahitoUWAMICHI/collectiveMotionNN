@@ -29,7 +29,7 @@ def judge_skipUpdate(g, dynamicVariable, dynamicName):
 
 def make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName):
     Nnodes = dynamicVariable.shape[0]
-    g = dgl.graph((torch.tensor([0]), torch.tensor([0])), num_nodes=Nnodes)
+    g = dgl.graph((torch.tensor([], dtype=torch.int64), torch.tensor([], dtype=torch.int64)), num_nodes=Nnodes)
     g.ndata[dynamicName] = dynamicVariable
 
     for key in staticVariables.keys():
