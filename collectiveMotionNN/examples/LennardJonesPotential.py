@@ -2,72 +2,16 @@ import numpy as np
 import torch
 from torch import nn
 
+from torchdyn.core import NeuralODE
+
 import dgl.function as fn
 
 import ..utils as ut
 import ..graph_utils as gu
 import ..module as mo
 
-class LJpotential(nn.Module):
-    def __init__(self, c, sigma, p=12, q=6):
-        super().__init__()
-        self.c = c
-        self.sigma = sigma
-        self.p = p
-        self.q = q
-        
-    def potential(self, r):
-        return 4 * self.c * (self.sigma/r)**(self.q) * ((self.sigma/r)**(self.p-self.q) - 1)
+from distutils.util import strtobool
 
-    def force(self, r):
-        return 4 * self.c * (self.sigma/r)**(self.q) * ((self.p * (self.sigma/r)**(self.p-self.q)) - self.q) / r
-    
-
-class interactionModule(nn.Module):
-    def __init__(self, d, c, sigma, p=12, q=6, periodic=None, dynamicName=None, messageName=None, aggregateName=None):
-        self.d = d
-        self.c = c
-        self.sigma = sigma
-        self.p = p
-        self.q = q
-        
-        self.LJ = LJpotential(c, sigma, p, q)
-        
-        self.flg_periodic = not(periodic is None)
-        
-        if self.flg_periodic:
-            self.periodic = torch.tensor(periodic)
-        else:
-            self.periodic = periodic
-            
-        self.dynamicName = ut.variableInitializer(dynamicName, 'y')
-        
-        self.messageName = ut.variableInitializer(messageName, 'm')
-
-        self.aggregateName = ut.variableInitializer(aggregateName, 'v')
-        
-    def set_dynamicName(self, dynamicName):
-        self.dynamicName = ut.variableInitializer(dynamicName, self.dynamicName)
-
-    def set_messageName(self, messageName):
-        self.messageName = ut.variableInitializer(messageName, self.messageName)
-
-    def set_aggregateName(self, aggregateName):
-        self.aggregateName = ut.variableInitializer(aggregateName, self.aggregateName)
-        
-    def calc_message(self, edges):
-        dr = calc_dr(edges.dst[self.dynamicName], edges.src[self.dynamicName])
-
-        abs_dr = torch.norm(dr, dim=-1, keepdim=True)
-        unit_dr = nn.functional.normalize(dr, dim=-1)
-        
-        return {self.messageName: self.LJ.force(abs_dr) * unit_dr}
-        
-    def f(self, t, g, dynamicName=None, derivativeName=None):
-        self.set_dynamicName(dynamicName)
-        self.set_aggregateName(derivativeName)
-        g.update_all(self.calc_message, fn.sum(self.messageName, self.set_aggregateName))
-        return g
 
     
 class dr_nonPeriodic(nn.Module):
@@ -89,7 +33,7 @@ class dr_periodic(nn.Module):
     
     
 class edgeCalculator(nn.Module):
-    def __init__(self, r0, periodic=None, selfLoop=False):
+    def __init__(self, r0, periodic=None, selfLoop=False, variableName=None):
         super().__init__()
            
         self.r0 = r0
@@ -98,11 +42,13 @@ class edgeCalculator(nn.Module):
         
         self.selfLoop = selfLoop
         
+        self.edgeVariable = ut.variableInitializer(variableName, 'y')
+        
         self.def_dr()
         
         self.def_distance2edge()
         
-           
+        
     def def_nonPeriodic(self):
         self.distanceCalc = dr_nonPeriodic()
         
@@ -130,12 +76,176 @@ class edgeCalculator(nn.Module):
             
             
         
-    def forward(self, r):
-        dr = self.distanceCalc(torch.unsqueeze(r, 0), torch.unsqueeze(r, 1))
+    def forward(self, g):
+        dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
         dr = torch.norm(dr, dim=-1)
         return self.distance2edge(dr)        
     
+
     
-LJ_GODEwrapper(mo.dynamicGNDEmodule):
-    def __init__(self, calc_module, edgeConditionFunc, forceUpdate=False)
-        super().__init__(calc_module, edgeConditionFunc, forceUpdate)
+class LJpotential(nn.Module):
+    def __init__(self, c, sigma, p=12, q=6):
+        super().__init__()
+        self.c = c
+        self.sigma = sigma
+        self.p = p
+        self.q = q
+        
+    def potential(self, r):
+        return 4 * self.c * (self.sigma/r)**(self.q) * ((self.sigma/r)**(self.p-self.q) - 1)
+
+    def force(self, r):
+        return 4 * self.c * (self.sigma/r)**(self.q) * ((self.p * (self.sigma/r)**(self.p-self.q)) - self.q) / r
+    
+
+class interactionModule(nn.Module):
+    def __init__(self, c, sigma, p=12, q=6, periodic=None, dynamicName=None, messageName=None, aggregateName=None):
+        self.c = c
+        self.sigma = sigma
+        self.p = p
+        self.q = q
+        
+        self.LJ = LJpotential(c, sigma, p, q)
+        
+        self.flg_periodic = not(periodic is None)
+        
+        if self.flg_periodic:
+            self.periodic = torch.tensor(periodic)
+        else:
+            self.periodic = periodic
+            
+        self.def_dr()
+            
+        self.dynamicName = ut.variableInitializer(dynamicName, 'y')
+        
+        self.messageName = ut.variableInitializer(messageName, 'm')
+
+        self.aggregateName = ut.variableInitializer(aggregateName, 'v')
+        
+    def set_dynamicName(self, dynamicName):
+        self.dynamicName = ut.variableInitializer(dynamicName, self.dynamicName)
+
+    def set_messageName(self, messageName):
+        self.messageName = ut.variableInitializer(messageName, self.messageName)
+
+    def set_aggregateName(self, aggregateName):
+        self.aggregateName = ut.variableInitializer(aggregateName, self.aggregateName)
+        
+        
+        
+    def def_nonPeriodic(self):
+        self.distanceCalc = dr_nonPeriodic()
+        
+    def def_periodic(self):
+        self.distanceCalc = dr_periodic(self.periodic)
+        
+    def def_dr(self):
+        if self.periodic is None:
+            self.def_nonPeriodic()
+        else:
+            self.def_periodic(periodic)
+            
+            
+    def calc_message(self, edges):
+        dr = self.distanceCalc(edges.dst[self.dynamicName], edges.src[self.dynamicName])
+
+        abs_dr = torch.norm(dr, dim=-1, keepdim=True)
+        unit_dr = nn.functional.normalize(dr, dim=-1)
+        
+        return {self.messageName: self.LJ.force(abs_dr) * unit_dr}
+        
+    def f(self, t, g, dynamicName=None, derivativeName=None):
+        self.set_dynamicName(dynamicName)
+        self.set_aggregateName(derivativeName)
+        g.update_all(self.calc_message, fn.sum(self.messageName, self.set_aggregateName))
+        return g
+    
+    
+    
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--c', type=float)
+    parser.add_argument('--sigma', type=float)
+    parser.add_argument('--p', type=float)
+    parser.add_argument('--q', type=float)
+    
+    parser.add_argument('--r0', type=float)
+    
+    parser.add_argument('--L', type=float)
+    
+    parser.add_argument('--N_particles', type=int)
+    parser.add_argument('--N_batch', type=int)
+
+    parser.add_argument('--t_max', type=float)
+    parser.add_argument('--dt_step', type=float)
+    parser.add_argument('--dt_save', type=float)
+
+    parser.add_argument('--periodic', type=float)
+    parser.add_argument('--selfloop', type=strtobool)
+    
+    parser.add_argument('--device', type=str)
+    parser.add_argument('--save_x', type=str)
+    parser.add_argument('--save_t', type=str)
+    
+    args = parser.parse_args()
+    
+    
+    c = variableInitializer(args.c, 1.0)
+    sigma = variableInitializer(args.c, 1.0)
+    p = variableInitializer(args.p, 12.0)
+    q = variableInitializer(args.q, 6.0)
+    
+    r0 = variableInitializer(args.r0, 3.0)
+    L = variableInitializer(args.L, 5.0)
+    
+    N_particles = variableInitializer(args.N_particles, int(10))
+    N_batch = variableInitializer(args.N_batch, int(5))
+    
+    t_max = variableInitializer(args.t_max, 50.0)
+    dt_step = variableInitializer(args.dt_step, 0.1)
+    dt_save = variableInitializer(args.dt_save, 1.0)
+    
+    periodic = variableInitializer(args.periodic, None)
+    selfloop = variableInitializer(args.selfloop, False)
+    
+    device = variableInitializer(args.device, 'cuda' if torch.cuda.is_available() else 'cpu')
+    save_x = variableInitializer(args.save_x, 'LJ_traj.pt')
+    save_t = variableInitializer(args.save_t, 't_eval.pt')
+    
+    
+    
+    LJ_Module = interactionModule(c, sigma, p, q, periodic)
+    edgeModule = edgeCalculator(r0, periodic, selfLoop)
+    
+    LJ_ODEModule = mo.dynamicGNDEmodule(LJ_Module, edgeModule)
+    
+    
+    y0 = []
+    graph_init = []
+    for i in range(N_batch):
+        y0.append(torch.rand([N_particles, 2]) * L)
+        graph_init.append(gu.make_disconnectedGraph(y0[i], {}, 'y'))
+    y0 = torch.concat(y0, dim=1)
+    graph_init = dgl.batch(graph_init)
+    
+    
+                 
+    LJ_ODEwrapper = dynamicGODEwrapper(LJ_ODEmodule, graph_init)
+    
+    neuralDE = NeuralODE(LJ_ODEwrapper, solver='euler').to(device)
+    
+    
+    
+    t_span = torch.arange(0, t_max+dt_step, dt_step)
+    t_save = torch.arange(0, t_max+dt_step, dt_save)
+    
+    t_eval, x = neuralDE(x0.to(device), t_span.to(device), save_at=t_save.to(device))
+    
+    x = x.to('cpu')
+    
+    x = x.reshape((N_batch, -1, 2))
+
+    torch.save(x, save_x)
+
+    torch.save(t_eval.to('cpu'), save_t)
