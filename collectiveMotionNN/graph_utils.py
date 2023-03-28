@@ -6,13 +6,8 @@ def update_edges(g, edges):
     g.add_edges(edges[0], edges[1])
     return g
 
-def calc_adjacency(g, edgeConditionFunc):
-    adj = edgeConditionFunc(g.ndata)
-    edges = torch.argwhere(adj)
-    return (edges[:,0], edges[:,1])
-
 def update_adjacency(g, edgeConditionFunc):
-    edges = calc_adjacency(g, edgeConditionFunc)
+    edges = edgeConditionFunc(g)
     update_edges(g, edges)
     return g
 
@@ -36,3 +31,7 @@ def make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName):
         g.ndata[key] = staticVariables[key]
 
     return g
+
+def bool2edge(boolMatrix):
+    edges = torch.argwhere(boolMatrix)
+    return (edges[:,0], edges[:,1])
