@@ -35,3 +35,11 @@ def make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName):
 def bool2edge(boolMatrix):
     edges = torch.argwhere(boolMatrix)
     return (edges[:,0], edges[:,1])
+
+def radiusGraphEdge_selfLoop(distance_Matrix, r0):
+    return distance_Matrix < r0
+
+def radiusGraphEdge_noSelfLoop(distance_Matrix, r0):
+    distance_Matrix.fill_diagonal_(r0+1)
+    return distance_Matrix < r0
+
