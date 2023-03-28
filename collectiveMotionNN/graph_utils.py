@@ -21,7 +21,6 @@ def update_adjacency_batch(bg, edgeConditionFunc):
 def judge_skipUpdate(g, dynamicVariable, dynamicName):
     return torch.allclose(g.ndata[dynamicName], dynamicVariable)
 
-
 def make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName):
     Nnodes = dynamicVariable.shape[0]
     g = dgl.graph((torch.tensor([], dtype=torch.int64), torch.tensor([], dtype=torch.int64)), num_nodes=Nnodes)
@@ -32,14 +31,33 @@ def make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName):
 
     return g
 
+
 def bool2edge(boolMatrix):
     edges = torch.argwhere(boolMatrix)
     return (edges[:,0], edges[:,1])
 
-def radiusGraphEdge_selfLoop(distance_Matrix, r0):
-    return distance_Matrix < r0
+def radiusGraphEdge_selfLoop(distanceMatrix, r0):
+    return distanceMatrix < r0
 
-def radiusGraphEdge_noSelfLoop(distance_Matrix, r0):
-    distance_Matrix.fill_diagonal_(r0+1)
-    return distance_Matrix < r0
+def radiusGraphEdge_noSelfLoop(distanceMatrix, r0):
+    distanceMatrix.fill_diagonal_(r0+1)
+    return distanceMatrix < r0
+
+class distance2edge_selfLoop(nn.Module):
+    def __init__(self, r0):
+        super().__init__()
+        self.r0 = r0
+        
+    def calc(self, distanceMatrix):
+        boolMatrix = radiusGraphEdge_selfLoop(distanceMatrix, self.r0)
+        return bool2edge(boolMatrix)
+    
+class distance2edge_noSelfLoop(nn.Module):
+    def __init__(self, r0):
+        super().__init__()
+        self.r0 = r0
+        
+    def calc(self, distanceMatrix):
+        boolMatrix = radiusGraphEdge_noSelfLoop(distanceMatrix, self.r0)
+        return bool2edge(boolMatrix)
 
