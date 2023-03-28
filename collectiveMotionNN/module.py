@@ -40,10 +40,6 @@ class dynamicGNDEmodule(nn.Module):
         
         self.forceUpdate = forceUpdate
 
-    def edgeRefresh_execute(self, gr, dynamicVariable, dynamicName):
-        gr.ndata[dynamicName] = dynamicVariable
-        gr = gu.update_adjacency_batch(gr, self.edgeConditionFunc)
-        return gr
 
     def edgeRefresh(self, gr, dynamicVariable, dynamicName):
         if self.forceUpdate:
