@@ -22,7 +22,7 @@ class LJpotential(nn.Module):
         return 4 * self.c * (self.sigma/r)**(self.q) * (self.p * (self.sigma/r)**(self.p-self.q) - self.q) / r
     
 
-class MessagePasser(nn.Module):
+class interactionModule(nn.Module):
     def __init__(self, d, c, sigma, p=12, q=6, periodic=None):
         self.d = d
         self.c = c
@@ -39,12 +39,6 @@ class MessagePasser(nn.Module):
         else:
             self.periodic = periodic
         
-    def calc_dr(self, r1, r2):
-        dr = r2 - r1
-        if self.flg_periodic:
-            dr = torch.remainder(dr, self.periodic)
-            dr[dr > self.periodic/2] = dr[dr > self.periodic/2] - self.periodic
-        return dr
         
     def calc_message(self, edges):
         dr = calc_dr(edges.dst['x'], edges.src['x'])
@@ -52,12 +46,66 @@ class MessagePasser(nn.Module):
         abs_dr = torch.norm(dr, dim=-1, keepdim=True)
         unit_dr = nn.functional.normalize(dr, dim=-1)
         
-        return {'m': self.LJ(abs_dr) * unit_dr}
+        return {'m': self.LJ.force(abs_dr) * unit_dr}
         
     def forward(self, g):
         g.update_all(self.calc_message, fn.sum('m', 'v'))
         return g
 
     
-dynamicGODEwrapper(nn.Module):
-    def __init__(self, module_f)    
+class dr_nonPeriodic(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+    def calc(self, r1, r2):
+        return r2 - r1
+    
+class dr_periodic(nn.Module):
+    def __init__(self, periodic):
+        super().__init__()
+        
+        self.periodic = torch.tensor(periodic, dtype=torch.float32)
+        
+    def calc(self, r1, r2):
+        dr = torch.remainder(r2 - r1, self.periodic)
+        return dr - (dr > self.periodic/2) * self.periodic
+    
+    
+class edgeCalculator(nn.Module):
+    def __init__(self, r0, periodic=None, selfLoop=False):
+        super().__init__()
+           
+        self.r0 = r0
+
+        self.periodic = periodic
+        
+        self.selfLoop = selfLoop
+        
+        self.def_dr()
+           
+    def def_dr(self):
+        if self.periodic is None:
+            self.def_nonPeriodic()
+        else:
+            self.def_periodic(periodic)
+        
+    def def_nonPeriodic(self):
+        self.distanceCalc = dr_nonPeriodic()
+        
+    def def_periodic(self):
+        self.distanceCalc = dr_periodic(self.periodic)
+        
+    def calc_adjacencyMatrix(self, r):
+        dr = self.distanceCalc.calc(torch.unsqueeze(r, 0), torch.unsqueeze(r, 1))
+        dr = torch.norm(dr, dim=-1)
+        if self.selfLoop:
+            return dr < self.r0
+        else:
+            dr.fill_diagonal_(self.r0+1)
+            return dr < self.r0
+        
+    
+    
+class dynamicGODEwrapper(mo.dynamicGNDEmodule):
+    def __init__(self, calc_module, edgeConditionFunc, forceUpdate=False)
+        super().__init__(calc_module, edgeConditionFunc, forceUpdate)
