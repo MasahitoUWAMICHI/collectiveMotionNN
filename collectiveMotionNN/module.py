@@ -1,5 +1,6 @@
 from torch import nn
 
+import utils as ut
 import graph_utils as gu
 
 
@@ -32,41 +33,42 @@ class edgeRefresh_forceUpdate(nn.Module):
 
 
 class dynamicGODEwrapper(nn.Module):
-    def __init__(self, dynamicGNDEmodule, graph=None, dynamicName=None):
+    def __init__(self, dynamicGNDEmodule, graph=None, dynamicName=None, derivativeName=None):
         super().__init__()
 
         self.dynamicGNDEmodule = dynamicGNDEmodule
 
         self.graph = graph
         
-        if dynamicName is None:
-            self.dynamicName = 'y'
-        else:
-            self.dynamicName = dynamicName
+        self.dynamicName = ut.variableInitializer(dynamicName, 'y')
+            
+        self.derivativeName = ut.variableInitializer(derivativeName, 'v')
         
     def loadGraph(self, dynamicVariable, staticVariables, dynamicName=None):
         self.graph = gu.make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName=dynamicName)
-        if dynamicName is None:
-            return None
-        else:
-            self.dynamicName = dynamicName
-            return None
+
+        self.dynamicName = ut.variableInitializer(dynamicName, self.dynamicName)
+                
+    def dynamicValues(self):
+        return self.graph(self.dynamicName)
 
     def f(self, t, y):
-        out, self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.dynamicName)
-        return out
+        self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.dynamicName, self.derivativeName)
+        return self.graph.ndata[self.derivativeName]
 
 
 class dynamicGSDEwrapper(dynamicGODEwrapper):
-    def __init__(self, dynamicGNDEmodule, noise_type, sde_type, graph=None, dynamicName=None):
-        super().__init__(dynamicGNDEmodule, graph)
+    def __init__(self, dynamicGNDEmodule, noise_type, sde_type, graph=None, dynamicName=None, noiseName=None):
+        super().__init__(dynamicGNDEmodule, graph, dynamicName, derivativeName)
+        
+        self.noiseName = ut.variableInitializer(noiseName, 's')
 
         self.noise_type = noise_type
         self.sde_type = sde_type
         
     def g(self, t, y):
-        out, self.graph = self.dynamicGNDEmodule.g(t, y, self.graph, self.dynamicName)
-        return out
+        self.graph = self.dynamicGNDEmodule.g(t, y, self.graph, self.dynamicName, self.noiseName)
+        return self.graph.ndata[self.noiseName]
 
 
 
@@ -100,10 +102,10 @@ class dynamicGNDEmodule(nn.Module):
             
 
     # f and g should be updated in user-defined class
-    def f(self, t, y, gr, dynamicName):
+    def f(self, t, y, gr, dynamicName, derivativeName):
         gr = self.edgeRefresher(gr, y, dynamicName)
-        return self.calc_module.f(t, gr, dynamicName), gr
+        return self.calc_module.f(t, gr, dynamicName, derivativeName)
 
-    def g(self, t, y, gr, dynamicName):
+    def g(self, t, y, gr, dynamicName, noiseName):
         gr = self.edgeRefresher(gr, y, dynamicName)
-        return self.calc_module.g(t, gr, dynamicName), gr
+        return self.calc_module.g(t, gr, dynamicName, noiseName)
