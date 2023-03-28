@@ -5,29 +5,6 @@ import graph_utils as gu
 
 
 
-class edgeRefresh_noForceUpdate(nn.Module):
-    def __init__(self, edgeCondtionModule):
-        super().__init__()
-        
-        self.edgeConditionModule = edgeConditionModule
-        
-    def forward(self, gr, dynamicVariable, dynamicName):
-        if gu.judge_skipUpdate(gr, dynamicVariable, dynamicName):
-            return gr
-        else:
-            return gu.edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
-
-class edgeRefresh_forceUpdate(nn.Module):
-    def __init__(self, edgeCondtionModule):
-        super().__init__()
-        
-        self.edgeConditionModule = edgeConditionModule
-        
-    def forward(self, gr, dynamicVariable, dynamicName):
-        return gu.edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
-
-
-
 
 
 
@@ -55,6 +32,9 @@ class dynamicGODEwrapper(nn.Module):
     def f(self, t, y):
         self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.dynamicName, self.derivativeName)
         return self.graph.ndata[self.derivativeName]
+    
+    def forward(self, t, y):
+        return self.f(t, y)
 
 
 class dynamicGSDEwrapper(dynamicGODEwrapper):
@@ -89,10 +69,10 @@ class dynamicGNDEmodule(nn.Module):
         self.def_edgeRefresher()
         
     def def_edgeRefresher_forceUpdate(self):
-        self.edgeRefresher = edgeRefresh_forceUpdate(self.edgeConditionModule)
+        self.edgeRefresher = gu.edgeRefresh_forceUpdate(self.edgeConditionModule)
 
     def def_edgeRefresher_noForceUpdate(self):
-        self.edgeRefresher = edgeRefresh_noForceUpdate(self.edgeConditionModule)
+        self.edgeRefresher = gu.edgeRefresh_noForceUpdate(self.edgeConditionModule)
         
     def def_edgeRefresher(self):
         if self.forceUpdate:
