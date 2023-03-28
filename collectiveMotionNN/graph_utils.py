@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 import dgl
 
 def update_edges(g, edges):
@@ -21,6 +22,35 @@ def update_adjacency_batch(bg, edgeConditionFunc):
 def judge_skipUpdate(g, dynamicVariable, dynamicName):
     return torch.allclose(g.ndata[dynamicName], dynamicVariable)
 
+def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeConditionFunc):
+    gr.ndata[dynamicName] = dynamicVariable
+    gr = update_adjacency_batch(gr, edgeConditionFunc)
+    return gr
+
+class edgeRefresh_judgeSkip(nn.Module):
+    def __init__(self, edgeCondtionModule):
+        super().__init__()
+        
+        self.edgeConditionModule = edgeConditionModule
+        
+    def forward(self, gr, dynamicVariable, dynamicName):
+        if judge_skipUpdate(gr, dynamicVariable, dynamicName):
+            return gr
+        else:
+            return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
+
+class edgeRefresh_forceUpdate(nn.Module):
+    def __init__(self, edgeCondtionModule):
+        super().__init__()
+        
+        self.edgeConditionModule = edgeConditionModule
+        
+    def forward(self, gr, dynamicVariable, dynamicName):
+        return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
+
+
+    
+
 def make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName):
     Nnodes = dynamicVariable.shape[0]
     g = dgl.graph((torch.tensor([], dtype=torch.int64), torch.tensor([], dtype=torch.int64)), num_nodes=Nnodes)
@@ -30,6 +60,9 @@ def make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName):
         g.ndata[key] = staticVariables[key]
 
     return g
+
+
+
 
 
 def bool2edge(boolMatrix):
