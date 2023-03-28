@@ -89,9 +89,9 @@ class dynamicGNDEmodule(nn.Module):
 
     # f and g should be updated in user-defined class
     def f(self, t, y, gr, dynamicName):
-        gr = self.edgeRefresher(gr, dynamicVariable, dynamicName)
-        return self.calc_module.f(t, y, gr, dynamicName)
+        gr = self.edgeRefresher(gr, y, dynamicName)
+        return self.calc_module.f(t, gr, dynamicName)
 
     def g(self, t, y, gr, dynamicName):
-        gr = self.edgeRefresher(gr, dynamicVariable, dynamicName)
-        return self.calc_module.g(t, y, gr, dynamicName)
+        gr = self.edgeRefresher(gr, y, dynamicName)
+        return self.calc_module.g(t, gr, dynamicName)
