@@ -58,6 +58,10 @@ class dynamicGSDEwrapper(dynamicGODEwrapper):
 
 
 
+    
+    
+    
+    
 class dynamicGNDEmodule(nn.Module):
     def __init__(self, calc_module, edgeConditionModule, forceUpdate=False):
         super().__init__()
