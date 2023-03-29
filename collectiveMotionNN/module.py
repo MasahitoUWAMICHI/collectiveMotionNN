@@ -29,12 +29,12 @@ class dynamicGODEwrapper(nn.Module):
     def dynamicValues(self):
         return self.graph(self.dynamicName)
 
-    def f(self, t, y):
-        self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.dynamicName, self.derivativeName)
+    def f(self, t, y, args=None):
+        self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.dynamicName, self.derivativeName, args)
         return self.graph.ndata[self.derivativeName]
     
-    def forward(self, t, y):
-        return self.f(t, y)
+    def forward(self, t, y, args=None):
+        return self.f(t, y, args)
 
 
 class dynamicGSDEwrapper(dynamicGODEwrapper):
@@ -46,8 +46,8 @@ class dynamicGSDEwrapper(dynamicGODEwrapper):
         self.noise_type = noise_type
         self.sde_type = sde_type
         
-    def g(self, t, y):
-        self.graph = self.dynamicGNDEmodule.g(t, y, self.graph, self.dynamicName, self.noiseName)
+    def g(self, t, y, args=None):
+        self.graph = self.dynamicGNDEmodule.g(t, y, self.graph, self.dynamicName, self.noiseName, args)
         return self.graph.ndata[self.noiseName]
 
 
@@ -82,10 +82,10 @@ class dynamicGNDEmodule(nn.Module):
             
 
     # f and g should be updated in user-defined class
-    def f(self, t, y, gr, dynamicName, derivativeName):
-        gr = self.edgeRefresher(gr, y, dynamicName)
-        return self.calc_module.f(t, gr, dynamicName, derivativeName)
+    def f(self, t, y, gr, dynamicName, derivativeName, args=None):
+        gr = self.edgeRefresher(gr, y, dynamicName, args)
+        return self.calc_module.f(t, gr, dynamicName, derivativeName, args)
 
-    def g(self, t, y, gr, dynamicName, noiseName):
-        gr = self.edgeRefresher(gr, y, dynamicName)
-        return self.calc_module.g(t, gr, dynamicName, noiseName)
+    def g(self, t, y, gr, dynamicName, noiseName, args=None):
+        gr = self.edgeRefresher(gr, y, dynamicName, args)
+        return self.calc_module.g(t, gr, dynamicName, noiseName, args)
