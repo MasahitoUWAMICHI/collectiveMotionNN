@@ -80,7 +80,7 @@ class edgeCalculator(nn.Module):
         
     def forward(self, g, args=None):
         dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
-        dr = torch.norm(dr, dim=-1, keepdims=False)
+        dr = torch.norm(dr, dim=-1, keepdim=False)
         return self.distance2edge(dr)        
     
 
