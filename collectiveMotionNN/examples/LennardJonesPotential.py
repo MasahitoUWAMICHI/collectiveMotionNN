@@ -232,6 +232,9 @@ if __name__ == '__main__':
     y0 = torch.concat(y0, dim=1)
     graph_init = dgl.batch(graph_init)
     
+    print(y0.shape)
+    print(graph_init.ndata['y'])
+    
     
                  
     LJ_ODEwrapper = mo.dynamicGODEwrapper(LJ_ODEmodule, graph_init)
