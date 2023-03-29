@@ -32,7 +32,7 @@ class dynamicGODEwrapper(nn.Module):
         return self.graph(self.dynamicName)
     
     def edgeInitialize(self, args=None):
-        self.graph = self.dynamicGNDEmodule.edgeInitialize(self, self.graph, self.dynamicName, args)
+        self.graph = self.dynamicGNDEmodule.edgeInitialize(self.graph, self.dynamicName, args)
 
     def f(self, t, y, args=None):
         print('f1')
