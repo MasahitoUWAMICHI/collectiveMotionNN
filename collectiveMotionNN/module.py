@@ -30,6 +30,7 @@ class dynamicGODEwrapper(nn.Module):
         return self.graph(self.dynamicName)
 
     def f(self, t, y, args=None):
+        print('f1')
         self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.dynamicName, self.derivativeName, args)
         return self.graph.ndata[self.derivativeName]
     
@@ -83,6 +84,7 @@ class dynamicGNDEmodule(nn.Module):
 
     # f and g should be updated in user-defined class
     def f(self, t, y, gr, dynamicName, derivativeName, args=None):
+        print('f2')
         gr = self.edgeRefresher(gr, y, dynamicName, args)
         return self.calc_module.f(t, gr, dynamicName, derivativeName, args)
 
