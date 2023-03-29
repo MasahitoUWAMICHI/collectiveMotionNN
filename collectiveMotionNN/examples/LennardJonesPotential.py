@@ -251,7 +251,7 @@ if __name__ == '__main__':
     else:
         x = torch.remainder(x.to('cpu'), periodic) 
     
-    x = x.reshape((N_batch, -1, 2))
+    x = x.reshape((t_eval.shape[0], N_batch, N_particles, 2))
 
     torch.save(x, save_x)
 
