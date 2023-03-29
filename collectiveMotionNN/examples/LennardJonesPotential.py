@@ -4,6 +4,7 @@ from torch import nn
 
 from torchdyn.core import NeuralODE
 
+import dgl
 import dgl.function as fn
 
 import collectiveMotionNN.utils as ut
