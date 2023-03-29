@@ -246,6 +246,8 @@ if __name__ == '__main__':
     
     t_eval, x = neuralDE(y0.to(device), t_span.to(device), save_at=t_save.to(device))
     
+    print(neuralDE.vf.graph)
+    
     if periodic is None:
         x = x.to('cpu')
     else:
