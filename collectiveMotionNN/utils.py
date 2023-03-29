@@ -1,6 +1,6 @@
 
 
-def variableInitializer(val, defaultVal)
+def variableInitializer(val, defaultVal):
     if val is None:
         return defaultVal
     else:
