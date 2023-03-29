@@ -10,7 +10,7 @@ import collectiveMotionNN.graph_utils as gu
 
 
 class dynamicGODEwrapper(nn.Module):
-    def __init__(self, dynamicGNDEmodule, graph=None, dynamicName=None, derivativeName=None):
+    def __init__(self, dynamicGNDEmodule, graph=None, dynamicName=None, derivativeName=None, args=None):
         super().__init__()
 
         self.dynamicGNDEmodule = dynamicGNDEmodule
@@ -21,6 +21,8 @@ class dynamicGODEwrapper(nn.Module):
             
         self.derivativeName = ut.variableInitializer(derivativeName, 'v')
         
+        self.edgeInitialize(args)
+        
     def loadGraph(self, dynamicVariable, staticVariables, dynamicName=None):
         self.graph = gu.make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName=dynamicName)
 
@@ -28,6 +30,9 @@ class dynamicGODEwrapper(nn.Module):
                 
     def dynamicValues(self):
         return self.graph(self.dynamicName)
+    
+    def edgeInitialize(self, args=None):
+        self.graph = self.dynamicGNDEmodule.edgeInitialize(self, self.graph, self.dynamicName, args)
 
     def f(self, t, y, args=None):
         print('f1')
@@ -81,6 +86,8 @@ class dynamicGNDEmodule(nn.Module):
         else:
             self.def_edgeRefresher_noForceUpdate()
             
+    def edgeInitialize(self, gr, dynamicName, args=None):
+        return self.edgeRefresher.forceUpdate(gr, gr.ndata[dynamicName], dynamicName, args)
 
     # f and g should be updated in user-defined class
     def f(self, t, y, gr, dynamicName, derivativeName, args=None):
