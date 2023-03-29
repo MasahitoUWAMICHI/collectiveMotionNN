@@ -218,7 +218,7 @@ if __name__ == '__main__':
     
     
     LJ_Module = interactionModule(c, sigma, p, q, periodic)
-    edgeModule = edgeCalculator(r0, periodic, selfLoop)
+    edgeModule = edgeCalculator(r0, periodic, selfloop)
     
     LJ_ODEModule = mo.dynamicGNDEmodule(LJ_Module, edgeModule)
     
