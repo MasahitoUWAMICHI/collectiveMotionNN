@@ -229,12 +229,9 @@ if __name__ == '__main__':
     for i in range(N_batch):
         y0.append(torch.rand([N_particles, 2]) * L)
         graph_init.append(gu.make_disconnectedGraph(y0[i], {}, 'y'))
-    y0 = torch.concat(y0, dim=1)
+    y0 = torch.concat(y0, dim=0)
     graph_init = dgl.batch(graph_init)
-    
-    print(y0.shape)
-    print(graph_init.ndata['y'])
-    
+        
     
                  
     LJ_ODEwrapper = mo.dynamicGODEwrapper(LJ_ODEmodule, graph_init)
