@@ -243,7 +243,7 @@ if __name__ == '__main__':
     t_span = torch.arange(0, t_max+dt_step, dt_step)
     t_save = torch.arange(0, t_max+dt_step, dt_save)
     
-    t_eval, x = neuralDE(x0.to(device), t_span.to(device), save_at=t_save.to(device))
+    t_eval, x = neuralDE(y0.to(device), t_span.to(device), save_at=t_save.to(device))
     
     x = x.to('cpu')
     
