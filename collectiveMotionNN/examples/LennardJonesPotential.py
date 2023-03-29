@@ -10,6 +10,7 @@ import collectiveMotionNN.utils as ut
 import collectiveMotionNN.graph_utils as gu
 import collectiveMotionNN.module as mo
 
+import argparse
 from distutils.util import strtobool
 
 
