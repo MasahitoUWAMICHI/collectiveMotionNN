@@ -192,27 +192,27 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     
-    c = variableInitializer(args.c, 1.0)
-    sigma = variableInitializer(args.c, 1.0)
-    p = variableInitializer(args.p, 12.0)
-    q = variableInitializer(args.q, 6.0)
+    c = ut.variableInitializer(args.c, 1.0)
+    sigma = ut.variableInitializer(args.c, 1.0)
+    p = ut.variableInitializer(args.p, 12.0)
+    q = ut.variableInitializer(args.q, 6.0)
     
-    r0 = variableInitializer(args.r0, 3.0)
-    L = variableInitializer(args.L, 5.0)
+    r0 = ut.variableInitializer(args.r0, 3.0)
+    L = ut.variableInitializer(args.L, 5.0)
     
-    N_particles = variableInitializer(args.N_particles, int(10))
-    N_batch = variableInitializer(args.N_batch, int(5))
+    N_particles = ut.variableInitializer(args.N_particles, int(10))
+    N_batch = ut.variableInitializer(args.N_batch, int(5))
     
-    t_max = variableInitializer(args.t_max, 50.0)
-    dt_step = variableInitializer(args.dt_step, 0.1)
-    dt_save = variableInitializer(args.dt_save, 1.0)
+    t_max = ut.variableInitializer(args.t_max, 50.0)
+    dt_step = ut.variableInitializer(args.dt_step, 0.1)
+    dt_save = ut.variableInitializer(args.dt_save, 1.0)
     
-    periodic = variableInitializer(args.periodic, None)
-    selfloop = variableInitializer(args.selfloop, False)
+    periodic = ut.variableInitializer(args.periodic, None)
+    selfloop = ut.variableInitializer(args.selfloop, False)
     
-    device = variableInitializer(args.device, 'cuda' if torch.cuda.is_available() else 'cpu')
-    save_x = variableInitializer(args.save_x, 'LJ_traj.pt')
-    save_t = variableInitializer(args.save_t, 't_eval.pt')
+    device = ut.variableInitializer(args.device, 'cuda' if torch.cuda.is_available() else 'cpu')
+    save_x = ut.variableInitializer(args.save_x, 'LJ_traj.pt')
+    save_t = ut.variableInitializer(args.save_t, 't_eval.pt')
     
     
     
