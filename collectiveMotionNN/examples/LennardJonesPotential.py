@@ -230,7 +230,7 @@ if __name__ == '__main__':
         y0.append(torch.rand([N_particles, 2]) * L)
         graph_init.append(gu.make_disconnectedGraph(y0[i], {}, 'y'))
     y0 = torch.concat(y0, dim=0)
-    graph_init = dgl.batch(graph_init)
+    graph_init = dgl.batch(graph_init).to(device)
         
     
                  
