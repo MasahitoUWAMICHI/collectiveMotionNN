@@ -101,6 +101,7 @@ class LJpotential(nn.Module):
 
 class interactionModule(nn.Module):
     def __init__(self, c, sigma, p=12, q=6, periodic=None, dynamicName=None, messageName=None, aggregateName=None):
+        super().__init__()
         self.c = c
         self.sigma = sigma
         self.p = p
