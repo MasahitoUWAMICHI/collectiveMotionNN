@@ -7,24 +7,24 @@ def update_edges(g, edges):
     g.add_edges(edges[0], edges[1])
     return g
 
-def update_adjacency(g, edgeCondtionModule):
-    edges = edgeCondtionModule(g)
+def update_adjacency(g, edgeCondtionModule, args=None):
+    edges = edgeCondtionModule(g, args)
     update_edges(g, edges)
     return g
 
-def update_adjacency_batch(bg, edgeCondtionModule):
+def update_adjacency_batch(bg, edgeCondtionModule, args=None):
     gs = dgl.unbatch(bg)
     for g in gs:
-        update_adjacency(g, edgeCondtionModule)
+        update_adjacency(g, edgeCondtionModule, args)
     bg = dgl.batch(gs)
     return bg
 
-def judge_skipUpdate(g, dynamicVariable, dynamicName):
-    return torch.allclose(g.ndata[dynamicName], dynamicVariable)
+def judge_skipUpdate(g, dynamicVariable, dynamicName, args=None):
+    return torch.allclose(g.ndata[dynamicName], dynamicVariable, args)
 
-def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeCondtionModule):
+def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeCondtionModule, args=None):
     gr.ndata[dynamicName] = dynamicVariable
-    gr = update_adjacency_batch(gr, edgeCondtionModule)
+    gr = update_adjacency_batch(gr, edgeCondtionModule, args)
     return gr
 
 
@@ -34,11 +34,11 @@ class edgeRefresh_noForceUpdate(nn.Module):
         
         self.edgeConditionModule = edgeConditionModule
         
-    def forward(self, gr, dynamicVariable, dynamicName):
-        if judge_skipUpdate(gr, dynamicVariable, dynamicName):
+    def forward(self, gr, dynamicVariable, dynamicName, args=None):
+        if judge_skipUpdate(gr, dynamicVariable, dynamicName, args):
             return gr
         else:
-            return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
+            return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule, args)
 
 class edgeRefresh_forceUpdate(nn.Module):
     def __init__(self, edgeConditionModule):
@@ -46,8 +46,8 @@ class edgeRefresh_forceUpdate(nn.Module):
         
         self.edgeConditionModule = edgeConditionModule
         
-    def forward(self, gr, dynamicVariable, dynamicName):
-        return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
+    def forward(self, gr, dynamicVariable, dynamicName, args=None):
+        return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule, args)
 
 
 
