@@ -20,8 +20,8 @@ def update_adjacency_batch(bg, edgeCondtionModule, args=None):
     return bg
 
 def judge_skipUpdate(g, dynamicVariable, dynamicName):
-    print(g)
-    print(dynamicVariable)
+    #print(g)
+    #print(dynamicVariable)
     return torch.allclose(g.ndata[dynamicName], dynamicVariable)
 
 def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeCondtionModule, args=None):
