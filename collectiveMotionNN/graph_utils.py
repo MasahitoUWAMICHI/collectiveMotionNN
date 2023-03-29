@@ -51,6 +51,9 @@ class edgeRefresh_forceUpdate(nn.Module):
         
         self.edgeConditionModule = edgeConditionModule
         
+    def forceUpdate(self, gr, dynamicVariable, dynamicName, args=None):
+        return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule, args)
+    
     def forward(self, gr, dynamicVariable, dynamicName, args=None):
         return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule, args)
 
