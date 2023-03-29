@@ -29,7 +29,7 @@ def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeCondtionModule):
 
 
 class edgeRefresh_noForceUpdate(nn.Module):
-    def __init__(self, edgeCondtionModule):
+    def __init__(self, edgeConditionModule):
         super().__init__()
         
         self.edgeConditionModule = edgeConditionModule
@@ -41,7 +41,7 @@ class edgeRefresh_noForceUpdate(nn.Module):
             return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule)
 
 class edgeRefresh_forceUpdate(nn.Module):
-    def __init__(self, edgeCondtionModule):
+    def __init__(self, edgeConditionModule):
         super().__init__()
         
         self.edgeConditionModule = edgeConditionModule
