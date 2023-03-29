@@ -78,7 +78,7 @@ class edgeCalculator(nn.Module):
             
             
         
-    def forward(self, g):
+    def forward(self, g, args=None):
         dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
         dr = torch.norm(dr, dim=-1)
         return self.distance2edge(dr)        
@@ -157,7 +157,7 @@ class interactionModule(nn.Module):
         
         return {self.messageName: self.LJ.force(abs_dr) * unit_dr}
         
-    def f(self, t, g, dynamicName=None, derivativeName=None):
+    def f(self, t, g, dynamicName=None, derivativeName=None, args=None):
         self.set_dynamicName(dynamicName)
         self.set_aggregateName(derivativeName)
         g.update_all(self.calc_message, fn.sum(self.messageName, self.set_aggregateName))
