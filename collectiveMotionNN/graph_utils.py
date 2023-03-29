@@ -92,7 +92,7 @@ class distance2edge_selfLoop(nn.Module):
         super().__init__()
         self.r0 = r0
         
-    def calc(self, distanceMatrix):
+    def forward(self, distanceMatrix):
         boolMatrix = radiusGraphEdge_selfLoop(distanceMatrix, self.r0)
         return bool2edge(boolMatrix)
     
@@ -101,7 +101,7 @@ class distance2edge_noSelfLoop(nn.Module):
         super().__init__()
         self.r0 = r0
         
-    def calc(self, distanceMatrix):
+    def forward(self, distanceMatrix):
         print('distance',distanceMatrix)
         boolMatrix = radiusGraphEdge_noSelfLoop(distanceMatrix, self.r0)
         print('bool', boolMatrix)
