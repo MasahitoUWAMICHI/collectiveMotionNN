@@ -234,9 +234,10 @@ if __name__ == '__main__':
         
     
                  
-    LJ_ODEwrapper = mo.dynamicGODEwrapper(LJ_ODEmodule, graph_init)
+    LJ_ODEwrapper = mo.dynamicGODEwrapper(LJ_ODEmodule, graph_init).to(device)
     
     neuralDE = NeuralODE(LJ_ODEwrapper, solver='euler').to(device)
+    
     
     
     
