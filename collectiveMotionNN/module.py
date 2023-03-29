@@ -1,7 +1,7 @@
 from torch import nn
 
-import utils as ut
-import graph_utils as gu
+import collectiveMotionNN.utils as ut
+import collectiveMotionNN.graph_utils as gu
 
 
 
