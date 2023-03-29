@@ -3,6 +3,7 @@ from torch import nn
 import dgl
 
 def update_edges(g, edges):
+    print('edge', edges)
     g.remove_edges(g.edge_ids(g.edges()[0], g.edges()[1]))
     g.add_edges(edges[0], edges[1])
     return g
@@ -20,8 +21,6 @@ def update_adjacency_batch(bg, edgeCondtionModule, args=None):
     return bg
 
 def judge_skipUpdate(g, dynamicVariable, dynamicName):
-    #print(g)
-    #print(dynamicVariable)
     return torch.allclose(g.ndata[dynamicName], dynamicVariable)
 
 def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeCondtionModule, args=None):
