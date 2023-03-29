@@ -246,7 +246,10 @@ if __name__ == '__main__':
     
     t_eval, x = neuralDE(y0.to(device), t_span.to(device), save_at=t_save.to(device))
     
-    x = x.to('cpu')
+    if periodic is None:
+        x = x.to('cpu')
+    else:
+        x = torch.remainder(x.to('cpu'), periodic) 
     
     x = x.reshape((N_batch, -1, 2))
 
