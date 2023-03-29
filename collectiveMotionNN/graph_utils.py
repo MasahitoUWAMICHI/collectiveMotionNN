@@ -3,7 +3,6 @@ from torch import nn
 import dgl
 
 def update_edges(g, edges):
-    print('edge', edges)
     g.remove_edges(g.edge_ids(g.edges()[0], g.edges()[1]))
     g.add_edges(edges[0], edges[1])
     return g
@@ -102,8 +101,6 @@ class distance2edge_noSelfLoop(nn.Module):
         self.r0 = r0
         
     def forward(self, distanceMatrix):
-        print('distance',distanceMatrix)
         boolMatrix = radiusGraphEdge_noSelfLoop(distanceMatrix, self.r0)
-        print('bool', boolMatrix)
         return bool2edge(boolMatrix)
 
