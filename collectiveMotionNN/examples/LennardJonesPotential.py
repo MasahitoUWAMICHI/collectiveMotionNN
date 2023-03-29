@@ -160,7 +160,7 @@ class interactionModule(nn.Module):
     def f(self, t, g, dynamicName=None, derivativeName=None, args=None):
         self.set_dynamicName(dynamicName)
         self.set_aggregateName(derivativeName)
-        g.update_all(self.calc_message, fn.sum(self.messageName, self.set_aggregateName))
+        g.update_all(self.calc_message, fn.sum(self.messageName, self.aggregateName))
         return g
     
     
