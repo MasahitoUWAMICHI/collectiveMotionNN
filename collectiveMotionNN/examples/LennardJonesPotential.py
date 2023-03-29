@@ -61,7 +61,7 @@ class edgeCalculator(nn.Module):
         if self.periodic is None:
             self.def_nonPeriodic()
         else:
-            self.def_periodic(periodic)
+            self.def_periodic()
         
 
     def def_noSelfLoop(self):
