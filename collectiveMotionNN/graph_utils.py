@@ -19,8 +19,8 @@ def update_adjacency_batch(bg, edgeCondtionModule, args=None):
     bg = dgl.batch(gs)
     return bg
 
-def judge_skipUpdate(g, dynamicVariable, dynamicName, args=None):
-    return torch.allclose(g.ndata[dynamicName], dynamicVariable, args)
+def judge_skipUpdate(g, dynamicVariable, dynamicName):
+    return torch.allclose(g.ndata[dynamicName], dynamicVariable)
 
 def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeCondtionModule, args=None):
     gr.ndata[dynamicName] = dynamicVariable
@@ -35,7 +35,7 @@ class edgeRefresh_noForceUpdate(nn.Module):
         self.edgeConditionModule = edgeConditionModule
         
     def forward(self, gr, dynamicVariable, dynamicName, args=None):
-        if judge_skipUpdate(gr, dynamicVariable, dynamicName, args):
+        if judge_skipUpdate(gr, dynamicVariable, dynamicName):
             return gr
         else:
             return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule, args)
