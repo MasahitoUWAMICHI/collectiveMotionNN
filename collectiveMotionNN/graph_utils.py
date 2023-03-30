@@ -149,7 +149,6 @@ class distance2edge_noSelfLoop(nn.Module):
 
     
     
-    
 class radiusgraphEdge(nn.Module):
     def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None):
         super().__init__()
