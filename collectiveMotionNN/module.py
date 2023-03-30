@@ -10,50 +10,45 @@ import collectiveMotionNN.graph_utils as gu
 
 
 class dynamicGODEwrapper(nn.Module):
-    def __init__(self, dynamicGNDEmodule, graph=None, dynamicName=None, derivativeName=None, args=None):
+    def __init__(self, dynamicGNDEmodule, graph=None, ndataInputModule=None, ndataOutputModule=None, args=None):
         super().__init__()
 
         self.dynamicGNDEmodule = dynamicGNDEmodule
 
         self.graph = graph
         
-        self.dynamicName = ut.variableInitializer(dynamicName, 'y')
+        self.ndataInputModule = ut.variableInitializer(ndataInputModule, gu.singleVariableNdataInput('y'))
             
-        self.derivativeName = ut.variableInitializer(derivativeName, 'v')
+        self.ndataOutputModule = ut.variableInitializer(ndataOutputModule, gu.singleVariableNdataOutput('v'))
         
         self.edgeInitialize(args)
         
-    def loadGraph(self, dynamicVariable, staticVariables, dynamicName=None):
-        self.graph = gu.make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName=dynamicName)
-
-        self.dynamicName = ut.variableInitializer(dynamicName, self.dynamicName)
-                
-    def dynamicValues(self):
-        return self.graph(self.dynamicName)
+    def loadGraph(self, dynamicVariable, staticVariables):
+        self.graph = gu.make_disconnectedGraph(dynamicVariable, staticVariables, self.ndataInputModule)
     
     def edgeInitialize(self, args=None):
-        self.graph = self.dynamicGNDEmodule.edgeInitialize(self.graph, self.dynamicName, args)
+        self.graph = self.dynamicGNDEmodule.edgeInitialize(self.graph, self.ndataInputModule, args)
 
     def f(self, t, y, args=None):
-        self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.dynamicName, self.derivativeName, args)
-        return self.graph.ndata[self.derivativeName]
+        self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.ndataInputModule, args)
+        return self.ndataOutputModule(self.graph)
     
     def forward(self, t, y, args=None):
         return self.f(t, y, args)
 
 
 class dynamicGSDEwrapper(dynamicGODEwrapper):
-    def __init__(self, dynamicGNDEmodule, noise_type, sde_type, graph=None, dynamicName=None, noiseName=None):
-        super().__init__(dynamicGNDEmodule, graph, dynamicName, derivativeName)
+    def __init__(self, dynamicGNDEmodule, graph=None, ndataInputModule=None, ndataDriftOutputModule=None, ndataNoiseOutputModule=None, args=None):
+        super().__init__(dynamicGNDEmodule, graph, ndataInputModule, ndataDriftOutputModule, args)
         
-        self.noiseName = ut.variableInitializer(noiseName, 's')
+        self.ndataNoiseOutputModule = ut.variableInitializer(ndataNoiseOutputModule, gu.singleVariableNdataOutput('s'))
 
         self.noise_type = noise_type
         self.sde_type = sde_type
         
     def g(self, t, y, args=None):
-        self.graph = self.dynamicGNDEmodule.g(t, y, self.graph, self.dynamicName, self.noiseName, args)
-        return self.graph.ndata[self.noiseName]
+        self.graph = self.dynamicGNDEmodule.g(t, y, self.graph, self.ndataInputModule, args)
+        return self.ndataNoiseOutputModule(self.graph)
 
 
 
@@ -85,14 +80,14 @@ class dynamicGNDEmodule(nn.Module):
         else:
             self.def_edgeRefresher_noForceUpdate()
             
-    def edgeInitialize(self, gr, dynamicName, args=None):
-        return self.edgeRefresher.forceUpdate(gr, gr.ndata[dynamicName], dynamicName, args)
+    def edgeInitialize(self, gr, ndataInputModule, args=None):
+        return self.edgeRefresher.createEdge(gr, ndataInputModule, args)
 
     # f and g should be updated in user-defined class
-    def f(self, t, y, gr, dynamicName, derivativeName, args=None):
-        gr = self.edgeRefresher(gr, y, dynamicName, args)
-        return self.calc_module.f(t, gr, dynamicName, derivativeName, args)
+    def f(self, t, y, gr, ndataInputModule, args=None):
+        gr = self.edgeRefresher(gr, y, ndataInputModule, args)
+        return self.calc_module.f(t, gr, ndataInputModule, args)
 
-    def g(self, t, y, gr, dynamicName, noiseName, args=None):
-        gr = self.edgeRefresher(gr, y, dynamicName, args)
-        return self.calc_module.g(t, gr, dynamicName, noiseName, args)
+    def g(self, t, y, gr, ndataInputModule, args=None):
+        gr = self.edgeRefresher(gr, y, ndataInputModule, args)
+        return self.calc_module.g(t, gr, ndataInputModule, args)
