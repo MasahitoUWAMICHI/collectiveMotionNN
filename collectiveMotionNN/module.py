@@ -85,8 +85,8 @@ class dynamicGNDEmodule(nn.Module):
 
     def f(self, t, y, gr, ndataInOutModule, args=None):
         gr = self.edgeRefresher(gr, y, ndataInOutModule, args)
-        return self.calc_module.f(t, gr, ndataInOutModule, args)
+        return self.calc_module.f(t, gr, args)
 
     def g(self, t, y, gr, ndataInOutModule, args=None):
         gr = self.edgeRefresher(gr, y, ndataInOutModule, args)
-        return self.calc_module.g(t, gr, ndataInOutModule, args)
+        return self.calc_module.g(t, gr, args)
