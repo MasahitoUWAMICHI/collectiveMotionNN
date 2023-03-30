@@ -101,6 +101,7 @@ if __name__ == '__main__':
     parser.add_argument('--sigma', type=float)
     parser.add_argument('--p', type=float)
     parser.add_argument('--q', type=float)
+    parser.add_argument('--min_r', type=float)
     
     parser.add_argument('--r0', type=float)
     
@@ -127,6 +128,7 @@ if __name__ == '__main__':
     sigma = ut.variableInitializer(args.c, 1.0)
     p = ut.variableInitializer(args.p, 12.0)
     q = ut.variableInitializer(args.q, 6.0)
+    min_r = ut.variableInitializer(args.min_r, 1e-1)
     
     r0 = ut.variableInitializer(args.r0, 3.0)
     L = ut.variableInitializer(args.L, 5.0)
