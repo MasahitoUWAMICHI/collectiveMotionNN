@@ -77,18 +77,18 @@ class singleVariableNdataInOut(nn.Module):
         return gr.ndata[self.variableName]
     
 class multiVariableNdataInOut(nn.Module):
-    def __init__(self, variableName, variableDims):
+    def __init__(self, variableName, variableNDims):
         super().__init__()
         
-        assert len(variableName) == len(variableDims)
+        assert len(variableName) == len(variableNDims)
         
         self.variableName = variableName
-        self.variableDims = variableDims
+        self.variableNDims = variableNDims
         
         self.initializeIndices()
         
     def initializeIndices(self):
-        self.variableIndices = np.cumsum(np.array([0]+list(self.variableDims), dtype=int))
+        self.variableIndices = np.cumsum(np.array([0]+list(self.variableNDims), dtype=int))
     
     def input(self, gr, variableValue):
         for vN, vD0, vD1 in zip(self.variableName, self.variableIndices[:-1], self.variableIndices[1:]):
