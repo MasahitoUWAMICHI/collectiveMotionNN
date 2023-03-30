@@ -16,13 +16,13 @@ class euclidDistance_nonPeriodic(nn.Module):
         return r2 - r1
     
 class euclidDistance_periodic(nn.Module):
-    def __init__(self, periodic):
+    def __init__(self, periodicLength):
         super().__init__()
         
-        self.periodic = torch.tensor(periodic, dtype=torch.float32)
+        self.periodicLength = torch.tensor(periodicLength, dtype=torch.float32)
         
     def forward(self, r1, r2):
-        dr = torch.remainder(r2 - r1, self.periodic)
-        return dr - (dr > self.periodic/2) * self.periodic
+        dr = torch.remainder(r2 - r1, self.periodicLength)
+        return dr - (dr > self.periodicLength/2) * self.periodicLength
     
     
