@@ -36,12 +36,14 @@ class LJpotential(nn.Module):
     
 
 class interactionModule(nn.Module):
-    def __init__(self, c, sigma, p=12, q=6, periodic=None, positionName=None, velocityName=None, accelerationName=None, messageName=None):
+    def __init__(self, c, sigma, p=12, q=6, gamma=0.1, periodic=None, positionName=None, velocityName=None, accelerationName=None, messageName=None):
         super().__init__()
         self.c = c
         self.sigma = sigma
         self.p = p
         self.q = q
+        
+        self.gamma = gamma
         
         self.LJ = LJpotential(c, sigma, p, q)
         
@@ -86,6 +88,7 @@ class interactionModule(nn.Module):
         
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, fn.sum(self.messageName, self.accelerationName))
+        g.ndata[self.accelerationName] = self.gamma * g.ndata[self.velocityName]
         return g
     
     
@@ -97,6 +100,7 @@ if __name__ == '__main__':
     parser.add_argument('--sigma', type=float)
     parser.add_argument('--p', type=float)
     parser.add_argument('--q', type=float)
+    parser.add_argument('--gamma', type=float)
     parser.add_argument('--min_r', type=float)
     
     parser.add_argument('--r0', type=float)
@@ -125,6 +129,9 @@ if __name__ == '__main__':
     sigma = ut.variableInitializer(args.sigma, 1.0)
     p = ut.variableInitializer(args.p, 12.0)
     q = ut.variableInitializer(args.q, 6.0)
+    
+    gamma = ut.variableInitializer(args.gamma, 0.1)
+    
     min_r = ut.variableInitializer(args.min_r, 1e-1)
     
     r0 = ut.variableInitializer(args.r0, 3.0)
