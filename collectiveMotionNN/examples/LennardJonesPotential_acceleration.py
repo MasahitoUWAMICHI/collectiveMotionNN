@@ -88,7 +88,7 @@ class interactionModule(nn.Module):
         
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, fn.sum(self.messageName, self.accelerationName))
-        g.ndata[self.accelerationName] = self.gamma * g.ndata[self.velocityName]
+        g.ndata[self.accelerationName] = g.ndata[self.accelerationName] - self.gamma * g.ndata[self.velocityName]
         return g
     
     
