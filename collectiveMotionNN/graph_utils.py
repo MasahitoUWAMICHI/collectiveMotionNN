@@ -20,8 +20,8 @@ def update_adjacency_batch(bg, edgeCondtionModule, args=None):
     bg = dgl.batch(gs)
     return bg
 
-def judge_skipUpdate(g, dynamicVariable, ndataOutputModule):
-    return torch.allclose(ndataOutputModule(g), dynamicVariable)
+def judge_skipUpdate(g, dynamicVariable, ndataInOutModule):
+    return torch.allclose(ndataInOutModule.output(g), dynamicVariable)
 
 def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeCondtionModule, args=None):
     gr = ndataInOutModule.input(gr, dynamicVariable)
@@ -95,10 +95,10 @@ class multiVariableNdataInOut(nn.Module):
     
     
 
-def make_disconnectedGraph(dynamicVariable, staticVariables, ndataInputModule):
+def make_disconnectedGraph(dynamicVariable, staticVariables, ndataInOutModule):
     Nnodes = dynamicVariable.shape[0]
     g = dgl.graph((torch.tensor([], dtype=torch.int64), torch.tensor([], dtype=torch.int64)), num_nodes=Nnodes)
-    g = ndataInputModule(g, dynamicVariable)
+    g = ndataInOutModule.input(g, dynamicVariable)
 
     for key in staticVariables.keys():
         g.ndata[key] = staticVariables[key]
