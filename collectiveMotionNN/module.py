@@ -10,7 +10,7 @@ import collectiveMotionNN.graph_utils as gu
 
 
 class dynamicGODEwrapper(nn.Module):
-    def __init__(self, dynamicGNDEmodule, graph=None, ndataInOutModule=None, velocityInOutModule=None, args=None):
+    def __init__(self, dynamicGNDEmodule, graph=None, ndataInOutModule=None, derivativeInOutModule=None, args=None):
         super().__init__()
 
         self.dynamicGNDEmodule = dynamicGNDEmodule
@@ -19,7 +19,7 @@ class dynamicGODEwrapper(nn.Module):
         
         self.ndataInOutModule = ut.variableInitializer(ndataInOutModule, gu.singleVariableNdataInOut('x'))
             
-        self.velocityInOutModule = ut.variableInitializer(velocityInOutModule, gu.singleVariableNdataInOut('v'))
+        self.derivativeInOutModule = ut.variableInitializer(derivativeInOutModule, gu.singleVariableNdataInOut('v'))
 
         self.edgeInitialize(args)
         
@@ -31,15 +31,15 @@ class dynamicGODEwrapper(nn.Module):
 
     def f(self, t, x, args=None):
         self.graph = self.dynamicGNDEmodule.f(t, x, self.graph, self.ndataInOutModule, args)
-        return self.ndataInOutModule.output(self.graph)
+        return self.derivativeInOutModule.output(self.graph)
     
     def forward(self, t, x, args=None):
         return self.f(t, x, args)
 
 
 class dynamicGSDEwrapper(dynamicGODEwrapper):
-    def __init__(self, dynamicGNDEmodule, graph=None, ndataInOutModule=None, velocityInOutModule=None, noiseInOutModule=None, args=None):
-        super().__init__(dynamicGNDEmodule, graph, ndataInOutModule, velocityInOutModule, args)
+    def __init__(self, dynamicGNDEmodule, graph=None, ndataInOutModule=None, derivativeInOutModule=None, noiseInOutModule=None, args=None):
+        super().__init__(dynamicGNDEmodule, graph, ndataInOutModule, derivativeInOutModule, args)
         
         self.noiseInOutModule = ut.variableInitializer(noiseInOutModule, gu.singleVariableNdataInOut('sigma'))
 
