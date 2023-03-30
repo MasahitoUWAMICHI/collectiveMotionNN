@@ -57,28 +57,28 @@ class dynamicGSDEwrapper(dynamicGODEwrapper):
     
     
 class dynamicGNDEmodule(nn.Module):
-    def __init__(self, calc_module, edgeConditionModule, forceUpdate=False):
+    def __init__(self, calc_module, edgeConditionModule, forceUpdate=None, rtol=None, atol=None, equal_nan=None):
         super().__init__()
         
         self.calc_module = calc_module
 
         self.edgeConditionModule = edgeConditionModule
         
-        self.forceUpdate = forceUpdate
-
-        self.def_edgeRefresher()
+        self.forceUpdate = ut.variableInitializer(forceUpdate, False)
+        
+        self.def_edgeRefresher(rtol, atol, equal_nan)
         
     def def_edgeRefresher_forceUpdate(self):
         self.edgeRefresher = gu.edgeRefresh_forceUpdate(self.edgeConditionModule)
 
-    def def_edgeRefresher_noForceUpdate(self):
-        self.edgeRefresher = gu.edgeRefresh_noForceUpdate(self.edgeConditionModule)
+    def def_edgeRefresher_noForceUpdate(self, rtol=None, atol=None, equal_nan=None):
+        self.edgeRefresher = gu.edgeRefresh_noForceUpdate(self.edgeConditionModule, rtol, atol, equal_nan)
         
-    def def_edgeRefresher(self):
+    def def_edgeRefresher(self, rtol=None, atol=None, equal_nan=None):
         if self.forceUpdate:
             self.def_edgeRefresher_forceUpdate()
         else:
-            self.def_edgeRefresher_noForceUpdate()
+            self.def_edgeRefresher_noForceUpdate(rtol, atol, equal_nan)
             
     def edgeInitialize(self, gr, args=None):
         return self.edgeRefresher.createEdge(gr, args)
