@@ -157,7 +157,7 @@ if __name__ == '__main__':
     graph_init = []
     for i in range(N_batch):
         x0.append(torch.cat((torch.rand([N_particles, 2]) * L, (torch.rand([N_particles, 2]) - 0.5) * (2*v0)), dim=-1))
-        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'v'], [2, 2]))
+        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'v'], [2, 2])))
     x0 = torch.concat(x0, dim=0)
     graph_init = dgl.batch(graph_init).to(device)
         
