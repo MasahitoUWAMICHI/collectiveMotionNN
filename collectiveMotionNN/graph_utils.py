@@ -100,10 +100,12 @@ class multiVariableNdataInOut(nn.Module):
     
     
 
-def make_disconnectedGraph(dynamicVariable, staticVariables, ndataInOutModule):
+def make_disconnectedGraph(dynamicVariable, ndataInOutModule, staticVariables=None):
     Nnodes = dynamicVariable.shape[0]
     g = dgl.graph((torch.tensor([], dtype=torch.int64), torch.tensor([], dtype=torch.int64)), num_nodes=Nnodes)
     g = ndataInOutModule.input(g, dynamicVariable)
+    
+    staticVariables = ut.variableInitializer(staticVariables, {})
 
     for key in staticVariables.keys():
         g.ndata[key] = staticVariables[key]
