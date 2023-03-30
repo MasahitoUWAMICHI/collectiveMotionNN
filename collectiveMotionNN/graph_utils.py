@@ -52,12 +52,21 @@ class edgeRefresh_noForceUpdate(edgeRefresh_forceUpdate):
         self.rtol = ut.variableInitializer(rtol, 1e-05)
         self.atol = ut.variableInitializer(atol, 1e-08)
         self.equal_nan = ut.variableInitializer(equal_nan, True)
+    
+    def loadGraph(self, gr):
+        self.graph = gr
+
+    def createEdge(self, gr, args=None):
+        self.loadGraph(gr)
+        return update_adjacency_batch(gr, self.edgeConditionModule, args)
         
     def forward(self, gr, dynamicVariable, ndataInOutModule, args=None):
-        if judge_skipUpdate(gr, dynamicVariable, ndataInOutModule, self.rtol, self.atol, self.equal_nan):
+        if judge_skipUpdate(self.graph, dynamicVariable, ndataInOutModule, self.rtol, self.atol, self.equal_nan):
             return gr
         else:
-            return edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, args)
+            gr = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, args)
+            self.loadGraph(gr)
+            return gr
 
 
 
