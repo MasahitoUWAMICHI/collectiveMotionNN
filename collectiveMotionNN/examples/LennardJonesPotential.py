@@ -44,7 +44,7 @@ class edgeCalculator(nn.Module):
         
         self.selfLoop = selfLoop
         
-        self.edgeVariable = ut.variableInitializer(variableName, 'y')
+        self.edgeVariable = ut.variableInitializer(variableName, 'x')
         
         self.def_dr()
         
@@ -119,7 +119,7 @@ class interactionModule(nn.Module):
             
         self.def_dr()
             
-        self.dynamicName = ut.variableInitializer(dynamicName, 'y')
+        self.dynamicName = ut.variableInitializer(dynamicName, 'x')
         
         self.messageName = ut.variableInitializer(messageName, 'm')
 
@@ -224,12 +224,12 @@ if __name__ == '__main__':
     LJ_ODEmodule = mo.dynamicGNDEmodule(LJ_Module, edgeModule)
     
     
-    y0 = []
+    x0 = []
     graph_init = []
     for i in range(N_batch):
-        y0.append(torch.rand([N_particles, 2]) * L)
-        graph_init.append(gu.make_disconnectedGraph(y0[i], {}, 'y'))
-    y0 = torch.concat(y0, dim=0)
+        x0.append(torch.rand([N_particles, 2]) * L)
+        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.singleVariableNdataInOut('x')))
+    x0 = torch.concat(x0, dim=0)
     graph_init = dgl.batch(graph_init).to(device)
         
     
@@ -244,7 +244,7 @@ if __name__ == '__main__':
     t_span = torch.arange(0, t_max+dt_step, dt_step)
     t_save = torch.arange(0, t_max+dt_step, dt_save)
     
-    t_eval, x = neuralDE(y0.to(device), t_span.to(device), save_at=t_save.to(device))
+    t_eval, x = neuralDE(x0.to(device), t_span.to(device), save_at=t_save.to(device))
     
     print(neuralDE.vf.vf.graph)
     
