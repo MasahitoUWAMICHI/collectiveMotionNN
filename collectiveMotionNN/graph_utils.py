@@ -63,11 +63,11 @@ class singleVariableNdataInOut(nn.Module):
         self.variableName = variableName
     
     def input(self, gr, variableValue):
-        gr[self.variableName] = variableValue
+        gr.ndata[self.variableName] = variableValue
         return gr
 
     def output(self, gr):
-        return gr[self.variableName]
+        return gr.ndata[self.variableName]
     
 class multiVariableNdataInOut(nn.Module):
     def __init__(self, variableName, variableDims):
@@ -85,11 +85,11 @@ class multiVariableNdataInOut(nn.Module):
     
     def input(self, gr, variableValue):
         for vN, vD0, vD1 in zip(self.variableName, self.variableIndices[:-1], self.variableIndices[1:]):
-            gr[vN] = variableValue[..., vD0:vD1]
+            gr.ndata[vN] = variableValue[..., vD0:vD1]
         return gr
 
     def output(self, gr):
-        return torch.cat([gr[vN] for vN in self.variableName], dim=-1)
+        return torch.cat([gr.ndata[vN] for vN in self.variableName], dim=-1)
     
     
     
