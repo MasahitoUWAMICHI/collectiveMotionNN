@@ -17,7 +17,7 @@ class dynamicGODEwrapper(nn.Module):
 
         self.graph = graph
         
-        self.ndataInOutModule = ut.variableInitializer(ndataInOutModule, gu.singleVariableNdataInOut('y'))
+        self.ndataInOutModule = ut.variableInitializer(ndataInOutModule, gu.singleVariableNdataInOut('x'))
             
         self.velocityInOutModule = ut.variableInitializer(velocityInOutModule, gu.singleVariableNdataInOut('v'))
 
@@ -41,7 +41,7 @@ class dynamicGSDEwrapper(dynamicGODEwrapper):
     def __init__(self, dynamicGNDEmodule, graph=None, ndataInOutModule=None, velocityInOutModule=None, noiseInOutModule=None, args=None):
         super().__init__(dynamicGNDEmodule, graph, ndataInOutModule, velocityInOutModule, args)
         
-        self.noiseInOutModule = ut.variableInitializer(noiseInOutModule, gu.singleVariableNdataInOut('s'))
+        self.noiseInOutModule = ut.variableInitializer(noiseInOutModule, gu.singleVariableNdataInOut('sigma'))
 
         self.noise_type = noise_type
         self.sde_type = sde_type
