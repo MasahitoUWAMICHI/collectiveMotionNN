@@ -123,17 +123,7 @@ class interactionModule(nn.Module):
         
         self.messageName = ut.variableInitializer(messageName, 'm')
 
-        self.aggregateName = ut.variableInitializer(aggregateName, 'v')
-        
-    def set_dynamicName(self, dynamicName):
-        self.dynamicName = ut.variableInitializer(dynamicName, self.dynamicName)
-
-    def set_messageName(self, messageName):
-        self.messageName = ut.variableInitializer(messageName, self.messageName)
-
-    def set_aggregateName(self, aggregateName):
-        self.aggregateName = ut.variableInitializer(aggregateName, self.aggregateName)
-        
+        self.aggregateName = ut.variableInitializer(aggregateName, 'v')        
         
         
     def def_nonPeriodic(self):
