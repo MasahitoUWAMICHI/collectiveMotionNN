@@ -29,12 +29,12 @@ class dynamicGODEwrapper(nn.Module):
     def edgeInitialize(self, args=None):
         self.graph = self.dynamicGNDEmodule.edgeInitialize(self.graph, args)
 
-    def f(self, t, y, args=None):
-        self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.ndataInOutModule, args)
+    def f(self, t, x, args=None):
+        self.graph = self.dynamicGNDEmodule.f(t, x, self.graph, self.ndataInOutModule, args)
         return self.ndataInOutModule.output(self.graph)
     
-    def forward(self, t, y, args=None):
-        return self.f(t, y, args)
+    def forward(self, t, x, args=None):
+        return self.f(t, x, args)
 
 
 class dynamicGSDEwrapper(dynamicGODEwrapper):
@@ -46,8 +46,8 @@ class dynamicGSDEwrapper(dynamicGODEwrapper):
         self.noise_type = noise_type
         self.sde_type = sde_type
         
-    def g(self, t, y, args=None):
-        self.graph = self.dynamicGNDEmodule.g(t, y, self.graph, self.ndataInOutModule, args)
+    def g(self, t, x, args=None):
+        self.graph = self.dynamicGNDEmodule.g(t, x, self.graph, self.ndataInOutModule, args)
         return self.noiseInOutModule.output(self.graph)
 
 
@@ -83,10 +83,10 @@ class dynamicGNDEmodule(nn.Module):
     def edgeInitialize(self, gr, args=None):
         return self.edgeRefresher.createEdge(gr, args)
 
-    def f(self, t, y, gr, ndataInOutModule, args=None):
-        gr = self.edgeRefresher(gr, y, ndataInOutModule, args)
+    def f(self, t, x, gr, ndataInOutModule, args=None):
+        gr = self.edgeRefresher(gr, x, ndataInOutModule, args)
         return self.calc_module.f(t, gr, args)
 
-    def g(self, t, y, gr, ndataInOutModule, args=None):
-        gr = self.edgeRefresher(gr, y, ndataInOutModule, args)
+    def g(self, t, x, gr, ndataInOutModule, args=None):
+        gr = self.edgeRefresher(gr, x, ndataInOutModule, args)
         return self.calc_module.g(t, gr, args)
