@@ -10,24 +10,24 @@ def update_edges(g, edges):
     g.add_edges(edges[0], edges[1])
     return g
 
-def update_adjacency(g, edgeCondtionModule, args=None):
-    edges = edgeCondtionModule(g, args)
+def update_adjacency(g, edgeConditionModule, args=None):
+    edges = edgeConditionModule(g, args)
     update_edges(g, edges)
     return g
 
-def update_adjacency_batch(bg, edgeCondtionModule, args=None):
+def update_adjacency_batch(bg, edgeConditionModule, args=None):
     gs = dgl.unbatch(bg)
     for g in gs:
-        update_adjacency(g, edgeCondtionModule, args)
+        update_adjacency(g, edgeConditionModule, args)
     bg = dgl.batch(gs)
     return bg
 
 def judge_skipUpdate(g, dynamicVariable, ndataInOutModule, rtol=1e-05, atol=1e-08, equal_nan=True):
     return torch.allclose(ndataInOutModule.output(g), dynamicVariable, rtol, atol, equal_nan)
 
-def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeCondtionModule, args=None):
+def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeConditionModule, args=None):
     gr = ndataInOutModule.input(gr, dynamicVariable)
-    gr = update_adjacency_batch(gr, edgeCondtionModule, args)
+    gr = update_adjacency_batch(gr, edgeConditionModule, args)
     return gr
 
 
@@ -39,7 +39,7 @@ class edgeRefresh_forceUpdate(nn.Module):
         self.edgeConditionModule = edgeConditionModule
 
     def createEdge(self, gr, args=None):
-        return update_adjacency_batch(gr, self.edgeCondtionModule, args)
+        return update_adjacency_batch(gr, self.edgeConditionModule, args)
     
     def forward(self, gr, dynamicVariable, ndataInOutModule, args=None):
         return edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, args)
