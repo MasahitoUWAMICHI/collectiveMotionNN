@@ -173,7 +173,7 @@ class radiusgraphEdge(nn.Module):
         self.distanceCalc = ut.euclidDistance_periodic(self.periodicLength)
         
     def def_dr(self):
-        if self.periodic is None:
+        if self.periodicLength is None:
             self.def_nonPeriodic()
         else:
             self.def_periodic()
