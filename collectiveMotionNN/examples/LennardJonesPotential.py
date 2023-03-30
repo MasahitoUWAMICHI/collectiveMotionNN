@@ -157,9 +157,7 @@ class interactionModule(nn.Module):
         
         return {self.messageName: self.LJ.force(abs_dr) * unit_dr}
         
-    def f(self, t, g, dynamicName=None, derivativeName=None, args=None):
-        self.set_dynamicName(dynamicName)
-        self.set_aggregateName(derivativeName)
+    def f(self, t, g, args=None):
         g.update_all(self.calc_message, fn.sum(self.messageName, self.aggregateName))
         return g
     
