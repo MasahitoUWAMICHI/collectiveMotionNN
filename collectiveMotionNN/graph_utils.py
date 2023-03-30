@@ -19,11 +19,11 @@ def update_adjacency_batch(bg, edgeCondtionModule, args=None):
     bg = dgl.batch(gs)
     return bg
 
-def judge_skipUpdate(g, dynamicVariable, dynamicName):
-    return torch.allclose(g.ndata[dynamicName], dynamicVariable)
+def judge_skipUpdate(g, dynamicVariable, ndataOutputModule):
+    return torch.allclose(ndataOutputModule(g), dynamicVariable)
 
-def edgeRefresh_execute(gr, dynamicVariable, dynamicName, edgeCondtionModule, args=None):
-    gr.ndata[dynamicName] = dynamicVariable
+def edgeRefresh_execute(gr, dynamicVariable, ndataInputModule, edgeCondtionModule, args=None):
+    gr = ndataInputModule(gr, dynamicVariable)
     gr = update_adjacency_batch(gr, edgeCondtionModule, args)
     return gr
 
@@ -34,37 +34,32 @@ class edgeRefresh_noForceUpdate(nn.Module):
         
         self.edgeConditionModule = edgeConditionModule
         
-    def forceUpdate(self, gr, dynamicVariable, dynamicName, args=None):
-        return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule, args)
+    def createEdge(self, gr, args=None):
+        return update_adjacency_batch(gr, self.edgeCondtionModule, args)
     
-    def forward(self, gr, dynamicVariable, dynamicName, args=None):
-        if judge_skipUpdate(gr, dynamicVariable, dynamicName):
+    def forward(self, gr, dynamicVariable, ndataInputModule, ndataOutputModule, args=None):
+        if judge_skipUpdate(gr, dynamicVariable, ndataOutputModule):
             return gr
         else:
-            return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule, args)
+            return edgeRefresh_execute(gr, dynamicVariable, ndataInputModule, self.edgeConditionModule, args)
 
         
-class edgeRefresh_forceUpdate(nn.Module):
+class edgeRefresh_forceUpdate(edgeRefresh_noForceUpdate):
     def __init__(self, edgeConditionModule):
-        super().__init__()
-        
-        self.edgeConditionModule = edgeConditionModule
-        
-    def forceUpdate(self, gr, dynamicVariable, dynamicName, args=None):
-        return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule, args)
-    
-    def forward(self, gr, dynamicVariable, dynamicName, args=None):
-        return edgeRefresh_execute(gr, dynamicVariable, dynamicName, self.edgeConditionModule, args)
+        super().__init__(edgeConditionModule)
+            
+    def forward(self, gr, dynamicVariable, ndataInputModule, ndataOutputModule, args=None):
+        return edgeRefresh_execute(gr, dynamicVariable, ndataInputModule, self.edgeConditionModule, args)
 
 
 
 
     
 
-def make_disconnectedGraph(dynamicVariable, staticVariables, dynamicName):
+def make_disconnectedGraph(dynamicVariable, staticVariables, ndataInputModule):
     Nnodes = dynamicVariable.shape[0]
     g = dgl.graph((torch.tensor([], dtype=torch.int64), torch.tensor([], dtype=torch.int64)), num_nodes=Nnodes)
-    g.ndata[dynamicName] = dynamicVariable
+    g = ndataInputModule(g, dynamicVariable)
 
     for key in staticVariables.keys():
         g.ndata[key] = staticVariables[key]
