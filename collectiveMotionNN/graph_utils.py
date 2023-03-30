@@ -147,3 +147,56 @@ class distance2edge_noSelfLoop(nn.Module):
         boolMatrix = radiusGraphEdge_noSelfLoop(distanceMatrix, self.r0)
         return bool2edge(boolMatrix)
 
+    
+    
+    
+class radiusgraphEdge(nn.Module):
+    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None):
+        super().__init__()
+           
+        self.r0 = r0
+
+        self.periodicLength = periodicLength
+        
+        self.selfLoop = selfLoop
+        
+        self.edgeVariable = ut.variableInitializer(variableName, 'x')
+        
+        self.def_dr()
+        
+        self.def_distance2edge()
+        
+        
+    def def_nonPeriodic(self):
+        self.distanceCalc = ut.euclidDistance_nonPeriodic()
+        
+    def def_periodic(self):
+        self.distanceCalc = ut.euclidDistance_periodic(self.periodicLength)
+        
+    def def_dr(self):
+        if self.periodic is None:
+            self.def_nonPeriodic()
+        else:
+            self.def_periodic()
+        
+
+    def def_noSelfLoop(self):
+        self.distance2edge = distance2edge_noSelfLoop(self.r0)
+        
+    def def_selfLoop(self):
+        self.distance2edge = distance2edge_selfLoop(self.r0)
+        
+    def def_distance2edge(self):
+        if self.selfLoop:
+            self.def_selfLoop()
+        else:
+            self.def_noSelfLoop()
+            
+            
+        
+    def forward(self, g, args=None):
+        dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
+        dr = torch.norm(dr, dim=-1, keepdim=False)
+        return self.distance2edge(dr)            
+    
+    
