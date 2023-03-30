@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn
 import dgl
@@ -22,8 +23,8 @@ def update_adjacency_batch(bg, edgeCondtionModule, args=None):
 def judge_skipUpdate(g, dynamicVariable, ndataOutputModule):
     return torch.allclose(ndataOutputModule(g), dynamicVariable)
 
-def edgeRefresh_execute(gr, dynamicVariable, ndataInputModule, edgeCondtionModule, args=None):
-    gr = ndataInputModule(gr, dynamicVariable)
+def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeCondtionModule, args=None):
+    gr = ndataInOutModule.input(gr, dynamicVariable)
     gr = update_adjacency_batch(gr, edgeCondtionModule, args)
     return gr
 
@@ -37,23 +38,61 @@ class edgeRefresh_noForceUpdate(nn.Module):
     def createEdge(self, gr, args=None):
         return update_adjacency_batch(gr, self.edgeCondtionModule, args)
     
-    def forward(self, gr, dynamicVariable, ndataInputModule, ndataOutputModule, args=None):
-        if judge_skipUpdate(gr, dynamicVariable, ndataOutputModule):
+    def forward(self, gr, dynamicVariable, ndataInOutModule, args=None):
+        if judge_skipUpdate(gr, dynamicVariable, ndataInOutModule):
             return gr
         else:
-            return edgeRefresh_execute(gr, dynamicVariable, ndataInputModule, self.edgeConditionModule, args)
+            return edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, args)
 
         
 class edgeRefresh_forceUpdate(edgeRefresh_noForceUpdate):
     def __init__(self, edgeConditionModule):
         super().__init__(edgeConditionModule)
             
-    def forward(self, gr, dynamicVariable, ndataInputModule, ndataOutputModule, args=None):
-        return edgeRefresh_execute(gr, dynamicVariable, ndataInputModule, self.edgeConditionModule, args)
+    def forward(self, gr, dynamicVariable, ndataInOutModule, args=None):
+        return edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, args)
 
 
 
 
+    
+class singleVariableNdataInOut(nn.Module):
+    def __init__(self, variableName):
+        super().__init__()
+        
+        self.variableName = variableName
+    
+    def input(self, gr, variableValue):
+        gr[self.variableName] = variableValue
+        return gr
+
+    def output(self, gr):
+        return gr[self.variableName]
+    
+class multiVariableNdataInOut(nn.Module):
+    def __init__(self, variableName, variableDims):
+        super().__init__()
+        
+        assert len(variableName) == len(variableDims)
+        
+        self.variableName = variableName
+        self.variableDims = variableDims
+        
+        self.initializeIndices()
+        
+    def initializeIndices(self):
+        self.variableIndices = np.cumsum(np.array([0]+list(self.variableDims), dtype=int))
+    
+    def input(self, gr, variableValue):
+        for vN, vD0, vD1 in zip(self.variableName, self.variableIndices[:-1], self.variableIndices[1:]):
+            gr[vN] = variableValue[..., vD0:vD1]
+        return gr
+
+    def output(self, gr):
+        return torch.cat([gr[vN] for vN in self.variableName], dim=-1)
+    
+    
+    
     
 
 def make_disconnectedGraph(dynamicVariable, staticVariables, ndataInputModule):
