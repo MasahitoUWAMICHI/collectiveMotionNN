@@ -16,75 +16,6 @@ from distutils.util import strtobool
 
 
     
-class dr_nonPeriodic(nn.Module):
-    def __init__(self):
-        super().__init__()
-        
-    def forward(self, r1, r2):
-        return r2 - r1
-    
-class dr_periodic(nn.Module):
-    def __init__(self, periodic):
-        super().__init__()
-        
-        self.periodic = torch.tensor(periodic, dtype=torch.float32)
-        
-    def forward(self, r1, r2):
-        dr = torch.remainder(r2 - r1, self.periodic)
-        return dr - (dr > self.periodic/2) * self.periodic
-    
-    
-class edgeCalculator(nn.Module):
-    def __init__(self, r0, periodic=None, selfLoop=False, variableName=None):
-        super().__init__()
-           
-        self.r0 = r0
-
-        self.periodic = periodic
-        
-        self.selfLoop = selfLoop
-        
-        self.edgeVariable = ut.variableInitializer(variableName, 'x')
-        
-        self.def_dr()
-        
-        self.def_distance2edge()
-        
-        
-    def def_nonPeriodic(self):
-        self.distanceCalc = dr_nonPeriodic()
-        
-    def def_periodic(self):
-        self.distanceCalc = dr_periodic(self.periodic)
-        
-    def def_dr(self):
-        if self.periodic is None:
-            self.def_nonPeriodic()
-        else:
-            self.def_periodic()
-        
-
-    def def_noSelfLoop(self):
-        self.distance2edge = gu.distance2edge_noSelfLoop(self.r0)
-        
-    def def_selfLoop(self):
-        self.distance2edge = gu.distance2edge_selfLoop(self.r0)
-        
-    def def_distance2edge(self):
-        if self.selfLoop:
-            self.def_selfLoop()
-        else:
-            self.def_noSelfLoop()
-            
-            
-        
-    def forward(self, g, args=None):
-        dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
-        dr = torch.norm(dr, dim=-1, keepdim=False)
-        return self.distance2edge(dr)        
-    
-
-    
 class LJpotential(nn.Module):
     def __init__(self, c, sigma, p=12, q=6):
         super().__init__()
@@ -129,10 +60,10 @@ class interactionModule(nn.Module):
         
         
     def def_nonPeriodic(self):
-        self.distanceCalc = dr_nonPeriodic()
+        self.distanceCalc = ut.euclidDistance_nonPeriodic()
         
     def def_periodic(self):
-        self.distanceCalc = dr_periodic(self.periodic)
+        self.distanceCalc = ut.euclidDistance_periodic(self.periodic)
         
     def def_dr(self):
         if self.periodic is None:
@@ -211,7 +142,7 @@ if __name__ == '__main__':
     
     
     LJ_Module = interactionModule(c, sigma, p, q, periodic)
-    edgeModule = edgeCalculator(r0, periodic, selfloop)
+    edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop)
     
     LJ_ODEmodule = mo.dynamicGNDEmodule(LJ_Module, edgeModule)
     
