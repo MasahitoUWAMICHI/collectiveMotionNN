@@ -17,17 +17,21 @@ from distutils.util import strtobool
 
     
 class LJpotential(nn.Module):
-    def __init__(self, c, sigma, p=12, q=6):
+    def __init__(self, c, sigma, p=12, q=6, min_r=1e-1):
         super().__init__()
         self.c = c
         self.sigma = sigma
         self.p = p
         self.q = q
         
-    def potential(self, r):
+        self.min_r = min_r
+        
+    def potential(self, r_in):
+        r = r_in*(r_in > min_r) + min_r*(r_in <= min_r)
         return 4 * self.c * (self.sigma/r)**(self.q) * ((self.sigma/r)**(self.p-self.q) - 1)
 
-    def force(self, r):
+    def force(self, r_in):
+        r = r_in*(r_in > min_r) + min_r*(r_in <= min_r)
         return 4 * self.c * (self.sigma/r)**(self.q) * ((self.p * (self.sigma/r)**(self.p-self.q)) - self.q) / r
     
 
