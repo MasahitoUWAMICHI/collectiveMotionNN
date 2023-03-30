@@ -142,8 +142,8 @@ if __name__ == '__main__':
     selfloop = ut.variableInitializer(args.selfloop, False)
     
     device = ut.variableInitializer(args.device, 'cuda' if torch.cuda.is_available() else 'cpu')
-    save_x = ut.variableInitializer(args.save_x, 'LJ_traj.pt')
-    save_t = ut.variableInitializer(args.save_t, 't_eval.pt')
+    save_x = ut.variableInitializer(args.save_x, 'LJacc_traj.pt')
+    save_t = ut.variableInitializer(args.save_t, 'LJacc_t_eval.pt')
     
     
     
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     else:
         x = torch.remainder(x.to('cpu'), periodic) 
     
-    x = x.reshape((t_eval.shape[0], N_batch, N_particles, 2))
+    x = x.reshape((t_eval.shape[0], N_batch, N_particles, 4))
 
     torch.save(x, save_x)
 
