@@ -82,7 +82,7 @@ class dynamicGNDEmodule(nn.Module):
         else:
             self.def_edgeRefresher_noForceUpdate()
             
-    def edgeInitialize(self, gr, ndataInputModule, args=None):
+    def edgeInitialize(self, gr, args=None):
         return self.edgeRefresher.createEdge(gr, args)
 
     # f and g should be updated in user-defined class
