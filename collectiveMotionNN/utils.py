@@ -8,14 +8,14 @@ def variableInitializer(val, defaultVal):
         return val
 
     
-class dr_nonPeriodic(nn.Module):
+class euclidDistance_nonPeriodic(nn.Module):
     def __init__(self):
         super().__init__()
         
     def forward(self, r1, r2):
         return r2 - r1
     
-class dr_periodic(nn.Module):
+class euclidDistance_periodic(nn.Module):
     def __init__(self, periodic):
         super().__init__()
         
