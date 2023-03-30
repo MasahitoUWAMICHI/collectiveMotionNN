@@ -27,7 +27,7 @@ class dynamicGODEwrapper(nn.Module):
         self.graph = gu.make_disconnectedGraph(dynamicVariable, staticVariables, self.ndataInOutModule)
     
     def edgeInitialize(self, args=None):
-        self.graph = self.dynamicGNDEmodule.edgeInitialize(self.graph, self.ndataInOutModule, args)
+        self.graph = self.dynamicGNDEmodule.edgeInitialize(self.graph, args)
 
     def f(self, t, y, args=None):
         self.graph = self.dynamicGNDEmodule.f(t, y, self.graph, self.ndataInOutModule, args)
