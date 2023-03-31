@@ -102,7 +102,7 @@ class interactionModule(nn.Module):
         return g
       
     def g(self, t, g, args=None):
-        g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.velocityName].shape[0], 1, 1)
+        g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.velocityName].shape[0], 1, 1).to(g.device)
         return g
     
     
