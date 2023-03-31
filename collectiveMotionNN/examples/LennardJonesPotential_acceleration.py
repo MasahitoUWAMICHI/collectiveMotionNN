@@ -121,6 +121,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str)
     parser.add_argument('--save_x', type=str)
     parser.add_argument('--save_t', type=str)
+    parser.add_argument('--save_model', type=str)
     
     args = parser.parse_args()
     
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     device = ut.variableInitializer(args.device, 'cuda' if torch.cuda.is_available() else 'cpu')
     save_x = ut.variableInitializer(args.save_x, 'LJacc_traj.pt')
     save_t = ut.variableInitializer(args.save_t, 'LJacc_t_eval.pt')
-    
+    save_model = ut.variableInitializer(args.save_model, 'LJacc_model.pt')
     
     
     LJ_Module = interactionModule(c, r_c, p, q, gamma, periodic)
@@ -196,3 +197,5 @@ if __name__ == '__main__':
     torch.save(x, save_x)
 
     torch.save(t_eval.to('cpu'), save_t)
+    
+    torch.save(LJ_ODEwrapper.to('cpu'), save_model)
