@@ -29,23 +29,23 @@ class dynamicGODEwrapper(nn.Module):
     def edgeInitialize(self, args=None):
         self.graph = self.dynamicGNDEmodule.edgeInitialize(self.graph, args)
 
-    def f(self, t, x, args=None):
+    def forward(self, t, x, args=None):
         self.graph = self.dynamicGNDEmodule.f(t, x, self.graph, self.ndataInOutModule, args)
         return self.derivativeInOutModule.output(self.graph)
     
-    def forward(self, t, x, args=None):
-        return self.f(t, x, args)
-
 
 class dynamicGSDEwrapper(dynamicGODEwrapper):
-    def __init__(self, dynamicGNDEmodule, graph=None, ndataInOutModule=None, derivativeInOutModule=None, noiseInOutModule=None, args=None):
+    def __init__(self, dynamicGNDEmodule, graph=None, ndataInOutModule=None, derivativeInOutModule=None, noiseInOutModule=None, noise_type=None, sde_type=None, args=None):
         super().__init__(dynamicGNDEmodule, graph, ndataInOutModule, derivativeInOutModule, args)
         
         self.noiseInOutModule = ut.variableInitializer(noiseInOutModule, gu.singleVariableNdataInOut('sigma'))
 
-        self.noise_type = noise_type
-        self.sde_type = sde_type
+        self.noise_type = ut.variableInitializer(noise_type, 'diagonal')
+        self.sde_type = ut.variableInitializer(sde_type, 'ito')
         
+    def f(self, t, x, args=None):
+        return self.forward(t, x, args)
+    
     def g(self, t, x, args=None):
         self.graph = self.dynamicGNDEmodule.g(t, x, self.graph, self.ndataInOutModule, args)
         return self.noiseInOutModule.output(self.graph)
