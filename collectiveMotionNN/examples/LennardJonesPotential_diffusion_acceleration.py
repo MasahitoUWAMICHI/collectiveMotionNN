@@ -28,11 +28,11 @@ class LJpotential(nn.Module):
         
     def potential(self, r_in):
         r = r_in*(r_in > min_r) + min_r*(r_in <= min_r)
-        return 4 * self.c * (self.sigma/r)**(self.q) * ((self.sigma/r)**(self.p-self.q) - 1)
+        return 4 * self.c * (self.r_c/r)**(self.q) * ((self.r_c/r)**(self.p-self.q) - 1)
 
     def force(self, r_in):
         r = r_in*(r_in > min_r) + min_r*(r_in <= min_r)
-        return 4 * self.c * (self.sigma/r)**(self.q) * ((self.p * (self.sigma/r)**(self.p-self.q)) - self.q) / r
+        return 4 * self.c * (self.r_c/r)**(self.q) * ((self.p * (self.r_c/r)**(self.p-self.q)) - self.q) / r
     
 
 class interactionModule(nn.Module):
@@ -127,8 +127,10 @@ if __name__ == '__main__':
     parser.add_argument('--selfloop', type=strtobool)
     
     parser.add_argument('--device', type=str)
-    parser.add_argument('--save_x', type=str)
-    parser.add_argument('--save_t', type=str)
+    parser.add_argument('--save_x_ODE', type=str)
+    parser.add_argument('--save_t_ODE', type=str)
+    parser.add_argument('--save_x_SDE', type=str)
+    parser.add_argument('--save_t_SDE', type=str)
     
     args = parser.parse_args()
     
@@ -158,12 +160,14 @@ if __name__ == '__main__':
     selfloop = ut.variableInitializer(args.selfloop, False)
     
     device = ut.variableInitializer(args.device, 'cuda' if torch.cuda.is_available() else 'cpu')
-    save_x = ut.variableInitializer(args.save_x, 'LJacc_traj.pt')
-    save_t = ut.variableInitializer(args.save_t, 'LJacc_t_eval.pt')
+    save_x_ODE = ut.variableInitializer(args.save_x_ODE, 'LJacc_ODE_traj.pt')
+    save_t_ODE = ut.variableInitializer(args.save_t_ODE, 'LJacc_ODE_t_eval.pt')
+    save_x_SDE = ut.variableInitializer(args.save_x_SDE, 'LJacc_SDE_traj.pt')
+    save_t_SDE = ut.variableInitializer(args.save_t_SDE, 'LJacc_SDE_t_eval.pt')
     
     
     
-    LJ_Module = interactionModule(c, sigma, p, q, periodic)
+    LJ_Module = interactionModule(c, r_c, p, q, gamma, sigma, periodic)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop)
     
     LJ_ODEmodule = mo.dynamicGNDEmodule(LJ_Module, edgeModule)
@@ -183,13 +187,14 @@ if __name__ == '__main__':
                                           ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2])).to(device)
     
-    neuralDE = NeuralODE(LJ_ODEwrapper, solver='euler').to(device)
-    
-    
-    
-    
+
     t_span = torch.arange(0, t_max+dt_step, dt_step)
     t_save = torch.arange(0, t_max+dt_step, dt_save)
+
+    
+    
+    
+    neuralDE = NeuralODE(LJ_ODEwrapper, solver='euler').to(device)
     
     t_eval, x = neuralDE(x0.to(device), t_span.to(device), save_at=t_save.to(device))
     
