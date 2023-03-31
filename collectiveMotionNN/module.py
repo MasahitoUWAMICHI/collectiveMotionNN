@@ -40,7 +40,7 @@ class dynamicGSDEwrapper(dynamicGODEwrapper):
         
         self.noiseInOutModule = ut.variableInitializer(noiseInOutModule, gu.singleVariableNdataInOut('sigma'))
 
-        self.noise_type = ut.variableInitializer(noise_type, 'diagonal')
+        self.noise_type = ut.variableInitializer(noise_type, 'general')
         self.sde_type = ut.variableInitializer(sde_type, 'ito')
         
     def f(self, t, x, args=None):
