@@ -138,6 +138,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_t_ODE', type=str)
     parser.add_argument('--save_x_SDE', type=str)
     parser.add_argument('--save_t_SDE', type=str)
+    parser.add_argument('--save_model', type=str)
     
     args = parser.parse_args()
     
@@ -171,7 +172,7 @@ if __name__ == '__main__':
     save_t_ODE = ut.variableInitializer(args.save_t_ODE, 'LJacc_ODE_t_eval.pt')
     save_x_SDE = ut.variableInitializer(args.save_x_SDE, 'LJacc_SDE_traj.pt')
     save_t_SDE = ut.variableInitializer(args.save_t_SDE, 'LJacc_SDE_t_eval.pt')
-    
+    save_model = ut.variableInitializer(args.save_model, 'LJacc_SDE_model.pt')
     
     
     LJ_Module = interactionModule(c, r_c, p, q, gamma, sigma, periodic).to(device)
@@ -218,7 +219,7 @@ if __name__ == '__main__':
 
     torch.save(t_save.to('cpu'), save_t_SDE)
     
-    
+    torch.save(LJ_SDEwrapper.to('cpu'), save_model)
     
     
     LJ_SDEwrapper = mo.dynamicGSDEwrapper(LJ_SDEmodule, copy.deepcopy(graph_init).to(device), 
