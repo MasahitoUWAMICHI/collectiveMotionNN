@@ -42,14 +42,14 @@ class LJpotential(nn.Module):
     
 
 class interactionModule(nn.Module):
-    def __init__(self, c, r_c, p=12, q=6, periodic=None, dynamicName=None, messageName=None, aggregateName=None):
+    def __init__(self, c, r_c, p=12, q=6, min_r=1e-1, periodic=None, dynamicName=None, messageName=None, aggregateName=None):
         super().__init__()
         self.c = c
         self.r_c = r_c
         self.p = p
         self.q = q
         
-        self.LJ = LJpotential(c, r_c, p, q)
+        self.LJ = LJpotential(c, r_c, p, q, min_r)
         
         self.flg_periodic = not(periodic is None)
         
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     
     
     
-    LJ_Module = interactionModule(c, r_c, p, q, periodic)
+    LJ_Module = interactionModule(c, r_c, p, q, min_r, periodic)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop)
     
     LJ_ODEmodule = mo.dynamicGNDEmodule(LJ_Module, edgeModule)
