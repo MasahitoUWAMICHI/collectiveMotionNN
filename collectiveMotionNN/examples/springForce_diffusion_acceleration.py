@@ -165,7 +165,7 @@ if __name__ == '__main__':
     save_model = ut.variableInitializer(args.save_model, 'SPacc_SDE_model.pt')
     
     
-    sp_Module = interactionModule(c, r_c, p, gamma, sigma, periodic).to(device)
+    SP_Module = interactionModule(c, r_c, p, gamma, sigma, periodic).to(device)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop).to(device)
     
     SP_SDEmodule = mo.dynamicGNDEmodule(SP_Module, edgeModule).to(device)
