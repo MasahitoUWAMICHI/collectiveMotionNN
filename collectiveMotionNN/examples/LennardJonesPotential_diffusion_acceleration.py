@@ -200,7 +200,7 @@ if __name__ == '__main__':
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
                       size=(N_particles, 4), dt=dt_step, device=device)
   
-    y = sdeint(LJ_ODEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method='euler')
+    y = sdeint(LJ_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method='euler')
     
     print(LJ_SDEwrapper.graph)
     
