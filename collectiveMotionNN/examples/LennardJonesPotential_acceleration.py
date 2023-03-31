@@ -17,10 +17,10 @@ from distutils.util import strtobool
 
     
 class LJpotential(nn.Module):
-    def __init__(self, c, sigma, p=12, q=6, min_r=1e-1):
+    def __init__(self, c, r_c, p=12, q=6, min_r=1e-1):
         super().__init__()
         self.c = c
-        self.sigma = sigma
+        self.r_c = r_c
         self.p = p
         self.q = q
         
@@ -28,24 +28,24 @@ class LJpotential(nn.Module):
         
     def potential(self, r_in):
         r = r_in*(r_in > min_r) + min_r*(r_in <= min_r)
-        return 4 * self.c * (self.sigma/r)**(self.q) * ((self.sigma/r)**(self.p-self.q) - 1)
+        return 4 * self.c * (self.r_c/r)**(self.q) * ((self.r_c/r)**(self.p-self.q) - 1)
 
     def force(self, r_in):
         r = r_in*(r_in > min_r) + min_r*(r_in <= min_r)
-        return 4 * self.c * (self.sigma/r)**(self.q) * ((self.p * (self.sigma/r)**(self.p-self.q)) - self.q) / r
+        return 4 * self.c * (self.r_c/r)**(self.q) * ((self.p * (self.r_c/r)**(self.p-self.q)) - self.q) / r
     
 
 class interactionModule(nn.Module):
-    def __init__(self, c, sigma, p=12, q=6, gamma=0.1, periodic=None, positionName=None, velocityName=None, accelerationName=None, messageName=None):
+    def __init__(self, c, r_c, p=12, q=6, gamma=0.1, periodic=None, positionName=None, velocityName=None, accelerationName=None, messageName=None):
         super().__init__()
         self.c = c
-        self.sigma = sigma
+        self.r_c = r_c
         self.p = p
         self.q = q
         
         self.gamma = gamma
         
-        self.LJ = LJpotential(c, sigma, p, q)
+        self.LJ = LJpotential(c, r_c, p, q)
         
         self.flg_periodic = not(periodic is None)
         
@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--c', type=float)
-    parser.add_argument('--sigma', type=float)
+    parser.add_argument('--r_c', type=float)
     parser.add_argument('--p', type=float)
     parser.add_argument('--q', type=float)
     parser.add_argument('--gamma', type=float)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     
     
     c = ut.variableInitializer(args.c, 1.0)
-    sigma = ut.variableInitializer(args.sigma, 1.0)
+    r_c = ut.variableInitializer(args.r_c, 1.0)
     p = ut.variableInitializer(args.p, 12.0)
     q = ut.variableInitializer(args.q, 6.0)
     
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     
     
     
-    LJ_Module = interactionModule(c, sigma, p, q, periodic)
+    LJ_Module = interactionModule(c, r_c, p, q, periodic)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop)
     
     LJ_ODEmodule = mo.dynamicGNDEmodule(LJ_Module, edgeModule)
