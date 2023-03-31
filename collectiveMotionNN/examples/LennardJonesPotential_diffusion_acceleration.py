@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from torch import nn
 
+import copy
+
 from torchdyn.core import NeuralODE
 
 from torchsde import BrownianInterval, sdeint
@@ -191,7 +193,7 @@ if __name__ == '__main__':
     
     
     
-    LJ_SDEwrapper = mo.dynamicGSDEwrapper(LJ_SDEmodule, graph_init.detach().to(device), 
+    LJ_SDEwrapper = mo.dynamicGSDEwrapper(LJ_SDEmodule, copy.deepcopy(graph_init).to(device), 
                                           ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2])).to(device)
     
@@ -216,6 +218,9 @@ if __name__ == '__main__':
     
     
     
+    LJ_SDEwrapper = mo.dynamicGSDEwrapper(LJ_SDEmodule, copy.deepcopy(graph_init).to(device), 
+                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
+                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2])).to(device)
     
     neuralDE = NeuralODE(LJ_SDEwrapper, solver='euler').to(device)
     
