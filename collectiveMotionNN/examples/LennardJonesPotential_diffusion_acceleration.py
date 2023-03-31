@@ -51,6 +51,8 @@ class interactionModule(nn.Module):
         
         self.sigma = sigma
         
+        self.prepare_sigma()
+        
         self.LJ = LJpotential(c, r_c, p, q)
         
         self.flg_periodic = not(periodic is None)
@@ -71,7 +73,6 @@ class interactionModule(nn.Module):
         self.messageName = ut.variableInitializer(messageName, 'm')
 
         
-        
     def def_nonPeriodic(self):
         self.distanceCalc = ut.euclidDistance_nonPeriodic()
         
@@ -84,6 +85,8 @@ class interactionModule(nn.Module):
         else:
             self.def_periodic()
             
+    def prepare_sigma(self):
+        self.sigmaMatrix = torch.cat((torch.zeros([2,2]), self.sigma=torch.eye(2)), dim=0)
             
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
@@ -99,7 +102,7 @@ class interactionModule(nn.Module):
         return g
       
     def g(self, t, g, args=None):
-        g.ndata[self.noiseName] = torch.cat((torch.zeros_like(g.ndata[self.positionName]), self.sigma * torch.ones_like(g.ndata[self.velocityName])), dim=-1)
+        g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.velocityName].shape[0], 1, 1)
         return g
     
     
@@ -198,7 +201,7 @@ if __name__ == '__main__':
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2])).to(device)
     
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                      size=x0.shape, dt=dt_step, device=device)
+                      size=(x0.shape[0], 2), dt=dt_step, device=device)
   
     y = sdeint(LJ_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method='euler')
     
