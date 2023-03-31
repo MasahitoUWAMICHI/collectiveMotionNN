@@ -18,7 +18,7 @@ import collectiveMotionNN.module as mo
 import argparse
 from distutils.util import strtobool
 
-
+import cloudpickle
     
 class LJpotential(nn.Module):
     def __init__(self, c, r_c, p=12, q=6, min_r=1e-1):
@@ -219,7 +219,9 @@ if __name__ == '__main__':
 
     torch.save(t_save.to('cpu'), save_t_SDE)
     
-    torch.save(LJ_SDEwrapper.to('cpu'), save_model)
+    #torch.save(LJ_SDEwrapper.to('cpu'), save_model)
+    with open(save_model, mode='wb') as f:
+        cloudpickle.dump(LJ_SDEwrapper.to('cpu'), f)
     
     
     LJ_SDEwrapper = mo.dynamicGSDEwrapper(LJ_SDEmodule, copy.deepcopy(graph_init).to(device), 
