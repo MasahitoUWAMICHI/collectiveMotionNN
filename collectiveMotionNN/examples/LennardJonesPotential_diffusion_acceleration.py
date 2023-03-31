@@ -17,10 +17,10 @@ from distutils.util import strtobool
 
     
 class LJpotential(nn.Module):
-    def __init__(self, c, sigma, p=12, q=6, min_r=1e-1):
+    def __init__(self, c, r_c, p=12, q=6, min_r=1e-1):
         super().__init__()
         self.c = c
-        self.sigma = sigma
+        self.r_c = r_c
         self.p = p
         self.q = q
         
@@ -36,18 +36,18 @@ class LJpotential(nn.Module):
     
 
 class interactionModule(nn.Module):
-    def __init__(self, c, sigma, p=12, q=6, gamma=0.0, s=0.1, periodic=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+    def __init__(self, c, r_c, p=12, q=6, gamma=0.0, sigma=0.1, periodic=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
         super().__init__()
         self.c = c
-        self.sigma = sigma
+        self.r_c = r_c
         self.p = p
         self.q = q
         
         self.gamma = gamma
         
-        self.s = s
+        self.sigma = sigma
         
-        self.LJ = LJpotential(c, sigma, p, q)
+        self.LJ = LJpotential(c, r_c, p, q)
         
         self.flg_periodic = not(periodic is None)
         
@@ -61,7 +61,7 @@ class interactionModule(nn.Module):
         self.positionName = ut.variableInitializer(positionName, 'x')
         self.velocityName = ut.variableInitializer(velocityName, 'v')        
         self.accelerationName = ut.variableInitializer(accelerationName, 'a')
-        self.noiseName = ut.variableInitializer(noiseName, 's')
+        self.noiseName = ut.variableInitializer(noiseName, 'sigma')
 
         
         self.messageName = ut.variableInitializer(messageName, 'm')
@@ -95,7 +95,7 @@ class interactionModule(nn.Module):
         return g
       
     def g(self, t, g, args=None):
-        g.ndata[self.noiseName] = self.s * g.ndata[self.velocityName]
+        g.ndata[self.noiseName] = torch.cat((torch.zeros_like(g.ndata[self.positionName]), self.sigma * torch.ones_like(g.ndata[self.velocityName])), dim=-1)
         return g
     
     
@@ -104,10 +104,11 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--c', type=float)
-    parser.add_argument('--sigma', type=float)
+    parser.add_argument('--r_c', type=float)
     parser.add_argument('--p', type=float)
     parser.add_argument('--q', type=float)
     parser.add_argument('--gamma', type=float)
+    parser.add_argument('--sigma', type=float)
     parser.add_argument('--min_r', type=float)
     
     parser.add_argument('--r0', type=float)
@@ -133,11 +134,12 @@ if __name__ == '__main__':
     
     
     c = ut.variableInitializer(args.c, 1.0)
-    sigma = ut.variableInitializer(args.sigma, 1.0)
+    r_c = ut.variableInitializer(args.r_c, 1.0)
     p = ut.variableInitializer(args.p, 12.0)
     q = ut.variableInitializer(args.q, 6.0)
     
     gamma = ut.variableInitializer(args.gamma, 0.0)
+    sigma = ut.variableInitializer(args.sigma, 0.1)
     
     min_r = ut.variableInitializer(args.min_r, 1e-1)
     
