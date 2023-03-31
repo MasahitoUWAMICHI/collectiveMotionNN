@@ -86,7 +86,7 @@ class interactionModule(nn.Module):
             self.def_periodic()
             
     def prepare_sigma(self):
-        self.sigmaMatrix = torch.cat((torch.zeros([2,2]), self.sigma=torch.eye(2)), dim=0)
+        self.sigmaMatrix = torch.cat((torch.zeros([2,2]), self.sigma*torch.eye(2)), dim=0)
             
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
