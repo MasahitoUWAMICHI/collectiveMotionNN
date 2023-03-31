@@ -198,7 +198,7 @@ if __name__ == '__main__':
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2])).to(device)
     
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                      size=(N_particles, 4), dt=dt_step, device=device)
+                      size=x0.shape, dt=dt_step, device=device)
   
     y = sdeint(LJ_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method='euler')
     
