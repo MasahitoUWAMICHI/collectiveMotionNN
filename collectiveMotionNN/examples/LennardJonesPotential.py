@@ -118,6 +118,8 @@ if __name__ == '__main__':
     parser.add_argument('--selfloop', type=strtobool)
     
     parser.add_argument('--device', type=str)
+    parser.add_argument('--solver', type=str)
+    
     parser.add_argument('--save_x', type=str)
     parser.add_argument('--save_t', type=str)
     parser.add_argument('--save_model', type=str)
@@ -146,6 +148,8 @@ if __name__ == '__main__':
     selfloop = ut.variableInitializer(args.selfloop, False)
     
     device = ut.variableInitializer(args.device, 'cuda' if torch.cuda.is_available() else 'cpu')
+    solver = ut.variableInitializer(args.solver, 'rk4')
+    
     save_x = ut.variableInitializer(args.save_x, 'LJ_traj.pt')
     save_t = ut.variableInitializer(args.save_t, 't_eval.pt')
     save_model = ut.variableInitializer(args.save_model, 'LJ_model.pt')
@@ -170,7 +174,7 @@ if __name__ == '__main__':
                  
     LJ_ODEwrapper = mo.dynamicGODEwrapper(LJ_ODEmodule, graph_init).to(device)
     
-    neuralDE = NeuralODE(LJ_ODEwrapper, solver='euler').to(device)
+    neuralDE = NeuralODE(LJ_ODEwrapper, solver=solver).to(device)
     
     
     
