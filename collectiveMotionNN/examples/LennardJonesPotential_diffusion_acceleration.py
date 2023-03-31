@@ -31,11 +31,11 @@ class LJpotential(nn.Module):
         self.min_r = min_r
         
     def potential(self, r_in):
-        r = r_in*(r_in > min_r) + min_r*(r_in <= min_r)
+        r = r_in*(r_in > self.min_r) + self.min_r*(r_in <= self.min_r)
         return 4 * self.c * (self.r_c/r)**(self.q) * ((self.r_c/r)**(self.p-self.q) - 1)
 
     def force(self, r_in):
-        r = r_in*(r_in > min_r) + min_r*(r_in <= min_r)
+        r = r_in*(r_in > self.min_r) + self.min_r*(r_in <= self.min_r)
         return 4 * self.c * (self.r_c/r)**(self.q) * ((self.p * (self.r_c/r)**(self.p-self.q)) - self.q) / r
     
 
