@@ -172,7 +172,7 @@ if __name__ == '__main__':
     LJ_Module = interactionModule(c, r_c, p, q, gamma, sigma, periodic)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop)
     
-    LJ_ODEmodule = mo.dynamicGNDEmodule(LJ_Module, edgeModule)
+    LJ_SDEmodule = mo.dynamicGNDEmodule(LJ_Module, edgeModule)
     
     
     x0 = []
