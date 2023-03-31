@@ -4,6 +4,8 @@ from torch import nn
 
 from torchdyn.core import NeuralODE
 
+from torchsde import BrownianInterval, sdeint
+
 import dgl
 import dgl.function as fn
 
@@ -179,22 +181,43 @@ if __name__ == '__main__':
         x0.append(torch.cat((torch.rand([N_particles, 2]) * L, (torch.rand([N_particles, 2]) - 0.5) * (2*v0)), dim=-1))
         graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'v'], [2, 2])))
     x0 = torch.concat(x0, dim=0)
-    graph_init = dgl.batch(graph_init).to(device)
+    graph_init = dgl.batch(graph_init)
         
     
-                 
-    LJ_ODEwrapper = mo.dynamicGODEwrapper(LJ_ODEmodule, graph_init, 
-                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2])).to(device)
-    
-
     t_span = torch.arange(0, t_max+dt_step, dt_step)
     t_save = torch.arange(0, t_max+dt_step, dt_save)
 
     
     
     
-    neuralDE = NeuralODE(LJ_ODEwrapper, solver='euler').to(device)
+    
+    LJ_SDEwrapper = mo.dynamicGSDEwrapper(LJ_SDEmodule, graph_init.detach().to(device), 
+                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
+                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2])).to(device)
+    
+    bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
+                      size=(N_particles, 4), dt=dt_step, device=device)
+  
+    y = sdeint(LJ_ODEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method='euler')
+    
+    print(LJ_SDEwrapper.graph)
+    
+    if periodic is None:
+        y = y.to('cpu')
+    else:
+        y = torch.remainder(y.to('cpu'), periodic) 
+    
+    y = y.reshape((t_eval.shape[0], N_batch, N_particles, 4))
+
+    torch.save(y, save_x_SDE)
+
+    torch.save(t_eval.to('cpu'), save_t_SDE)
+    
+    
+    
+    
+    
+    neuralDE = NeuralODE(LJ_SDEwrapper, solver='euler').to(device)
     
     t_eval, x = neuralDE(x0.to(device), t_span.to(device), save_at=t_save.to(device))
     
@@ -207,6 +230,12 @@ if __name__ == '__main__':
     
     x = x.reshape((t_eval.shape[0], N_batch, N_particles, 4))
 
-    torch.save(x, save_x)
+    torch.save(x, save_x_ODE)
 
-    torch.save(t_eval.to('cpu'), save_t)
+    torch.save(t_eval.to('cpu'), save_t_ODE)
+    
+    
+    
+
+    
+        
