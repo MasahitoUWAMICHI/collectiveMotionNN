@@ -209,11 +209,11 @@ if __name__ == '__main__':
     else:
         y = torch.remainder(y.to('cpu'), periodic) 
     
-    y = y.reshape((t_eval.shape[0], N_batch, N_particles, 4))
+    y = y.reshape((t_save.shape[0], N_batch, N_particles, 4))
 
     torch.save(y, save_x_SDE)
 
-    torch.save(t_eval.to('cpu'), save_t_SDE)
+    torch.save(t_save.to('cpu'), save_t_SDE)
     
     
     
