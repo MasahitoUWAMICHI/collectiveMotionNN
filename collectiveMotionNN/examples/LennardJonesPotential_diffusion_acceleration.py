@@ -40,7 +40,7 @@ class LJpotential(nn.Module):
     
 
 class interactionModule(nn.Module):
-    def __init__(self, c, r_c, p=12, q=6, gamma=0.0, sigma=0.1, periodic=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+    def __init__(self, c, r_c, p=12, q=6, min_r=1e-1, gamma=0.0, sigma=0.1, periodic=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
         super().__init__()
         self.c = c
         self.r_c = r_c
@@ -53,7 +53,7 @@ class interactionModule(nn.Module):
         
         self.prepare_sigma()
         
-        self.LJ = LJpotential(c, r_c, p, q)
+        self.LJ = LJpotential(c, r_c, p, q, min_r)
         
         self.flg_periodic = not(periodic is None)
         
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     save_model = ut.variableInitializer(args.save_model, 'LJacc_SDE_model.pt')
     
     
-    LJ_Module = interactionModule(c, r_c, p, q, gamma, sigma, periodic).to(device)
+    LJ_Module = interactionModule(c, r_c, p, q, min_r, gamma, sigma, periodic).to(device)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop).to(device)
     
     LJ_SDEmodule = mo.dynamicGNDEmodule(LJ_Module, edgeModule).to(device)
