@@ -14,7 +14,7 @@ import collectiveMotionNN.module as mo
 import argparse
 from distutils.util import strtobool
 
-
+import cloudpickle
 
     
     
@@ -197,5 +197,6 @@ if __name__ == '__main__':
 
     torch.save(t_eval.to('cpu'), save_t)
     
-    torch.save(LJ_ODEwrapper.to('cpu'), save_model)
-    
+    #torch.save(LJ_ODEwrapper.to('cpu'), save_model)
+    with open(save_model, mode='wb') as f:
+        cloudpickle.dump(LJ_ODEwrapper.to('cpu'), f)
