@@ -176,7 +176,7 @@ if __name__ == '__main__':
     noise_type = ut.variableInitializer(args.noise_type, 'general')
     sde_type = ut.variableInitializer(args.sde_type, 'ito')
     
-    bm_levy = ut.variableInitializer(args.bm_levy, 'None')
+    bm_levy = ut.variableInitializer(args.bm_levy, 'none')
     
     SP_Module = interactionModule(c, r_c, p, gamma, sigma, periodic).to(device)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop).to(device)
