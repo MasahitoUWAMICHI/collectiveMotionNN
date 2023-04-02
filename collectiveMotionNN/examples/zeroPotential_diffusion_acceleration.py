@@ -122,6 +122,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_x_SDE', type=str)
     parser.add_argument('--save_t_SDE', type=str)
     parser.add_argument('--save_model', type=str)
+    parser.add_argument('--save_bm', type=str)
     
     parser.add_argument('--method_ODE', type=str)
     parser.add_argument('--method_SDE', type=str)
@@ -158,6 +159,8 @@ if __name__ == '__main__':
     save_t_SDE = ut.variableInitializer(args.save_t_SDE, 'ZPacc_SDE_t_eval.pt')
     save_model = ut.variableInitializer(args.save_model, 'ZPacc_SDE_model.pt')
 
+    save_bm = ut.variableInitializer(args.save_bm, 'ZPacc_SDE_bm.pt')
+    
     method_ODE = ut.variableInitializer(args.method_ODE, 'euler')
     method_SDE = ut.variableInitializer(args.method_SDE, 'euler')
     noise_type = ut.variableInitializer(args.noise_type, 'general')
@@ -193,7 +196,7 @@ if __name__ == '__main__':
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                      size=(x0.shape[0], 2), dt=dt_step, levy_area_approximation=bm_levy, device=device)
+                      size=(x0.shape[0], 2), dt=dt_step/4.0, levy_area_approximation=bm_levy, device=device)
   
     y = sdeint(SP_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
     
@@ -214,7 +217,10 @@ if __name__ == '__main__':
     with open(save_model, mode='wb') as f:
         cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
     
-    
+    with open(save_bm, mode='wb') as f:
+        cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
+        
+        
     #SP_SDEwrapper = mo.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
     #                                      ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
     #                                      derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2]),
