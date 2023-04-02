@@ -27,7 +27,7 @@ class euclidDistance_periodic(nn.Module):
     
     
 def extractBrownian(bm, tW, device=None):
-    bm_size = list(bm.size)
+    bm_size = list(bm.size())
     Nt = len(tW) - 1
     device = variableInitializer(device, 'cpu')
 
