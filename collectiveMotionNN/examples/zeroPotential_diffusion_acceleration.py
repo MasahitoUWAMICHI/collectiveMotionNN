@@ -82,7 +82,7 @@ class interactionModule(nn.Module):
         abs_dr = torch.norm(dr, dim=-1, keepdim=True)
         unit_dr = nn.functional.normalize(dr, dim=-1)
         
-        return {self.messageName: self.p.force(abs_dr) * unit_dr}
+        return {self.messageName: self.zp.force(abs_dr) * unit_dr}
         
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, fn.sum(self.messageName, self.accelerationName))
