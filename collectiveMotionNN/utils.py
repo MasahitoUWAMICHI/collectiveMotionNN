@@ -26,3 +26,13 @@ class euclidDistance_periodic(nn.Module):
         return dr - (dr > self.periodicLength/2) * self.periodicLength
     
     
+def extractBrownian(bm, tW, device=None):
+    bm_size = list(bm.size)
+    Nt = len(tW) - 1
+    device = variableInitializer(device, 'cpu')
+
+    B_t = torch.zeros([Nt+1]+bm_size)
+    for i in range(Nt):
+        B_t[i+1] = B_t[i] + bm(tW[i], tW[i+1]).to(device).detach()
+
+    return B_t
