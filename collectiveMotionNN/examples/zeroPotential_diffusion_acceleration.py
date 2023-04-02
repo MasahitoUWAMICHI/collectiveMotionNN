@@ -218,7 +218,7 @@ if __name__ == '__main__':
         cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
     
     with open(save_bm, mode='wb') as f:
-        cloudpickle.dump(bm.to('cpu'), f)
+        cloudpickle.dump(bm, f)
         
         
     #SP_SDEwrapper = mo.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
