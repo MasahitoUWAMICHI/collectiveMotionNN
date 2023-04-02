@@ -217,8 +217,9 @@ if __name__ == '__main__':
     with open(save_model, mode='wb') as f:
         cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
     
-    with open(save_bm, mode='wb') as f:
-        cloudpickle.dump(bm, f)
+    bm_tensor = ut.extractBrownian(bm, torch.arange(0.0, t_max+dt_step, dt_step))
+    
+    torch.save(bm_tensor, save_bm)
         
         
     #SP_SDEwrapper = mo.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
