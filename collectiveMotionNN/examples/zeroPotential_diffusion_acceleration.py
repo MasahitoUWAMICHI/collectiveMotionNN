@@ -152,11 +152,11 @@ if __name__ == '__main__':
     selfloop = ut.variableInitializer(args.selfloop, False)
     
     device = ut.variableInitializer(args.device, 'cuda' if torch.cuda.is_available() else 'cpu')
-    save_x_ODE = ut.variableInitializer(args.save_x_ODE, 'SPacc_ODE_traj.pt')
-    save_t_ODE = ut.variableInitializer(args.save_t_ODE, 'SPacc_ODE_t_eval.pt')
-    save_x_SDE = ut.variableInitializer(args.save_x_SDE, 'SPacc_SDE_traj.pt')
-    save_t_SDE = ut.variableInitializer(args.save_t_SDE, 'SPacc_SDE_t_eval.pt')
-    save_model = ut.variableInitializer(args.save_model, 'SPacc_SDE_model.pt')
+    save_x_ODE = ut.variableInitializer(args.save_x_ODE, 'ZPacc_ODE_traj.pt')
+    save_t_ODE = ut.variableInitializer(args.save_t_ODE, 'ZPacc_ODE_t_eval.pt')
+    save_x_SDE = ut.variableInitializer(args.save_x_SDE, 'ZPacc_SDE_traj.pt')
+    save_t_SDE = ut.variableInitializer(args.save_t_SDE, 'ZPacc_SDE_t_eval.pt')
+    save_model = ut.variableInitializer(args.save_model, 'ZPacc_SDE_model.pt')
 
     method_ODE = ut.variableInitializer(args.method_ODE, 'euler')
     method_SDE = ut.variableInitializer(args.method_SDE, 'euler')
