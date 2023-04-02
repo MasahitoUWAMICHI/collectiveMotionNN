@@ -132,6 +132,11 @@ if __name__ == '__main__':
     parser.add_argument('--save_t_SDE', type=str)
     parser.add_argument('--save_model', type=str)
     
+    parser.add_argument('--method_ODE', type=str)
+    parser.add_argument('--method_SDE', type=str)
+    parser.add_argument('--noise_type', type=str)
+    parser.add_argument('--sde_type', type=str)
+    
     args = parser.parse_args()
     
     
@@ -163,7 +168,11 @@ if __name__ == '__main__':
     save_x_SDE = ut.variableInitializer(args.save_x_SDE, 'SPacc_SDE_traj.pt')
     save_t_SDE = ut.variableInitializer(args.save_t_SDE, 'SPacc_SDE_t_eval.pt')
     save_model = ut.variableInitializer(args.save_model, 'SPacc_SDE_model.pt')
-    
+
+    method_ODE = ut.variableInitializer(args.method_ODE, 'euler')
+    method_SDE = ut.variableInitializer(args.method_SDE, 'euler')
+    noise_type = ut.variableInitializer(args.noise_type, 'general')
+    sde_type = ut.variableInitializer(args.sde_type, 'ito')
     
     SP_Module = interactionModule(c, r_c, p, gamma, sigma, periodic).to(device)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop).to(device)
@@ -189,12 +198,13 @@ if __name__ == '__main__':
     
     SP_SDEwrapper = mo.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
                                           ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2])).to(device)
+                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2]),
+                                          noise_type=noise_type, sde_type=sde_type).to(device)
     
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
                       size=(x0.shape[0], 2), dt=dt_step, device=device)
   
-    y = sdeint(SP_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method='euler')
+    y = sdeint(SP_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
     
     print(SP_SDEwrapper.graph)
     
@@ -216,9 +226,10 @@ if __name__ == '__main__':
     
     SP_SDEwrapper = mo.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
                                           ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2])).to(device)
+                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2]),
+                                          noise_type=noise_type, sde_type=sde_type).to(device)
     
-    neuralDE = NeuralODE(SP_SDEwrapper, solver='euler').to(device)
+    neuralDE = NeuralODE(SP_SDEwrapper, solver=method_ODE).to(device)
     
     t_eval, x = neuralDE(x0.to(device), t_span.to(device), save_at=t_save.to(device))
     
