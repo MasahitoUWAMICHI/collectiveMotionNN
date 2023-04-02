@@ -144,7 +144,7 @@ if __name__ == '__main__':
     
     c = ut.variableInitializer(args.c, 1.0)
     r_c = ut.variableInitializer(args.r_c, 1.0)
-    p = ut.variableInitializer(args.p, 12.0)
+    p = ut.variableInitializer(args.p, 2.0)
     
     gamma = ut.variableInitializer(args.gamma, 0.0)
     sigma = ut.variableInitializer(args.sigma, 0.1)
