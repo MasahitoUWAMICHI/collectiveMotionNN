@@ -228,10 +228,13 @@ if __name__ == '__main__':
         cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
     
     
-    SP_SDEwrapper = mo.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
-                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2]),
-                                          noise_type=noise_type, sde_type=sde_type).to(device)
+    #SP_SDEwrapper = mo.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
+    #                                      ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [2, 2]), 
+    #                                      derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [2, 2]),
+    #                                      noise_type=noise_type, sde_type=sde_type).to(device)
+    
+    SP_SDEwrapper.graph =  copy.deepcopy(graph_init).to(device)
+    SP_SDEwrapper.edgeInitialize()
     
     neuralDE = NeuralODE(SP_SDEwrapper, solver=method_ODE).to(device)
     
