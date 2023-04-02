@@ -136,6 +136,8 @@ if __name__ == '__main__':
     parser.add_argument('--method_SDE', type=str)
     parser.add_argument('--noise_type', type=str)
     parser.add_argument('--sde_type', type=str)
+
+    parser.add_argument('--bm_levy', type=str)
     
     args = parser.parse_args()
     
@@ -174,6 +176,8 @@ if __name__ == '__main__':
     noise_type = ut.variableInitializer(args.noise_type, 'general')
     sde_type = ut.variableInitializer(args.sde_type, 'ito')
     
+    bm_levy = ut.variableInitializer(args.bm_levy, 'None')
+    
     SP_Module = interactionModule(c, r_c, p, gamma, sigma, periodic).to(device)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop).to(device)
     
@@ -202,7 +206,7 @@ if __name__ == '__main__':
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                      size=(x0.shape[0], 2), dt=dt_step, device=device)
+                      size=(x0.shape[0], 2), dt=dt_step, levy_area_approximation=bm_levy, device=device)
   
     y = sdeint(SP_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
     
