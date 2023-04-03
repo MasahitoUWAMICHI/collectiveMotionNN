@@ -162,7 +162,7 @@ if __name__ == '__main__':
     if not(periodic is None):
         y[..., :2] = torch.remainder(y[..., :2], periodic)
     
-    y = y.reshape((t_save.shape[0], N_batch, N_particles, 4))
+    y = y.reshape((t_save.shape[0], N_batch, N_particles, 3))
 
     torch.save(y, save_x_SDE)
 
