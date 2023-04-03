@@ -234,10 +234,9 @@ if __name__ == '__main__':
     
     print(neuralDE.vf.vf.graph)
     
-    if periodic is None:
-        x = x.to('cpu')
-    else:
-        x = torch.remainder(x.to('cpu'), periodic) 
+    x = x.to('cpu')
+    if not(periodic is None):
+        x[..., :2] = torch.remainder(x[..., :2], periodic)
     
     x = x.reshape((t_eval.shape[0], N_batch, N_particles, 4))
 
