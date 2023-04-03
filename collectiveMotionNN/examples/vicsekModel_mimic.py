@@ -19,13 +19,15 @@ from distutils.util import strtobool
 import cloudpickle
 
 class interactionModule(nn.Module):
-    def __init__(self, u0, w0, sigma=0.1, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
+    def __init__(self, u0, w0, sigma=0.1, d=1, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
         super().__init__()
         
         self.v0 = v0
         self.w0 = w0
 
         self.sigma = sigma
+        
+        self.d = d
         
         self.prepare_sigma()
                     
@@ -42,7 +44,7 @@ class interactionModule(nn.Module):
         self.sigmaMatrix = torch.cat((torch.zeros([2,1]), self.sigma*torch.ones([1,1])), dim=0)
             
     def calc_message(self, edges):
-        dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
+        dtheta = (edges.src[self.polarityName] - edges.dst[self.polarityName]) * self.d
         return {self.messageName: torch.cat((torch.cos(dtheta), torch.sin(dtheta)), -1)}
     
     def aggregate_message(self, nodes):
@@ -66,6 +68,7 @@ if __name__ == '__main__':
     parser.add_argument('--v0', type=float)
     parser.add_argument('--w0', type=float)
     parser.add_argument('--sigma', type=float)
+    parser.add_argument('--d', type=float)
     
     parser.add_argument('--r0', type=float)
     
@@ -100,6 +103,8 @@ if __name__ == '__main__':
     
     sigma = ut.variableInitializer(args.sigma, 0.3)
         
+    d = ut.variableInitializer(args.d, 1)
+    
     r0 = ut.variableInitializer(args.r0, 1.0)
     L = ut.variableInitializer(args.L, 5.0)
     
@@ -124,7 +129,7 @@ if __name__ == '__main__':
     
     bm_levy = ut.variableInitializer(args.bm_levy, 'none')
     
-    Vicsek_Module = interactionModule(v0, w0, sigma).to(device)
+    Vicsek_Module = interactionModule(v0, w0, sigma, d).to(device)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop).to(device)
     
     Vicsek_SDEmodule = mo.dynamicGNDEmodule(Vicsek_Module, edgeModule).to(device)
