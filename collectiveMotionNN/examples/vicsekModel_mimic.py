@@ -42,7 +42,7 @@ class interactionModule(nn.Module):
         self.sigmaMatrix = torch.cat((torch.zeros([2,1]), self.sigma*torch.ones([1,1])), dim=0)
             
     def calc_message(self, edges):
-        dtheta = edges.src[self.positionName] - edges.dst[self.polarityName]
+        dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
         return {self.messageName: torch.cat((torch.cos(dtheta), torch.sin(dtheta)), -1)}
     
     def aggregate_message(self, nodes):
