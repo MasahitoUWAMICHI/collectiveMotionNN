@@ -152,7 +152,7 @@ if __name__ == '__main__':
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                      size=(x0.shape[0], 2), dt=dt_step, device=device)
+                      size=(x0.shape[0], 1), dt=dt_step, device=device)
   
     y = sdeint(Vicsek_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
     
