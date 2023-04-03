@@ -212,10 +212,9 @@ if __name__ == '__main__':
     
     print(SP_SDEwrapper.graph)
     
-    if periodic is None:
-        y = y.to('cpu')
-    else:
-        y = torch.remainder(y.to('cpu'), periodic) 
+    y = y.to('cpu')
+    if not(periodic is None):
+        y[..., :2] = torch.remainder(y[..., :2], periodic)
     
     y = y.reshape((t_save.shape[0], N_batch, N_particles, 4))
 
