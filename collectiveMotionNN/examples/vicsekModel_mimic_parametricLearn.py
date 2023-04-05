@@ -395,7 +395,7 @@ if __name__ == '__main__':
             Vicsek_SDEwrapper.edgeInitialize()
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
-            xyloss, thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape))
+            xyloss, thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
             loss = xyloss + thetaLoss_weight * thetaloss
             loss_history.append([xyloss.item(), thetaloss.item()])
             loss.backward()
@@ -412,7 +412,7 @@ if __name__ == '__main__':
                 Vicsek_SDEwrapper.edgeInitialize()
                 _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
-                valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape))
+                valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
                 valid_xyloss_total = valid_xyloss_total + x_truth.shape[0] * valid_xyloss
                 valid_thetaloss_total = valid_thetaloss_total + x_truth.shape[0] * valid_thetaloss
                 valid_loss = valid_loss + x_truth.shape[0] * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
