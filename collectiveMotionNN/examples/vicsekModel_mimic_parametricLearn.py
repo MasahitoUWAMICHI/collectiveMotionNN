@@ -94,10 +94,10 @@ class myDataset(torch.utils.data.Dataset):
         xshape, _ = self.loadData()
         N_t, N_batch, N_particles, N_dim = xshape
         
-        self.N_t = N_t.item()
-        self.N_batch = N_batch.item()
-        self.N_particles = N_particles.item()
-        self.N_dim = N_dim.item()
+        self.N_t = N_t
+        self.N_batch = N_batch
+        self.N_particles = N_particles
+        self.N_dim = N_dim
         
         self.t_max = self.N_t - self.extractDataLength + 1
         
