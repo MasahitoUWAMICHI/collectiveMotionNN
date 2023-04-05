@@ -390,7 +390,7 @@ if __name__ == '__main__':
     
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
-            print(x_truth)
+            print(x_truth.shape)
             optimizer.zero_grad()
             Vicsek_SDEwrapper.graph = graph.to(device)
             Vicsek_SDEwrapper.edgeInitialize()
