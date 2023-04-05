@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torch import nn
-from torch.utils.data import Dataset
 
 import copy
 
@@ -42,7 +41,7 @@ class interactionModule(nn.Module):
         
         self.messageName = ut.variableInitializer(messageName, 'm')
         
-    def initialize_parameter(self):
+    def reset_parameter(self):
         nn.init.uniform_(self.v0)
         nn.init.uniform_(self.w0)
         nn.init.uniform_(self.sigma)
@@ -68,7 +67,7 @@ class interactionModule(nn.Module):
         return g
     
     
-class myDataset(Dataset):
+class myDataset(torch.utils.data.Dataset):
     def __init__(self, dataPath, len=None, delayTruth=1):
         super().__init__()
         
@@ -106,8 +105,11 @@ class myDataset(Dataset):
     def calc_t_batch(self, index):
         return divmod(index, self.t_max)
     
-    def __getitem__(self, index):
-        t, batch = self.calc_t_batch(index)
+    def calc_t_batch_subset(self, index, batchIndices_subset):
+        batch_sub, t = divmod(index, self.t_max)
+        return batchIndices_subset[batch_sub], t
+    
+    def from_t_batch(self, batch, t)
         _, x = self.loadData()
         
         gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'theta'], [2, 1]))
@@ -115,6 +117,30 @@ class myDataset(Dataset):
         x_truth = x[t+self.delayTruth, batch]
         
         return gr, x_truth
+    
+    def __getitem__(self, index):
+        batch, t = self.calc_t_batch(index)
+        return self.from_t_batch(batch, t)
+    
+class batchedSubset(torch.utils.data.Subset):
+    """
+    Subset of a dataset at specified indices.
+
+    Arguments:
+        dataset (Dataset): The whole Dataset
+        indices (sequence): Indices of batch in the whole set selected for subset
+    """
+    def __init__(self, dataset, indices):
+        super().__init__(dataset, indices)
+
+    def __getitem__(self, idx):
+        batch, t = self.dataset.calc_t_batch_subset(idx, self.indices)
+        return self.dataset.from_t_batch(batch, t)
+
+    def __len__(self):
+        return len(self.indices) * self.dataset.t_max
+    
+    
     
 class cosLoss(nn.Module):
     def __init__(self):
@@ -136,6 +162,10 @@ class myLoss(nn.Module):
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
         thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
         return xyLoss, thetaLoss
+    
+    
+    
+    
     
 if __name__ == '__main__':
 
@@ -177,6 +207,11 @@ if __name__ == '__main__':
     
     parser.add_argument('--method_ODE', type=str)
     parser.add_argument('--N_epoch', type=int)
+    parser.add_argument('--N_train_batch', type=int)
+    
+    parser.add_argument('--ratio_valid', type=float)
+    parser.add_argument('--ratio_test', type=float)
+    parser.add_argument('--split_seed', type=int)
     
     parser.add_argument('--lr', type=float)
     
@@ -224,7 +259,14 @@ if __name__ == '__main__':
 
     method_ODE = ut.variableInitializer(args.method_ODE, 'euler')
     N_epoch = ut.variableInitializer(args.N_epoch, 10)
+    N_train_batch = ut.variableInitializer(args.N_train_batch, 8)
 
+    ratio_valid = ut.variableInitializer(args.ratio_valid, 0.0)
+    ratio_test = ut.variableInitializer(args.ratio_test, 0.0)
+    ratio_train = 1.0 - ratio_valid - ratio_test
+
+    split_seed = ut.variableInitializer(torch.Generator().manual_seed(args.split_seed), torch.Generator())
+    
     lr = ut.variableInitializer(args.lr, 1e-3)
     
     save_learned_model = ut.variableInitializer(args.save_learned_model, 'Vicsek_learned_model.pt')
@@ -232,8 +274,9 @@ if __name__ == '__main__':
     
     
     
-    with torch.no_grad():
-        Vicsek_Module = interactionModule(v0, w0, sigma, d).to(device)
+    
+    
+    Vicsek_Module = interactionModule(v0, w0, sigma, d).to(device)
     edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop).to(device)
     
     Vicsek_SDEmodule = mo.dynamicGNDEmodule(Vicsek_Module, edgeModule).to(device)
@@ -263,7 +306,8 @@ if __name__ == '__main__':
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
                       size=(x0.shape[0], 1), dt=dt_step, device=device)
   
-    y = sdeint(Vicsek_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
+    with torch.no_grad():
+        y = sdeint(Vicsek_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
     
     print(Vicsek_SDEwrapper.graph)
     
@@ -284,9 +328,28 @@ if __name__ == '__main__':
     
     
     vicsek_dataset = myDataset(save_x_SDE, delayTruth=delayPredict)
+    vicsek_dataset.initialize()
+    
+    range_split = random_split(range(vicsek_dataset.N_batch), [ratio_train, ratio_valid, ratio_test], generator=generator)
+    
+    train_dataset = batchedSubset(vicsek_dataset, [i for i in range_split[0]])
+    valid_dataset = batchedSubset(vicsek_dataset, [i for i in range_split[1]])
+    test_dataset = batchedSubset(vicsek_dataset, [i for i in range_split[2]])
+    
+    train_loader = GraphDataLoader(train_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
+    valid_loader = GraphDataLoader(valid_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
+    test_loader = GraphDataLoader(test_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
+    
+    if periodic is None:
+        lossFunc = myLoss(ut.euclidDistance_nonPeriodic())
+    else:
+        lossFunc = myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)))
     
     
+    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter()
     
+        
 
+    for epoch in range()
     
         
