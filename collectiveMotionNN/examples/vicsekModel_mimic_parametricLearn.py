@@ -77,7 +77,7 @@ class myDataset(torch.utils.data.Dataset):
                 
         if len is None:
             self.initialize()
-        else
+        else:
             self.len = len
         
     def __len__(self):
