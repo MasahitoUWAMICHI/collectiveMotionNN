@@ -201,6 +201,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--bm_levy', type=str)
     
+
+    parser.add_argument('--skipSimulate', type=strtobool)
     
     
     parser.add_argument('--delayPredict', type=int)
@@ -256,6 +258,8 @@ if __name__ == '__main__':
     
     bm_levy = ut.variableInitializer(args.bm_levy, 'none')
     
+
+    skipSimulate = ut.variableInitializer(args.skipSimulate, False)
     
     
     delayPredict = ut.variableInitializer(args.delayPredict, 1)
@@ -312,26 +316,28 @@ if __name__ == '__main__':
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [2, 1]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
-    bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                      size=(x0.shape[0], 1), dt=dt_step, device=device)
-  
-    with torch.no_grad():
-        y = sdeint(Vicsek_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
+    if not skipSimulate:
     
-    print(Vicsek_SDEwrapper.graph)
-    
-    y = y.to('cpu')
-    if not(periodic is None):
-        y[..., :2] = torch.remainder(y[..., :2], periodic)
-    
-    y = y.reshape((t_save.shape[0], N_batch, N_particles, 3))
+        bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
+                          size=(x0.shape[0], 1), dt=dt_step, device=device)
 
-    torch.save(y, save_x_SDE)
+        with torch.no_grad():
+            y = sdeint(Vicsek_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
 
-    torch.save(t_save.to('cpu'), save_t_SDE)
-    
-    with open(save_model, mode='wb') as f:
-        cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
+        print(Vicsek_SDEwrapper.graph)
+
+        y = y.to('cpu')
+        if not(periodic is None):
+            y[..., :2] = torch.remainder(y[..., :2], periodic)
+
+        y = y.reshape((t_save.shape[0], N_batch, N_particles, 3))
+
+        torch.save(y, save_x_SDE)
+
+        torch.save(t_save.to('cpu'), save_t_SDE)
+
+        with open(save_model, mode='wb') as f:
+            cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
     
 
     
@@ -351,7 +357,7 @@ if __name__ == '__main__':
     vicsek_dataset = myDataset(save_x_SDE, delayTruth=delayPredict)
     vicsek_dataset.initialize()
     
-    range_split = random_split(range(vicsek_dataset.N_batch), [ratio_train, ratio_valid, ratio_test], generator=generator)
+    range_split = torch.utils.data.random_split(range(vicsek_dataset.N_batch), [ratio_train, ratio_valid, ratio_test], generator=generator)
     
     train_dataset = batchedSubset(vicsek_dataset, [i for i in range_split[0]])
     valid_dataset = batchedSubset(vicsek_dataset, [i for i in range_split[1]])
