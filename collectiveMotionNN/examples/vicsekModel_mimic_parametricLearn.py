@@ -214,8 +214,11 @@ if __name__ == '__main__':
     parser.add_argument('--split_seed', type=int)
     
     parser.add_argument('--lr', type=float)
+    parser.add_argument('--thetaLoss_weight', type=float)
     
     parser.add_argument('--save_learned_model', type=str)
+    parser.add_argument('--save_loss_history', type=str)
+    parser.add_argument('--save_validloss_history', type=str)
     
     
     args = parser.parse_args()
@@ -255,7 +258,7 @@ if __name__ == '__main__':
     
     
     delayPredict = ut.variableInitializer(args.delayPredict, 1)
-    dt_train = ut.variableInitializer(args.dt_train, dt_save)
+    dt_train = ut.variableInitializer(args.dt_train, dt_step)
 
     method_ODE = ut.variableInitializer(args.method_ODE, 'euler')
     N_epoch = ut.variableInitializer(args.N_epoch, 10)
@@ -268,9 +271,11 @@ if __name__ == '__main__':
     split_seed = ut.variableInitializer(torch.Generator().manual_seed(args.split_seed), torch.Generator())
     
     lr = ut.variableInitializer(args.lr, 1e-3)
+    thetaLoss_weight = ut.variableInitializer(args.thetaLoss_weight, 1.0)
     
-    save_learned_model = ut.variableInitializer(args.save_learned_model, 'Vicsek_learned_model.pt')
-    
+    save_learned_model = ut.variableInitializer(args.save_learned_model, 'Vicsek_parametric_learned_model.pt')
+    save_loss_history = ut.variableInitializer(args.save_loss_history, 'Vicsek_parametric_loss_history.pt')
+    save_validloss_history = ut.variableInitializer(args.save_validloss_history, 'Vicsek_parametric_validloss_history.pt')
     
     
     
@@ -327,6 +332,18 @@ if __name__ == '__main__':
 
     
     
+    
+    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter()
+    
+    neuralDE = NeuralODE(Vicsek_SDEwrapper, solver=method_ODE).to(device)
+    
+    t_pred_max = dt_save * float(delayPredict)
+    
+    t_learn_span = torch.arange(0, t_pred_max+dt_train, dt_train)
+    t_learn_save = torch.tensor([t_pred_max])
+    
+    
+    
     vicsek_dataset = myDataset(save_x_SDE, delayTruth=delayPredict)
     vicsek_dataset.initialize()
     
@@ -340,16 +357,65 @@ if __name__ == '__main__':
     valid_loader = GraphDataLoader(valid_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
     test_loader = GraphDataLoader(test_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
     
+    
     if periodic is None:
         lossFunc = myLoss(ut.euclidDistance_nonPeriodic())
     else:
         lossFunc = myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)))
+        
+    optimizer = torch.optim.SGD(module.parameters(), lr=lr)
     
+    best_valid_loss = np.inf
     
-    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter()
+    print('epoch: trainLoss (xy, theta), validLoss (xy, theta)')
     
+    loss_history = []
+    valid_loss_history = []
+    
+    saved_model = Vicsek_SDEwrapper.cpu().detach()
+    
+    for epoch in range(N_epoch):
+        for graph, x_truth in train_loader:
+            _, x_pred = neuralDE(graph.to(device), t_learn_span.to(device), save_at=t_learn_save.to(device))
+            xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
+            loss = xyloss + thetaLoss_weight * thetaloss
+            loss_history.append([xyloss.item(), thetaloss.item()])
+            loss.backward()
+            optimizer.step()
+            
+        with torch.no_grad():
+            valid_loss = 0
+            valid_xyloss_total = 0
+            valid_thetaloss_total = 0
+            data_count = 0
+            
+            for graph, x_truth in valid_loader:
+                _, x_pred = neuralDE(graph.to(device), t_learn_span.to(device), save_at=t_learn_save.to(device))
+                valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth)
+                valid_xyloss_total = valid_xyloss_total + x_truth.shape[0] * valid_xyloss
+                valid_thetaloss_total = valid_thetaloss_total + x_truth.shape[0] * valid_thetaloss
+                valid_loss = valid_loss + x_truth.shape[0] * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
+                data_count = data_count + x_truth.shape[0]
+                
+            valid_loss = valid_loss / data_count
+            valid_xyloss_total = valid_xyloss_total / data_count
+            valid_thetaloss_total = valid_thetaloss_total / data_count
+            valid_loss_history.append([valid_xyloss.item(), valid_thetaloss.item()])
+            
+        if valid_loss < best_loss:
+            saved_model = Vicsek_SDEwrapper.cpu().detach()
+            best_loss = valid_loss
+            print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}) Best'.format(
+                epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item()))
+        else:
+            print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f})'.format(
+                epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item()))
+        
+    torch.save(torch.tensor(loss_history), save_loss_history)
+
+    torch.save(torch.tensor(valid_loss_history), save_validloss_history)
+    
+    with open(save_learned_model, mode='wb') as f:
+        cloudpickle.dump(saved_model.to('cpu'), f)
         
 
-    for epoch in range()
-    
-        
