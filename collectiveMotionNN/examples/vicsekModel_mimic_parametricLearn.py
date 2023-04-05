@@ -109,7 +109,7 @@ class myDataset(torch.utils.data.Dataset):
         batch_sub, t = divmod(index, self.t_max)
         return batchIndices_subset[batch_sub], t
     
-    def from_t_batch(self, batch, t)
+    def from_t_batch(self, batch, t):
         _, x = self.loadData()
         
         gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'theta'], [2, 1]))
