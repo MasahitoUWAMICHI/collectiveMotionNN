@@ -390,12 +390,12 @@ if __name__ == '__main__':
     
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
-            print(x_truth.shape)
             optimizer.zero_grad()
             Vicsek_SDEwrapper.graph = graph.to(device)
             Vicsek_SDEwrapper.edgeInitialize()
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
+            print(x_pred.shape, x_truth.shape)
             xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
             loss = xyloss + thetaLoss_weight * thetaloss
             loss_history.append([xyloss.item(), thetaloss.item()])
