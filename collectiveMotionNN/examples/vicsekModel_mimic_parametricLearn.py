@@ -269,7 +269,7 @@ if __name__ == '__main__':
     N_epoch = ut.variableInitializer(args.N_epoch, 10)
     N_train_batch = ut.variableInitializer(args.N_train_batch, 8)
 
-    ratio_valid = ut.variableInitializer(args.ratio_valid, 0.0)
+    ratio_valid = ut.variableInitializer(args.ratio_valid, 1.0 / N_batch)
     ratio_test = ut.variableInitializer(args.ratio_test, 0.0)
 
     if args.split_seed is None:
@@ -368,7 +368,8 @@ if __name__ == '__main__':
     
     train_loader = GraphDataLoader(train_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
     valid_loader = GraphDataLoader(valid_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
-    test_loader = GraphDataLoader(test_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
+    if len(test_dataset) > 0:
+        test_loader = GraphDataLoader(test_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
     
     
     if periodic is None:
