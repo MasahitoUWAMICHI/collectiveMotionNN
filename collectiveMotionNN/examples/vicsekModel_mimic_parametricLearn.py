@@ -5,6 +5,7 @@ from torch import nn
 import copy
 
 from torchsde import BrownianInterval, sdeint
+from torchdyn.core import NeuralODE
 
 import dgl
 import dgl.function as fn
