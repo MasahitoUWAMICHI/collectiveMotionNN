@@ -423,7 +423,7 @@ if __name__ == '__main__':
             valid_thetaloss_total = valid_thetaloss_total / data_count
             valid_loss_history.append([valid_xyloss.item(), valid_thetaloss.item()])
             
-        if valid_loss < best_loss:
+        if valid_loss < best_valid_loss:
             #saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
             with open(save_learned_model, mode='wb') as f:
                 cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
