@@ -386,7 +386,7 @@ if __name__ == '__main__':
     loss_history = []
     valid_loss_history = []
     
-    saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
+    #saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
     
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
@@ -418,7 +418,9 @@ if __name__ == '__main__':
             valid_loss_history.append([valid_xyloss.item(), valid_thetaloss.item()])
             
         if valid_loss < best_loss:
-            saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
+            #saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
+            with open(save_learned_model, mode='wb') as f:
+                cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
             best_loss = valid_loss
             print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}) Best'.format(
                 epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item()))
@@ -430,7 +432,7 @@ if __name__ == '__main__':
 
     torch.save(torch.tensor(valid_loss_history), save_validloss_history)
     
-    with open(save_learned_model, mode='wb') as f:
-        cloudpickle.dump(saved_model.to('cpu'), f)
+    #with open(save_learned_model, mode='wb') as f:
+    #    cloudpickle.dump(saved_model.to('cpu'), f)
         
 
