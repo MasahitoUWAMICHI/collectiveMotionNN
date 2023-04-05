@@ -377,7 +377,7 @@ if __name__ == '__main__':
     else:
         lossFunc = myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)))
         
-    optimizer = torch.optim.SGD(module.parameters(), lr=lr)
+    optimizer = torch.optim.SGD(neuralDE.parameters(), lr=lr)
     
     best_valid_loss = np.inf
     
@@ -390,6 +390,7 @@ if __name__ == '__main__':
     
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
+            optimizer.zero_grad()
             _, x_pred = neuralDE(graph.to(device), t_learn_span.to(device), save_at=t_learn_save.to(device))
             xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
             loss = xyloss + thetaLoss_weight * thetaloss
