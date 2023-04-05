@@ -357,7 +357,7 @@ if __name__ == '__main__':
     vicsek_dataset = myDataset(save_x_SDE, delayTruth=delayPredict)
     vicsek_dataset.initialize()
     
-    range_split = torch.utils.data.random_split(range(vicsek_dataset.N_batch), [ratio_train, ratio_valid, ratio_test], generator=generator)
+    range_split = torch.utils.data.random_split(range(vicsek_dataset.N_batch), [ratio_train, ratio_valid, ratio_test], generator=split_seed)
     
     train_dataset = batchedSubset(vicsek_dataset, [i for i in range_split[0]])
     valid_dataset = batchedSubset(vicsek_dataset, [i for i in range_split[1]])
