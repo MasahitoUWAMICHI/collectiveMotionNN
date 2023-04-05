@@ -392,7 +392,7 @@ if __name__ == '__main__':
         for graph, x_truth in train_loader:
             optimizer.zero_grad()
             Vicsek_SDEwrapper.graph = graph.to(device)
-            Vicsek_SDEwrapper.edge_initialize()
+            Vicsek_SDEwrapper.edgeInitialize()
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
@@ -409,7 +409,7 @@ if __name__ == '__main__':
             
             for graph, x_truth in valid_loader:
                 Vicsek_SDEwrapper.graph = graph.to(device)
-                Vicsek_SDEwrapper.edge_initialize()
+                Vicsek_SDEwrapper.edgeInitialize()
                 _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
                 valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth)
