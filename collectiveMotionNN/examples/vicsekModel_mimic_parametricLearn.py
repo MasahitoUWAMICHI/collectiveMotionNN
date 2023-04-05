@@ -172,13 +172,13 @@ if __name__ == '__main__':
     
     
     
-    parser.add_argument('--delayPredict', type=float)
+    parser.add_argument('--delayPredict', type=int)
     parser.add_argument('--dt_train', type=float)
     
     parser.add_argument('--method_ODE', type=str)
     parser.add_argument('--N_epoch', type=int)
     
-    parser.add_argument('--lr', type=int)
+    parser.add_argument('--lr', type=float)
     
     parser.add_argument('--save_learned_model', type=str)
     
@@ -219,7 +219,15 @@ if __name__ == '__main__':
     
     
     
-    save_learned_model = ut.variableInitializer(args.save_model, 'Vicsek_SDE_model.pt')
+    delayPredict = ut.variableInitializer(args.delayPredict, 1)
+    dt_train = ut.variableInitializer(args.dt_train, dt_save)
+
+    method_ODE = ut.variableInitializer(args.method_ODE, 'euler')
+    N_epoch = ut.variableInitializer(args.N_epoch, 10)
+
+    lr = ut.variableInitializer(args.lr, 1e-3)
+    
+    save_learned_model = ut.variableInitializer(args.save_learned_model, 'Vicsek_learned_model.pt')
     
     
     
