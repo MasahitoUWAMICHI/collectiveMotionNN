@@ -268,7 +268,10 @@ if __name__ == '__main__':
     ratio_test = ut.variableInitializer(args.ratio_test, 0.0)
     ratio_train = 1.0 - ratio_valid - ratio_test
 
-    split_seed = ut.variableInitializer(torch.Generator().manual_seed(args.split_seed), torch.Generator())
+    if args.split_seed is None:
+        split_seed = torch.Generator()
+    else:
+        split_seed = torch.Generator().manual_seed(args.split_seed)
     
     lr = ut.variableInitializer(args.lr, 1e-3)
     thetaLoss_weight = ut.variableInitializer(args.thetaLoss_weight, 1.0)
