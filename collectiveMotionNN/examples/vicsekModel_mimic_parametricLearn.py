@@ -271,7 +271,6 @@ if __name__ == '__main__':
 
     ratio_valid = ut.variableInitializer(args.ratio_valid, 0.0)
     ratio_test = ut.variableInitializer(args.ratio_test, 0.0)
-    ratio_train = 1.0 - ratio_valid - ratio_test
 
     if args.split_seed is None:
         split_seed = torch.Generator()
@@ -357,7 +356,11 @@ if __name__ == '__main__':
     vicsek_dataset = myDataset(save_x_SDE, delayTruth=delayPredict)
     vicsek_dataset.initialize()
     
-    range_split = torch.utils.data.random_split(range(vicsek_dataset.N_batch), [ratio_train, ratio_valid, ratio_test], generator=split_seed)
+    N_valid = int(vicsek_dataset.N_batch * ratio_valid)
+    N_test = int(vicsek_dataset.N_batch * ratio_test)
+    N_train = vicsek_dataset.N_batch - N_valid - N_test
+    
+    range_split = torch.utils.data.random_split(range(vicsek_dataset.N_batch), [N_train, N_valid, N_test], generator=split_seed)
     
     train_dataset = batchedSubset(vicsek_dataset, [i for i in range_split[0]])
     valid_dataset = batchedSubset(vicsek_dataset, [i for i in range_split[1]])
