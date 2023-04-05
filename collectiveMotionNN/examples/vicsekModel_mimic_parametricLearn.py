@@ -427,7 +427,7 @@ if __name__ == '__main__':
             #saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
             with open(save_learned_model, mode='wb') as f:
                 cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
-            best_loss = valid_loss
+            best_valid_loss = valid_loss
             print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}) Best'.format(
                 epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item()))
         else:
