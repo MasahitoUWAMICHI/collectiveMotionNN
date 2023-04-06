@@ -448,7 +448,7 @@ if __name__ == '__main__':
             #loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
             loss = xyloss + thetaLoss_weight * thetaloss + edgeLoss_weight * edgeloss
             loss_history.append([xyloss.item(), thetaloss.item(), edgeloss.item()])
-            valid_loss_history.append([np.nan, np.nan])
+            valid_loss_history.append([np.nan, np.nan, np.nan])
             mw.zero_grad()
             #loss.backward(create_graph=True)
             loss.backward()
