@@ -191,7 +191,7 @@ class myLoss(nn.Module):
         dxy = self.distanceCalc(x[..., :2], y[..., :2])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
         thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
-        edgeLoss = self.edgeLoss(x, y, )
+        edgeLoss = self.edgeLoss(x, y)
         return xyLoss, thetaLoss, edgeLoss
     
     
@@ -417,9 +417,9 @@ if __name__ == '__main__':
     
     
     if periodic is None:
-        lossFunc = myLoss(ut.euclidDistance_nonPeriodic())
+        lossFunc = myLoss(ut.euclidDistance_nonPeriodic(), Vicsek_SDEwrapper)
     else:
-        lossFunc = myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)))
+        lossFunc = myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)), Vicsek_SDEwrapper)
         
     
     
