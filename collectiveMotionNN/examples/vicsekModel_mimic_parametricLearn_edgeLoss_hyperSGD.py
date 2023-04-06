@@ -164,7 +164,7 @@ class edgeLoss(nn.Module):
         self.distanceName = ut.variableInitializer(distanceName, 'distance')
         
     def calc_edgeDistance(self, edges):
-        d = self.distanceCalc(edges.dst[self.wrapper.positionName], edges.src[self.wrapper.positionName])
+        d = self.distanceCalc(edges.dst[self.wrapper.dynamicGNDEmodule.calc_module.positionName], edges.src[self.wrapper.dynamicGNDEmodule.calc_module.positionName])
         return {self.distanceName: torch.norm(d, dim=-1, keepdim=True)}
     
     def forward(self, x, y):
