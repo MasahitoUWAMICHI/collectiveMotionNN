@@ -353,13 +353,15 @@ if __name__ == '__main__':
     
     optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(1e-3))
 
-    mw = mo.hyperSGDwrapper(Vicsek_SDEwrapper, optimizer=optim)
+    #mw = mo.hyperSGDwrapper(Vicsek_SDEwrapper, optimizer=optim)
+    mw = gdtuo.ModuleWrapper(Vicsek_SDEwrapper, optimizer=optim)
     
     mw.initialize()
     
     
     
-    neuralDE = NeuralODE(mw, solver=method_ODE).to(device)
+    #neuralDE = NeuralODE(mw, solver=method_ODE).to(device)
+    neuralDE = NeuralODE(Vicsek_SDEwrapper, solver=method_ODE).to(device)
     
     
     
