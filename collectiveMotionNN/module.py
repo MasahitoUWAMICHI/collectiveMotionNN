@@ -31,6 +31,9 @@ class dynamicGODEwrapper(nn.Module):
         self.graph = graph
         self.edgeInitialize(args)
         
+    def deleteGraph(self):
+        self.graph = None
+        
     def forward(self, t, x, args=None):
         self.graph = self.dynamicGNDEmodule.f(t, x, self.graph, self.ndataInOutModule, args)
         return self.derivativeInOutModule.output(self.graph)
