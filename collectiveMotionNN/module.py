@@ -1,5 +1,7 @@
 from torch import nn
 
+from gradient_descent_the_ultimate_optimizer import gdtuo
+
 import collectiveMotionNN.utils as ut
 import collectiveMotionNN.graph_utils as gu
 
@@ -95,3 +97,23 @@ class dynamicGNDEmodule(nn.Module):
     def g(self, t, x, gr, ndataInOutModule, args=None):
         gr = self.edgeRefresher(gr, x, ndataInOutModule, args)
         return self.calc_module.g(t, gr, args)
+
+    
+    
+    
+    
+class hyperSGDwrapper(nn.Module, gdtuo.ModuleWrapper):
+    def __init__(self, module, optimizer):
+        super().__init__()
+        super(nn.Module, self).__init__(module, optimizer)
+        
+    def forward(self, t, x, args=None):
+        return self.module(t, x, args)
+     
+    def f(self, t, x, args=None):
+        return self.module.f(t, x, args)
+    
+    def g(self, t, x, args=None):
+        return self.module.g(t, x, args)
+    
+    
