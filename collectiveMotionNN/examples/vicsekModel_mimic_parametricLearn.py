@@ -398,6 +398,7 @@ if __name__ == '__main__':
             xyloss, thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
             loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
             loss_history.append([xyloss.item(), thetaloss.item()])
+            valid_loss_history.append([np.nan, np.nan])
             loss.backward()
             optimizer.step()
             
@@ -423,7 +424,7 @@ if __name__ == '__main__':
             valid_loss = valid_loss / data_count
             valid_xyloss_total = valid_xyloss_total / data_count
             valid_thetaloss_total = valid_thetaloss_total / data_count
-            valid_loss_history.append([valid_xyloss.item(), valid_thetaloss.item()])
+            valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item()]
             
         if valid_loss < best_valid_loss:
             #saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
