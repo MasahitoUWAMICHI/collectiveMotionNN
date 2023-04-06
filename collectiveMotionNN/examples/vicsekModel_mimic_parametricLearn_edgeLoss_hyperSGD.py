@@ -379,6 +379,8 @@ if __name__ == '__main__':
     
     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter()
     
+    print(Vicsek_SDEwrapper.state_dict())
+    
         
     optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(lr_hyperSGD))
 
@@ -430,7 +432,7 @@ if __name__ == '__main__':
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, theta, edge), validLoss (xy, theta, edge), alpha, 1-beta1, 1-beta2')
+    print('epoch: trainLoss (xy, theta, edge), validLoss (xy, theta, edge), v0, w0, sigma, alpha, 1-beta1, 1-beta2')
     
     loss_history = []
     valid_loss_history = []
@@ -487,16 +489,22 @@ if __name__ == '__main__':
                 with open(save_learned_model, mode='wb') as f:
                     cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e} Best'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), edgeloss.item(), 
                     valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_edgeloss_total.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.w0.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 
                     1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 
                     1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), edgeloss.item(), 
                     valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_edgeloss_total.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.w0.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 
                     1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 
                     1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
