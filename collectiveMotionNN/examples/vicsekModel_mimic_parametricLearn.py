@@ -391,8 +391,7 @@ if __name__ == '__main__':
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
             optimizer.zero_grad()
-            Vicsek_SDEwrapper.graph = graph.to(device)
-            Vicsek_SDEwrapper.edgeInitialize()
+            Vicsek_SDEwrapper.loadGraph(graph.to(device))
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             xyloss, thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
@@ -408,8 +407,7 @@ if __name__ == '__main__':
             data_count = 0
             
             for graph, x_truth in valid_loader:
-                Vicsek_SDEwrapper.graph = graph.to(device)
-                Vicsek_SDEwrapper.edgeInitialize()
+                Vicsek_SDEwrapper.loadGraph(graph.to(device))
                 _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
                 valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
@@ -425,6 +423,7 @@ if __name__ == '__main__':
             
         if valid_loss < best_valid_loss:
             #saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
+            Vicsek_SDEwrapper.deleteGraph()
             with open(save_learned_model, mode='wb') as f:
                 cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
             best_valid_loss = valid_loss
