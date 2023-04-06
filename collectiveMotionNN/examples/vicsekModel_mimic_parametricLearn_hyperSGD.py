@@ -419,7 +419,10 @@ if __name__ == '__main__':
             loss = xyloss + thetaLoss_weight * thetaloss
             loss_history.append([xyloss.item(), thetaloss.item()])
             valid_loss_history.append([np.nan, np.nan])
-            loss.backward(create_graph=True)
+            #loss.backward(create_graph=True)
+            loss.backward()
+            for key in mw.optimizer.parameters.keys():
+                mw.optimizer.parameters[key].retain_grad()
             mw.step()
             
         #loss = loss / graph_batchsize
