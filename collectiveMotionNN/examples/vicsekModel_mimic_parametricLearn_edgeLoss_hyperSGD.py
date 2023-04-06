@@ -150,8 +150,19 @@ class batchedSubset(torch.utils.data.Subset):
 class cosLoss(nn.Module):
     def __init__(self):
         super().__init__()
+        
     def forward(self, x, y):
         return 1 - torch.cos(x - y).mean()
+    
+class edgeLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.distanceLoss = nn.MSELoss()
+        
+    def forward(self, x, y, wrapper, distanceCalc):
+        wrapper.loadNdata_edgeInitialize(y)
+        distance_y = 
+        wrapper.loadNdata_noEdgeInitialize(x)
     
 class myLoss(nn.Module):
     def __init__(self, distanceCalc):
@@ -161,12 +172,14 @@ class myLoss(nn.Module):
                 
         self.xyLoss = nn.MSELoss()
         self.thetaLoss = cosLoss()
+        self.edgeLoss = edgeLoss()
         
-    def forward(self, x, y):
+    def forward(self, x, y, wrapper):
         dxy = self.distanceCalc(x[..., :2], y[..., :2])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
         thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
-        return xyLoss, thetaLoss
+        edgeLoss = self.edgeLoss(x, y, wrapper, self.distanceCalc)
+        return xyLoss, thetaLoss, edgeLoss
     
     
     
