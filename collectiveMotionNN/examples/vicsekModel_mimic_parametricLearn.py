@@ -47,6 +47,8 @@ class interactionModule(nn.Module):
         nn.init.uniform_(self.w0)
         nn.init.uniform_(self.sigma)
         
+        self.prepare_sigma()
+        
     def prepare_sigma(self):
         self.sigmaMatrix = torch.cat((torch.zeros([2,1]), self.sigma*torch.ones([1,1])), dim=0)
             
