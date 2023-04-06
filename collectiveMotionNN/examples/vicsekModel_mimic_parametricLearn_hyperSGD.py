@@ -402,7 +402,7 @@ if __name__ == '__main__':
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, theta), validLoss (xy, theta)')
+    print('epoch: trainLoss (xy, theta), validLoss (xy, theta), alpha, 1-beta1, 1-beta2')
     
     loss_history = []
     valid_loss_history = []
@@ -454,11 +454,13 @@ if __name__ == '__main__':
             with open(save_learned_model, mode='wb') as f:
                 cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
             best_valid_loss = valid_loss
-            print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}) Best'.format(
-                epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item()))
+            print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
+                epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
+                mw.optimizer.parameters['alpha'], 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2'])))
         else:
-            print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f})'.format(
-                epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item()))
+            print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
+                epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
+                mw.optimizer.parameters['alpha'], 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2'])))
         
     torch.save(torch.tensor(loss_history), save_loss_history)
 
