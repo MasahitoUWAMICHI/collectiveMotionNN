@@ -31,6 +31,13 @@ class dynamicGODEwrapper(nn.Module):
         self.graph = graph
         self.edgeInitialize(args)
         
+    def loadNdata_noEdgeInitialize(self, x):
+        self.graph = self.ndataInOutModule.input(self.graph, x)
+        
+    def loadNdata_edgeInitialize(self, x, args=None):
+        self.loadNdata_noEdgeInitialize(x)
+        self.edgeInitialize(args)
+        
     def deleteGraph(self):
         self.graph = None
         
