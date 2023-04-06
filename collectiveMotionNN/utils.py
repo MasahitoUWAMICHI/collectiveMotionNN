@@ -19,7 +19,10 @@ class euclidDistance_periodic(nn.Module):
     def __init__(self, periodicLength):
         super().__init__()
         
-        self.periodicLength = torch.tensor(periodicLength, dtype=torch.float32)
+        if torch.is_tensor(periodicLength):
+            self.periodicLength = periodicLength
+        else:
+            self.periodicLength = torch.tensor(periodicLength, dtype=torch.float32)
         
     def forward(self, r_target, r_zero):
         dr = torch.remainder(r_target - r_zero, self.periodicLength)
