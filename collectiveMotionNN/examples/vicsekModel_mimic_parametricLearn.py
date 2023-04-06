@@ -390,12 +390,13 @@ if __name__ == '__main__':
     
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
+            graph_batchsize = len(graph.batch_num_nodes())
             optimizer.zero_grad()
             Vicsek_SDEwrapper.loadGraph(graph.to(device))
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             xyloss, thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
-            loss = xyloss + thetaLoss_weight * thetaloss
+            loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
             loss_history.append([xyloss.item(), thetaloss.item()])
             loss.backward()
             optimizer.step()
@@ -407,14 +408,15 @@ if __name__ == '__main__':
             data_count = 0
             
             for graph, x_truth in valid_loader:
+                graph_batchsize = len(graph.batch_num_nodes())
                 Vicsek_SDEwrapper.loadGraph(graph.to(device))
                 _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
                 valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
-                valid_xyloss_total = valid_xyloss_total + x_truth.shape[0] * valid_xyloss
-                valid_thetaloss_total = valid_thetaloss_total + x_truth.shape[0] * valid_thetaloss
-                valid_loss = valid_loss + x_truth.shape[0] * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
-                data_count = data_count + x_truth.shape[0]
+                valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
+                valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
+                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
+                data_count = data_count + graph_batchsize
                 
             valid_loss = valid_loss / data_count
             valid_xyloss_total = valid_xyloss_total / data_count
