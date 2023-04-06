@@ -448,20 +448,18 @@ if __name__ == '__main__':
             valid_thetaloss_total = valid_thetaloss_total / data_count
             valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item()]
             
-        if valid_loss < best_valid_loss:
-            Vicsek_SDEwrapper.deleteGraph()
-            with open(save_learned_model, mode='wb') as f:
-                cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
-            best_valid_loss = valid_loss
-            print('1')
-            print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
-                epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
-                mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
-            print('2')
-        else:
-            print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
-                epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
-                mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
+            if valid_loss < best_valid_loss:
+                Vicsek_SDEwrapper.deleteGraph()
+                with open(save_learned_model, mode='wb') as f:
+                    cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
+                best_valid_loss = valid_loss
+                print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
+                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
+            else:
+                print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
+                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         
     torch.save(torch.tensor(loss_history), save_loss_history)
 
