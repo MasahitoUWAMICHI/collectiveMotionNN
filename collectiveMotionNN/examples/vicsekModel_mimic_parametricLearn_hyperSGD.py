@@ -426,8 +426,9 @@ if __name__ == '__main__':
             mw.step()
             
         #loss = loss / graph_batchsize
-            
+        print('1')
         with torch.no_grad():
+            print('2')
             valid_loss = 0
             valid_xyloss_total = 0
             valid_thetaloss_total = 0
@@ -449,6 +450,7 @@ if __name__ == '__main__':
             valid_thetaloss_total = valid_thetaloss_total / data_count
             valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item()]
             
+        print('3')
         if valid_loss < best_valid_loss:
             Vicsek_SDEwrapper.deleteGraph()
             with open(save_learned_model, mode='wb') as f:
