@@ -401,6 +401,8 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
             
+        loss = loss / graph_batchsize
+            
         with torch.no_grad():
             valid_loss = 0
             valid_xyloss_total = 0
