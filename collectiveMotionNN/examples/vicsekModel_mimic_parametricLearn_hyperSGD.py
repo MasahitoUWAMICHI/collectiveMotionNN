@@ -426,7 +426,8 @@ if __name__ == '__main__':
             mw.step()
             
         #loss = loss / graph_batchsize
-        mw.begin()
+        mw.begin() # remove graph for autograd
+        
         with torch.no_grad():
             valid_loss = 0
             valid_xyloss_total = 0
@@ -450,18 +451,13 @@ if __name__ == '__main__':
             valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item()]
             
             if valid_loss < best_valid_loss:
-                print('1')
                 Vicsek_SDEwrapper.deleteGraph()
-                print('2')
                 with open(save_learned_model, mode='wb') as f:
                     cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
-                print('3')
                 best_valid_loss = valid_loss
-                print('4')
                 print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
-                print('5')
             else:
                 print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
