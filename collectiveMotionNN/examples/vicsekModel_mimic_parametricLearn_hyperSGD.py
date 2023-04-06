@@ -221,6 +221,7 @@ if __name__ == '__main__':
     parser.add_argument('--split_seed', type=int)
     
     parser.add_argument('--lr', type=float)
+    parser.add_argument('--lr_hyperSGD', type=float)
     parser.add_argument('--thetaLoss_weight', type=float)
     
     parser.add_argument('--save_learned_model', type=str)
@@ -282,6 +283,7 @@ if __name__ == '__main__':
         split_seed = torch.Generator().manual_seed(args.split_seed)
     
     lr = ut.variableInitializer(args.lr, 1e-3)
+    lr_hyperSGD = ut.variableInitializer(args.lr_hyperSGD, 1e-3)
     thetaLoss_weight = ut.variableInitializer(args.thetaLoss_weight, 1.0)
     
     save_learned_model = ut.variableInitializer(args.save_learned_model, 'Vicsek_parametric_learned_model.pt')
@@ -349,7 +351,7 @@ if __name__ == '__main__':
     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter()
     
         
-    optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(1e-3))
+    optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(lr_hyperSGD))
 
     mw = gdtuo.ModuleWrapper(Vicsek_SDEwrapper, optimizer=optim)
     mw.initialize()
