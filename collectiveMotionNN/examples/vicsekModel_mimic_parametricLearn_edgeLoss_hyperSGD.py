@@ -164,7 +164,8 @@ class edgeLoss(nn.Module):
         self.distanceName = ut.variableInitializer(distanceName, 'distance')
         
     def calc_edgeDistance(self, edges):
-        d = self.distanceCalc(edges.dst[self.wrapper.dynamicGNDEmodule.calc_module.positionName], edges.src[self.wrapper.dynamicGNDEmodule.calc_module.positionName])
+        d = self.distanceCalc(edges.dst[self.wrapper.dynamicGNDEmodule.calc_module.positionName], 
+                              edges.src[self.wrapper.dynamicGNDEmodule.calc_module.positionName])
         return {self.distanceName: torch.norm(d, dim=-1, keepdim=True)}
     
     def forward(self, x, y):
@@ -487,12 +488,18 @@ if __name__ == '__main__':
                     cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
-                    epoch, loss.item(), xyloss.item(), thetaloss.item(), edgeloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_edgeloss_total.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), edgeloss.item(), 
+                    valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_edgeloss_total.item(),
+                    mw.optimizer.parameters['alpha'].item(), 
+                    1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 
+                    1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
             else:
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
-                    epoch, loss.item(), xyloss.item(), thetaloss.item(), edgeloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_edgeloss_total.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), edgeloss.item(), 
+                    valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_edgeloss_total.item(),
+                    mw.optimizer.parameters['alpha'].item(), 
+                    1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 
+                    1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         
     torch.save(torch.tensor(loss_history), save_loss_history)
 
