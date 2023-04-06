@@ -155,30 +155,43 @@ class cosLoss(nn.Module):
         return 1 - torch.cos(x - y).mean()
     
 class edgeLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, distanceCalc, wrapper, distanceName=None):
         super().__init__()
-        self.distanceLoss = nn.MSELoss()
         
-    def forward(self, x, y, wrapper, distanceCalc):
-        wrapper.loadNdata_edgeInitialize(y)
-        distance_y = 
-        wrapper.loadNdata_noEdgeInitialize(x)
+        self.wrapper = wrapper
+        self.distanceCalc = distanceCalc
+        self.distanceLoss = nn.MSELoss()
+        self.distanceName = ut.variableInitializer(distanceName, 'distance')
+        
+    def calc_edgeDistance(self, edges):
+        d = self.distanceCalc(edges.dst[self.wrapper.positionName], edges.src[self.wrapper.positionName])
+        return {self.distanceName: torch.norm(d, dim=-1, keepdim=True)}
+    
+    def forward(self, x, y):
+        self.wrapper.loadNdata_edgeInitialize(y)
+        self.wrapper.graph.apply_edges(self.calc_edgeDistance)
+        distance_y = self.wrapper.graph.edata[self.distanceName].detach()
+        
+        self.wrapper.loadNdata_noEdgeInitialize(x)
+        self.wrapper.graph.apply_edges(self.calc_edgeDistance)
+        distance_x = self.wrapper.graph.edata[self.distanceName].detach()
+        return self.distanceLoss(distance_x, distance_y)
     
 class myLoss(nn.Module):
-    def __init__(self, distanceCalc):
+    def __init__(self, distanceCalc, wrapper):
         super().__init__()
         
         self.distanceCalc = distanceCalc
                 
         self.xyLoss = nn.MSELoss()
         self.thetaLoss = cosLoss()
-        self.edgeLoss = edgeLoss()
+        self.edgeLoss = edgeLoss(distanceCalc, wrapper)
         
-    def forward(self, x, y, wrapper):
+    def forward(self, x, y):
         dxy = self.distanceCalc(x[..., :2], y[..., :2])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
         thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
-        edgeLoss = self.edgeLoss(x, y, wrapper, self.distanceCalc)
+        edgeLoss = self.edgeLoss(x, y, )
         return xyLoss, thetaLoss, edgeLoss
     
     
@@ -236,6 +249,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float)
     parser.add_argument('--lr_hyperSGD', type=float)
     parser.add_argument('--thetaLoss_weight', type=float)
+    parser.add_argument('--edgeLoss_weight', type=float)
     
     parser.add_argument('--save_learned_model', type=str)
     parser.add_argument('--save_loss_history', type=str)
@@ -298,6 +312,7 @@ if __name__ == '__main__':
     lr = ut.variableInitializer(args.lr, 1e-3)
     lr_hyperSGD = ut.variableInitializer(args.lr_hyperSGD, 1e-3)
     thetaLoss_weight = ut.variableInitializer(args.thetaLoss_weight, 1.0)
+    edgeLoss_weight = ut.variableInitializer(args.edgeLoss_weight, 1.0)
     
     save_learned_model = ut.variableInitializer(args.save_learned_model, 'Vicsek_parametric_learned_model.pt')
     save_loss_history = ut.variableInitializer(args.save_loss_history, 'Vicsek_parametric_loss_history.pt')
@@ -414,7 +429,7 @@ if __name__ == '__main__':
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, theta), validLoss (xy, theta), alpha, 1-beta1, 1-beta2')
+    print('epoch: trainLoss (xy, theta, edge), validLoss (xy, theta, edge), alpha, 1-beta1, 1-beta2')
     
     loss_history = []
     valid_loss_history = []
@@ -426,10 +441,10 @@ if __name__ == '__main__':
             Vicsek_SDEwrapper.loadGraph(graph.to(device))
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
-            xyloss, thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
+            xyloss, thetaloss, edgeloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
             #loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
-            loss = xyloss + thetaLoss_weight * thetaloss
-            loss_history.append([xyloss.item(), thetaloss.item()])
+            loss = xyloss + thetaLoss_weight * thetaloss + edgeLoss_weight * edgeloss
+            loss_history.append([xyloss.item(), thetaloss.item(), edgeloss.item()])
             valid_loss_history.append([np.nan, np.nan])
             mw.zero_grad()
             #loss.backward(create_graph=True)
@@ -445,6 +460,7 @@ if __name__ == '__main__':
             valid_loss = 0
             valid_xyloss_total = 0
             valid_thetaloss_total = 0
+            valid_edgeloss_total = 0
             data_count = 0
             
             for graph, x_truth in valid_loader:
@@ -452,28 +468,30 @@ if __name__ == '__main__':
                 Vicsek_SDEwrapper.loadGraph(graph.to(device))
                 _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
-                valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
+                valid_xyloss, valid_thetaloss, valid_edgeloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
                 valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
-                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
+                valid_edgeloss_total = valid_edgeloss_total + valid_edgeloss * graph_batchsize
+                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss + edgeLoss_weight * valid_edgeloss)
                 data_count = data_count + graph_batchsize
                 
             valid_loss = valid_loss / data_count
             valid_xyloss_total = valid_xyloss_total / data_count
             valid_thetaloss_total = valid_thetaloss_total / data_count
-            valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item()]
+            valid_edgeloss_total = valid_edgeloss_total / data_count
+            valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item(), valid_edgeloss.item()]
             
             if valid_loss < best_valid_loss:
                 Vicsek_SDEwrapper.deleteGraph()
                 with open(save_learned_model, mode='wb') as f:
                     cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
-                    epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), edgeloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_edgeloss_total.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
-                    epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), edgeloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_edgeloss_total.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         
     torch.save(torch.tensor(loss_history), save_loss_history)
