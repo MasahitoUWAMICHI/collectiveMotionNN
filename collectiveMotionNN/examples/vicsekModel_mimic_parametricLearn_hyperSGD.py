@@ -353,7 +353,7 @@ if __name__ == '__main__':
     
     optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(1e-3))
 
-    mw = gdtuo.ModuleWrapper(Vicsek_SDEwrapper, optimizer=optim)
+    mw = mo.hyperSGDwrapper(Vicsek_SDEwrapper, optimizer=optim)
     
     mw.initialize()
     
