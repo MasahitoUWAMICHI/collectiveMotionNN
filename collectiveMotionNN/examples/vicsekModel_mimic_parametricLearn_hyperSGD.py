@@ -458,11 +458,11 @@ if __name__ == '__main__':
             best_valid_loss = valid_loss
             print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
                 epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
-                mw.optimizer.parameters['alpha'], 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2'])))
+                mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         else:
             print('{}: {:.3f} ({:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
                 epoch, loss.item(), xyloss.item(), thetaloss.item(), valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(),
-                mw.optimizer.parameters['alpha'], 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2'])))
+                mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         
     torch.save(torch.tensor(loss_history), save_loss_history)
 
