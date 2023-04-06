@@ -405,9 +405,7 @@ if __name__ == '__main__':
     
     loss_history = []
     valid_loss_history = []
-    
-    #saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
-    
+        
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
             graph_batchsize = len(graph.batch_num_nodes())
@@ -417,7 +415,8 @@ if __name__ == '__main__':
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             xyloss, thetaloss = lossFunc(x_pred[0], x_truth.reshape(x_pred[0].shape).to(device))
-            loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
+            #loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
+            loss = xyloss + thetaLoss_weight * thetaloss
             loss_history.append([xyloss.item(), thetaloss.item()])
             valid_loss_history.append([np.nan, np.nan])
             loss.backward(create_graph=True)
@@ -448,7 +447,6 @@ if __name__ == '__main__':
             valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item()]
             
         if valid_loss < best_valid_loss:
-            #saved_model = copy.deepcopy(Vicsek_SDEwrapper).cpu()
             Vicsek_SDEwrapper.deleteGraph()
             with open(save_learned_model, mode='wb') as f:
                 cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
@@ -465,7 +463,6 @@ if __name__ == '__main__':
 
     torch.save(torch.tensor(valid_loss_history), save_validloss_history)
     
-    #with open(save_learned_model, mode='wb') as f:
-    #    cloudpickle.dump(saved_model.to('cpu'), f)
+
         
 
