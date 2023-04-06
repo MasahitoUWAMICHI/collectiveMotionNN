@@ -23,12 +23,14 @@ class dynamicGODEwrapper(nn.Module):
 
         self.edgeInitialize(args)
         
-    def loadGraph(self, dynamicVariable, staticVariables):
-        self.graph = gu.make_disconnectedGraph(dynamicVariable, staticVariables, self.ndataInOutModule)
-    
+        
     def edgeInitialize(self, args=None):
         self.graph = self.dynamicGNDEmodule.edgeInitialize(self.graph, args)
 
+    def loadGraph(self, graph, args=None):
+        self.graph = graph
+        self.edgeInitialize(args)
+        
     def forward(self, t, x, args=None):
         self.graph = self.dynamicGNDEmodule.f(t, x, self.graph, self.ndataInOutModule, args)
         return self.derivativeInOutModule.output(self.graph)
