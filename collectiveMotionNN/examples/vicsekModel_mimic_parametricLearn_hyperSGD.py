@@ -422,7 +422,7 @@ if __name__ == '__main__':
             loss.backward(create_graph=True)
             mw.step()
             
-        loss = loss / graph_batchsize
+        #loss = loss / graph_batchsize
             
         with torch.no_grad():
             valid_loss = 0
