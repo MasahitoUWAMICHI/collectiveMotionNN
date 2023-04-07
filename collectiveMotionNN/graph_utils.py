@@ -21,7 +21,7 @@ def update_adjacency_batch(bg, edgeConditionModule, args=None):
     for g in gs:
         update_adjacency(g, edgeConditionModule, args)
     bg = dgl.batch(gs)
-    return bg
+    return bg, None
 
 
 def update_adjacency_returnScore(g, edgeConditionModule, args=None):
@@ -67,7 +67,7 @@ class edgeRefresh_forceUpdate(nn.Module):
 
     def def_noScore(self):
         self.update_adjacency = lambda gr, args=None: update_adjacency_batch(gr, self.edgeConditionModule, args)
-        self.postProcess = lambda x: x
+        self.postProcess = lambda x: x[0]
         
     def def_score(self):
         self.update_adjacency = lambda gr, args=None: update_adjacency_returnScore_batch(gr, self.edgeConditionModule, args)
@@ -106,7 +106,8 @@ class edgeRefresh_forceUpdate(nn.Module):
         
     def createEdge(self, gr, args=None):
         self.loadGraph(gr)
-        return self.update_adjacency(gr, args)
+        out = self.update_adjacency(gr, args)
+        return self.postProcess(out)
     
     def postProcess_score(self, out)
         
