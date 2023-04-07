@@ -10,6 +10,7 @@ def update_edges(g, edges):
     g.add_edges(edges[0], edges[1])
     return g
 
+
 def update_adjacency(g, edgeConditionModule, args=None):
     edges = edgeConditionModule(g, args)
     update_edges(g, edges)
@@ -22,6 +23,22 @@ def update_adjacency_batch(bg, edgeConditionModule, args=None):
     bg = dgl.batch(gs)
     return bg
 
+
+def update_adjacency_returnScore(g, edgeConditionModule, args=None):
+    edges, score = edgeConditionModule(g, args)
+    update_edges(g, edges)
+    return g, score
+
+def update_adjacency_returnScore_batch(bg, edgeConditionModule, args=None):
+    gs = dgl.unbatch(bg)
+    scores = []
+    for i, g in enumerate(gs):
+        gs[i], score = update_adjacency_returnScore(g, edgeConditionModule, args)
+        scores.append(score)
+    bg = dgl.batch(gs)
+    return bg, scores
+
+
 def judge_skipUpdate(g, dynamicVariable, ndataInOutModule, rtol=1e-05, atol=1e-08, equal_nan=True):
     return torch.allclose(ndataInOutModule.output(g), dynamicVariable, rtol, atol, equal_nan)
 
@@ -30,6 +47,10 @@ def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeConditionModu
     gr = update_adjacency_batch(gr, edgeConditionModule, args)
     return gr
 
+def edgeRefresh_execute_returnScore(gr, dynamicVariable, ndataInOutModule, edgeConditionModule, args=None):
+    gr = ndataInOutModule.input(gr, dynamicVariable)
+    gr, sc = update_adjacency_returnScore_batch(gr, edgeConditionModule, args)
+    return gr, sc
 
         
 class edgeRefresh_forceUpdate(nn.Module):
