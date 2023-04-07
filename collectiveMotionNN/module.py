@@ -40,6 +40,7 @@ class dynamicGODEwrapper(nn.Module):
         
     def deleteGraph(self):
         self.graph = None
+        self.dynamicGNDEmodule.edgeRefresher.graph = None
         
     def forward(self, t, x, args=None):
         self.graph = self.dynamicGNDEmodule.f(t, x, self.graph, self.ndataInOutModule, args)
@@ -69,7 +70,7 @@ class dynamicGSDEwrapper(dynamicGODEwrapper):
     
     
 class dynamicGNDEmodule(nn.Module):
-    def __init__(self, calc_module, edgeConditionModule, forceUpdate=None, rtol=None, atol=None, equal_nan=None):
+    def __init__(self, calc_module, edgeConditionModule, forceUpdate=None, rtol=None, atol=None, equal_nan=None, edgeScoreModule=None, edgeScoreIntegrationModule=None):
         super().__init__()
         
         self.calc_module = calc_module
