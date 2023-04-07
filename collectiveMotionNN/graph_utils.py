@@ -52,7 +52,7 @@ def edgeRefresh_execute_returnScore(gr, dynamicVariable, ndataInOutModule, edgeC
     gr, sc = update_adjacency_returnScore_batch(gr, edgeConditionModule, args)
     return gr, sc
 
-        
+    
 class edgeRefresh_forceUpdate(nn.Module):
     def __init__(self, edgeConditionModule):
         super().__init__()
