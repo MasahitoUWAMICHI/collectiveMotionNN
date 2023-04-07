@@ -81,7 +81,7 @@ class edgeRefresh_forceUpdate(nn.Module):
         self.returnScore = returnScore
         self.def_graph_updates()
         
-            
+    
     def def_forceUpdate(self):
         self.forward = self.forward_forceUpdate
         
@@ -97,8 +97,8 @@ class edgeRefresh_forceUpdate(nn.Module):
     def reset_forceUpdateMode(self, forceUpdate):
         self.forceUpdate = forceUpdate
         self.def_forward()
-        
-        
+    
+    
     def loadGraph(self, gr):
         self.graph = gr
         
@@ -107,7 +107,8 @@ class edgeRefresh_forceUpdate(nn.Module):
         return self.update_adjacency(gr, args)
     
     def forward_forceUpdate(self, gr, dynamicVariable, ndataInOutModule, args=None):
-        gr = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, self.update_adjacency, args)
+        out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, self.update_adjacency, args)
+        gr = self.postProcess(out)
         self.loadGraph(gr)
         return gr
 
