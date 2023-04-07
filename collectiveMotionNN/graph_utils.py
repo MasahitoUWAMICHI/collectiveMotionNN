@@ -44,65 +44,81 @@ def judge_skipUpdate(g, dynamicVariable, ndataInOutModule, rtol=1e-05, atol=1e-0
 
 def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeConditionModule, updateFunc, args=None):
     gr = ndataInOutModule.input(gr, dynamicVariable)
-    out = updateFunc(gr, edgeConditionModule, args)
-    return out
+    return updateFunc(gr, edgeConditionModule, args)
 
     
 class edgeRefresh_forceUpdate(nn.Module):
-    def __init__(self, edgeConditionModule, returnScore=None):
+    def __init__(self, edgeConditionModule, returnScore=None, forceUpdate=None, rtol=None, atol=None, equal_nan=None):
         super().__init__()
 
         self.edgeConditionModule = edgeConditionModule
         
-        self.returnScore = ut.variableInitializer(returnScore, False)
+        self.rtol = ut.variableInitializer(rtol, 1e-05)
+        self.atol = ut.variableInitializer(atol, 1e-08)
+        self.equal_nan = ut.variableInitializer(equal_nan, True)
         
-        self.def_createEdge()
+        self.returnScore = ut.variableInitializer(returnScore, False)
+        self.forceUpdate = ut.variableInitializer(forceUpdate, False)
+        
+        self.def_graph_updates()
+        
+        self.def_forward()
+        
 
     def def_noScore(self):
-        self.createEdge = ut.euclidDistance_nonPeriodic()
+        self.update_adjacency = lambda gr, args=None: update_adjacency_batch(gr, self.edgeConditionModule, args)
         
     def def_score(self):
-        self.distanceCalc = ut.euclidDistance_periodic(self.periodicLength)
+        self.update_adjacency = lambda gr, args=None: update_adjacency_returnScore_batch(gr, self.edgeConditionModule, args)
         
-    def def_dr(self):
+    def def_graph_updates(self):
         if self.returnScore:
             self.def_score()
         else:
             self.def_noScore()
             
+    def reset_returnScoreMode(self, returnScore):
+        self.returnScore = returnScore
+        self.def_graph_updates()
+        
+            
+    def def_forceUpdate(self):
+        self.forward = lambda gr, dynamicVariable, ndataInOutModule, args=None: self.forward_forceUpdate(gr, dynamicVariable, ndataInOutModule, args)
+        
+    def def_noForceUpdate(self):
+        self.forward = lambda gr, dynamicVariable, ndataInOutModule, args=None: self.forward_noForceUpdate(gr, dynamicVariable, ndataInOutModule, args)
+        
+    def def_forward(self):
+        if self.forceUpdate:
+            self.def_forceUpdate()
+        else:
+            self.def_noForceUpdate()
+            
+    def reset_forceUpdateMode(self, forceUpdate):
+        self.forceUpdate = forceUpdate
+        self.def_forward()
+        
+        
     def loadGraph(self, gr):
         self.graph = gr
         
     def createEdge(self, gr, args=None):
-        return update_adjacency_batch(gr, self.edgeConditionModule, args)
-    
-    def forward(self, gr, dynamicVariable, ndataInOutModule, args=None):
-        return edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, args)
-
-
-class edgeRefresh_noForceUpdate(edgeRefresh_forceUpdate):
-    def __init__(self, edgeConditionModule, rtol=None, atol=None, equal_nan=None):
-        super().__init__(edgeConditionModule)
-        
-        self.rtol = ut.variableInitializer(rtol, 1e-05)
-        self.atol = ut.variableInitializer(atol, 1e-08)
-        self.equal_nan = ut.variableInitializer(equal_nan, True)
-    
-
-    def createEdge(self, gr, args=None):
         self.loadGraph(gr)
-        return update_adjacency_batch(gr, self.edgeConditionModule, args)
-        
-    def forward(self, gr, dynamicVariable, ndataInOutModule, args=None):
+        return self.update_adjacency(gr, args)
+    
+    def forward_forceUpdate(self, gr, dynamicVariable, ndataInOutModule, args=None):
+        gr = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, self.update_adjacency, args)
+        self.loadGraph(gr)
+        return gr
+
+    def forward_noForceUpdate(self, gr, dynamicVariable, ndataInOutModule, args=None):
         if judge_skipUpdate(self.graph, dynamicVariable, ndataInOutModule, self.rtol, self.atol, self.equal_nan):
             return gr
         else:
-            gr = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, args)
-            self.loadGraph(gr)
+            gr = self.forward_forceUpdate(gr, dynamicVariable, ndataInOutModule, args)
             return gr
 
-        
-        
+
 
 
 
