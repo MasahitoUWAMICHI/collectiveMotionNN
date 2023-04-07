@@ -83,10 +83,10 @@ class edgeRefresh_forceUpdate(nn.Module):
         
             
     def def_forceUpdate(self):
-        self.forward = lambda gr, dynamicVariable, ndataInOutModule, args=None: self.forward_forceUpdate(gr, dynamicVariable, ndataInOutModule, args)
+        self.forward = self.forward_forceUpdate
         
     def def_noForceUpdate(self):
-        self.forward = lambda gr, dynamicVariable, ndataInOutModule, args=None: self.forward_noForceUpdate(gr, dynamicVariable, ndataInOutModule, args)
+        self.forward = self.forward_noForceUpdate
         
     def def_forward(self):
         if self.forceUpdate:
