@@ -42,23 +42,37 @@ def update_adjacency_returnScore_batch(bg, edgeConditionModule, args=None):
 def judge_skipUpdate(g, dynamicVariable, ndataInOutModule, rtol=1e-05, atol=1e-08, equal_nan=True):
     return torch.allclose(ndataInOutModule.output(g), dynamicVariable, rtol, atol, equal_nan)
 
-def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeConditionModule, args=None):
+def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeConditionModule, updateFunc, args=None):
     gr = ndataInOutModule.input(gr, dynamicVariable)
-    gr = update_adjacency_batch(gr, edgeConditionModule, args)
-    return gr
-
-def edgeRefresh_execute_returnScore(gr, dynamicVariable, ndataInOutModule, edgeConditionModule, args=None):
-    gr = ndataInOutModule.input(gr, dynamicVariable)
-    gr, sc = update_adjacency_returnScore_batch(gr, edgeConditionModule, args)
-    return gr, sc
+    out = updateFunc(gr, edgeConditionModule, args)
+    return out
 
     
 class edgeRefresh_forceUpdate(nn.Module):
-    def __init__(self, edgeConditionModule):
+    def __init__(self, edgeConditionModule, returnScore=None):
         super().__init__()
 
         self.edgeConditionModule = edgeConditionModule
+        
+        self.returnScore = ut.variableInitializer(returnScore, False)
+        
+        self.def_createEdge()
 
+    def def_noScore(self):
+        self.createEdge = ut.euclidDistance_nonPeriodic()
+        
+    def def_score(self):
+        self.distanceCalc = ut.euclidDistance_periodic(self.periodicLength)
+        
+    def def_dr(self):
+        if self.returnScore:
+            self.def_score()
+        else:
+            self.def_noScore()
+            
+    def loadGraph(self, gr):
+        self.graph = gr
+        
     def createEdge(self, gr, args=None):
         return update_adjacency_batch(gr, self.edgeConditionModule, args)
     
@@ -74,8 +88,6 @@ class edgeRefresh_noForceUpdate(edgeRefresh_forceUpdate):
         self.atol = ut.variableInitializer(atol, 1e-08)
         self.equal_nan = ut.variableInitializer(equal_nan, True)
     
-    def loadGraph(self, gr):
-        self.graph = gr
 
     def createEdge(self, gr, args=None):
         self.loadGraph(gr)
@@ -88,6 +100,9 @@ class edgeRefresh_noForceUpdate(edgeRefresh_forceUpdate):
             gr = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, args)
             self.loadGraph(gr)
             return gr
+
+        
+        
 
 
 
