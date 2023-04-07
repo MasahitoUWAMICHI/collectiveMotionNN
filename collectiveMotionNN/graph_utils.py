@@ -67,9 +67,11 @@ class edgeRefresh_forceUpdate(nn.Module):
 
     def def_noScore(self):
         self.update_adjacency = lambda gr, args=None: update_adjacency_batch(gr, self.edgeConditionModule, args)
+        self.postProcess = lambda x: x
         
     def def_score(self):
         self.update_adjacency = lambda gr, args=None: update_adjacency_returnScore_batch(gr, self.edgeConditionModule, args)
+        self.postProcess = self.postProcess_score
         
     def def_graph_updates(self):
         if self.returnScore:
@@ -105,6 +107,10 @@ class edgeRefresh_forceUpdate(nn.Module):
     def createEdge(self, gr, args=None):
         self.loadGraph(gr)
         return self.update_adjacency(gr, args)
+    
+    def postProcess_score(self, out)
+        
+        return out[0]
     
     def forward_forceUpdate(self, gr, dynamicVariable, ndataInOutModule, args=None):
         out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, self.update_adjacency, args)
