@@ -48,7 +48,7 @@ def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeConditionModu
 
     
 class edgeRefresh_forceUpdate(nn.Module):
-    def __init__(self, edgeConditionModule, returnScore=None, forceUpdate=None, rtol=None, atol=None, equal_nan=None):
+    def __init__(self, edgeConditionModule, returnScore=None, scorePostProcessModule=None, forceUpdate=None, rtol=None, atol=None, equal_nan=None):
         super().__init__()
 
         self.edgeConditionModule = edgeConditionModule
@@ -59,10 +59,13 @@ class edgeRefresh_forceUpdate(nn.Module):
         
         self.returnScore = ut.variableInitializer(returnScore, False)
         self.forceUpdate = ut.variableInitializer(forceUpdate, False)
+        self.scorePostProcessModule = scorePostProcessModule
         
         self.def_graph_updates()
         
         self.def_forward()
+        
+        self.resetScore()
         
 
     def def_noScore(self):
@@ -107,8 +110,8 @@ class edgeRefresh_forceUpdate(nn.Module):
     def loadScore(self, score):
         self.score = score
         
-    def loadProcessedScore(self, ps):
-        self.processedScore = ps
+    def addProcessedScore(self, ps):
+        self.processedScore.append(ps)
         
     def createEdge(self, gr, args=None):
         self.loadGraph(gr)
@@ -116,10 +119,13 @@ class edgeRefresh_forceUpdate(nn.Module):
         return self.postProcess(out)
     
     def postProcess_score(self, out)
-        
-        self.loadScore(out[1])
+        self.addProcessedScore(self.scorePostProcessModule(self.score, out[1]))
         self.loadScore(out[1])
         return out[0]
+    
+    def resetScore(self):
+        self.score = None
+        self.processedScore = []        
     
     def forward_forceUpdate(self, gr, dynamicVariable, ndataInOutModule, args=None):
         out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, self.update_adjacency, args)
