@@ -122,18 +122,21 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
             self.def_selfLoop()
         else:
             self.def_noSelfLoop()
-            
     
+    
+    def calc_abs_distance(self, g, args=None):
+        dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
+        return torch.norm(dr, dim=-1, keepdim=False)
+        
+    def calc_score(self, dr):
+        return torch.sigmoid((dr/self.r0) - 1)
         
     def forward_noScore(self, g, args=None):
-        dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
-        dr = torch.norm(dr, dim=-1, keepdim=False)
+        dr = self.calc_abs_distance(g, args)
         return self.distance2edge(dr)
 
     def forward_score(self, g, args=None):
-        dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
-        dr = torch.norm(dr, dim=-1, keepdim=False)
-        
-        return self.distance2edge(dr)
+        dr = self.calc_abs_distance(g, args)
+        return self.distance2edge(dr), self.calc_score(dr)
     
     
