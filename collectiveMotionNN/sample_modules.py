@@ -80,9 +80,18 @@ class distance2edge_noSelfLoop(nn.Module):
 
     
         
+class distanceSigmoid(nn.Module):
+    def __init__(self, r_scale):
+        super().__init__()
+        
+        self.r_scale = r_scale
+        
+    def forward(self, dr):
+        return torch.sigmoid(dr/self.r_scale)
+        
     
 class radiusgraphEdge(wm.edgeScoreCalculationModule):
-    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False):
+    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, scoreCalcModule=None):
         super().__init__(returnScore)
            
         self.r0 = r0
@@ -92,6 +101,8 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         self.selfLoop = selfLoop
         
         self.edgeVariable = ut.variableInitializer(variableName, 'x')
+        
+        self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(r0/10.0))
         
         self.def_dr()
         
@@ -129,7 +140,7 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         return torch.norm(dr, dim=-1, keepdim=False)
         
     def calc_score(self, dr):
-        return torch.sigmoid((dr/self.r0) - 1)
+        return 
         
     def forward_noScore(self, g, args=None):
         dr = self.calc_abs_distance(g, args)
