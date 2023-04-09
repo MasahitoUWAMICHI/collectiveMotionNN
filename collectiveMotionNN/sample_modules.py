@@ -2,6 +2,9 @@ import numpy as np
 import torch
 from torch import nn
 
+import collectiveMotionNN.utils as ut
+import collectiveMotionNN.wrapper_modules as wm
+
 
 
 class singleVariableNdataInOut(nn.Module):
@@ -43,9 +46,44 @@ class multiVariableNdataInOut(nn.Module):
     
     
     
-class radiusgraphEdge(nn.Module):
-    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None):
+    
+
+
+def bool2edge(boolMatrix):
+    edges = torch.argwhere(boolMatrix)
+    return (edges[:,0], edges[:,1])
+
+def radiusGraphEdge_selfLoop(distanceMatrix, r0):
+    return distanceMatrix < r0
+
+def radiusGraphEdge_noSelfLoop(distanceMatrix, r0):
+    distanceMatrix.fill_diagonal_(r0+1)
+    return distanceMatrix < r0
+
+class distance2edge_selfLoop(nn.Module):
+    def __init__(self, r0):
         super().__init__()
+        self.r0 = r0
+        
+    def forward(self, distanceMatrix):
+        boolMatrix = radiusGraphEdge_selfLoop(distanceMatrix, self.r0)
+        return bool2edge(boolMatrix)
+    
+class distance2edge_noSelfLoop(nn.Module):
+    def __init__(self, r0):
+        super().__init__()
+        self.r0 = r0
+        
+    def forward(self, distanceMatrix):
+        boolMatrix = radiusGraphEdge_noSelfLoop(distanceMatrix, self.r0)
+        return bool2edge(boolMatrix)
+
+    
+        
+    
+class radiusgraphEdge(wm.edgeScoreCalculationModule):
+    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False):
+        super().__init__(returnScore)
            
         self.r0 = r0
 
@@ -85,10 +123,17 @@ class radiusgraphEdge(nn.Module):
         else:
             self.def_noSelfLoop()
             
-            
+    
         
-    def forward(self, g, args=None):
+    def forward_noScore(self, g, args=None):
         dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
         dr = torch.norm(dr, dim=-1, keepdim=False)
         return self.distance2edge(dr)
+
+    def forward_score(self, g, args=None):
+        dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
+        dr = torch.norm(dr, dim=-1, keepdim=False)
         
+        return self.distance2edge(dr)
+    
+    
