@@ -143,11 +143,6 @@ class edgeRefresh(nn.Module):
 
 
 
-
-
-
-    
-
     
 
 def make_disconnectedGraph(dynamicVariable, ndataInOutModule, staticVariables=None):
@@ -165,37 +160,5 @@ def make_disconnectedGraph(dynamicVariable, ndataInOutModule, staticVariables=No
 
 
 
-
-def bool2edge(boolMatrix):
-    edges = torch.argwhere(boolMatrix)
-    return (edges[:,0], edges[:,1])
-
-def radiusGraphEdge_selfLoop(distanceMatrix, r0):
-    return distanceMatrix < r0
-
-def radiusGraphEdge_noSelfLoop(distanceMatrix, r0):
-    distanceMatrix.fill_diagonal_(r0+1)
-    return distanceMatrix < r0
-
-class distance2edge_selfLoop(nn.Module):
-    def __init__(self, r0):
-        super().__init__()
-        self.r0 = r0
-        
-    def forward(self, distanceMatrix):
-        boolMatrix = radiusGraphEdge_selfLoop(distanceMatrix, self.r0)
-        return bool2edge(boolMatrix)
-    
-class distance2edge_noSelfLoop(nn.Module):
-    def __init__(self, r0):
-        super().__init__()
-        self.r0 = r0
-        
-    def forward(self, distanceMatrix):
-        boolMatrix = radiusGraphEdge_noSelfLoop(distanceMatrix, self.r0)
-        return bool2edge(boolMatrix)
-
-    
-    
 
     
