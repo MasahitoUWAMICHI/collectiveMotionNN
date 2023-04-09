@@ -139,9 +139,6 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
         return torch.norm(dr, dim=-1, keepdim=False)
         
-    def calc_score(self, dr):
-        return 
-        
     def forward_noScore(self, g, args=None):
         dr = self.calc_abs_distance(g, args)
         return self.distance2edge(dr)
