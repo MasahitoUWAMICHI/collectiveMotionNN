@@ -106,6 +106,22 @@ class dynamicGNDEmodule(nn.Module):
 
     
     
-    
+class edgeScoreCalculationModule(nn.Module):
+    def __init__(self, returnScore):
+        super().__init__()
+        self.set_returnScore(returnScore)
+        
+    def set_returnScore(self, returnScore):
+        self.returnScore = returnScore
+        if self.returnScore:
+            self.forward = self.forward_score
+        else:
+            self.forward = self.forward_noScore
+            
+    def forward_score(self, x):
+        return None
+        
+    def forward_noScore(self, x):
+        return None
    
-    
+
