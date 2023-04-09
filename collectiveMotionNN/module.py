@@ -107,7 +107,7 @@ class dynamicGNDEmodule(nn.Module):
     
     
 class edgeScoreCalculationModule(nn.Module):
-    def __init__(self, returnScore):
+    def __init__(self, returnScore=False):
         super().__init__()
         self.set_returnScore(returnScore)
         
