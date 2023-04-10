@@ -487,7 +487,7 @@ if __name__ == '__main__':
                 with open(save_learned_model, mode='wb') as f:
                     cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.2e}, {:.2e} Best'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e} Best'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
                     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
@@ -495,7 +495,7 @@ if __name__ == '__main__':
                     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.2e}, {:.2e}'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
                     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
