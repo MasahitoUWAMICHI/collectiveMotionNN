@@ -45,10 +45,22 @@ class interactionModule(nn.Module):
         
         self.messageName = ut.variableInitializer(messageName, 'm')
         
-    def reset_parameter(self):
-        nn.init.uniform_(self.v0)
-        nn.init.uniform_(self.w0)
-        nn.init.uniform_(self.sigma)
+    def reset_parameter(self, v0=None, w0=None, sigma=None):
+        if v0 is None:
+            nn.init.uniform_(self.v0)
+        else:
+            nn.init.constant_(self.v0, v0)
+            
+        if w0 is None:
+            nn.init.uniform_(self.w0)
+        else:
+            nn.init.constant_(self.w0, w0)
+            
+        if sigma is None:
+            nn.init.uniform_(self.sigma)
+        else:
+            nn.init.constant_(self.sigma, sigma)
+
         
         self.prepare_sigma()
         
@@ -210,6 +222,10 @@ if __name__ == '__main__':
 
     parser.add_argument('--skipSimulate', type=strtobool)
     
+    parser.add_argument('--v0_init', type=float)
+    parser.add_argument('--w0_init', type=float)
+    parser.add_argument('--sigma_init', type=float)
+
     
     parser.add_argument('--delayPredict', type=int)
     parser.add_argument('--dt_train', type=float)
@@ -269,6 +285,12 @@ if __name__ == '__main__':
 
     skipSimulate = ut.variableInitializer(args.skipSimulate, False)
     
+    
+    v0_init = ut.variableInitializer(args.v0_init, None)
+    w0_init = ut.variableInitializer(args.w0_init, None)
+    
+    sigma_init = ut.variableInitializer(args.sigma_init, None)
+
     
     delayPredict = ut.variableInitializer(args.delayPredict, 1)
     dt_train = ut.variableInitializer(args.dt_train, dt_step)
@@ -352,7 +374,7 @@ if __name__ == '__main__':
     
     
     
-    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter()
+    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(v0_init, w0_init, sigma_init)
     
     Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(True)
     
