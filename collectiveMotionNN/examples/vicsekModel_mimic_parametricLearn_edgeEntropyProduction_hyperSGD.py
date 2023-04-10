@@ -433,21 +433,17 @@ if __name__ == '__main__':
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             
             score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
-            print(score_truth.shape, score_pred.shape)
             
             xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-            #loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
             loss = xyloss + thetaLoss_weight * thetaloss + scoreLoss_weight * scoreloss
             loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             mw.zero_grad()
-            #loss.backward(create_graph=True)
             loss.backward()
             for key in mw.optimizer.parameters.keys():
                 mw.optimizer.parameters[key].retain_grad()
             mw.step()
             
-        #loss = loss / graph_batchsize
         mw.begin() # remove graph for autograd
         
         with torch.no_grad():
@@ -491,7 +487,7 @@ if __name__ == '__main__':
                 with open(save_learned_model, mode='wb') as f:
                     cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.2e}, {:.2e} Best'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
                     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
@@ -499,7 +495,7 @@ if __name__ == '__main__':
                     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.2e}, {:.2e}'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
                     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
