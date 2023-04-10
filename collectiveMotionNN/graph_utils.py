@@ -114,15 +114,15 @@ class edgeRefresh(nn.Module):
     
     def postProcess_score(self, out, t):
         if t > self.lastScoreCalculationTime:
-            self.processedScore = self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore)
-            self.loadScore(out[1])
-            self.loadTimeStamp(t)
+            self.resetScores(score = out[1],
+                             ps = self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore),
+                             t = t)
         return out[0]
     
     def resetScores(self, score=None, ps=None, t=None):
         self.loadScore(score)
         self.loadProcessedScore(ut.variableInitializer(ps, []))
-        self.lastScoreCalculationTime = ut.variableInitializer(t, 0)
+        self.loadTimeStamp(ut.variableInitializer(t, 0))
         
     def deleteGraphs(self):
         self.graph = None
