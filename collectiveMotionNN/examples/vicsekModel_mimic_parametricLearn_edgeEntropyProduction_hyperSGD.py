@@ -418,7 +418,7 @@ if __name__ == '__main__':
             graph_batchsize = len(graph.batch_num_nodes())
             
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-            Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph_init).to(device))
+            Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
             _ = Vicsek_SDEwrapper.f(1, x_truth)
             score_truth = torch.tensor(Vicsek_SDEwrapper.score(), device=device)
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
@@ -452,7 +452,7 @@ if __name__ == '__main__':
                 graph_batchsize = len(graph.batch_num_nodes())
                 
                 Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph_init).to(device))
+                Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
                 _ = Vicsek_SDEwrapper.f(1, x_truth)
                 score_truth = torch.tensor(Vicsek_SDEwrapper.score(), device=device)
                 Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
