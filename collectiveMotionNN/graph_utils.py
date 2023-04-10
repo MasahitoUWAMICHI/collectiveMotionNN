@@ -18,9 +18,6 @@ def update_adjacency(g, edgeConditionModule, args=None):
 
 def update_adjacency_batch(bg, edgeConditionModule, args=None):
     gs = list(map(lambda g: update_adjacency(g, edgeConditionModule, args), dgl.unbatch(bg)))
-    #gs = dgl.unbatch(bg)
-    #for g in gs:
-    #    update_adjacency(g, edgeConditionModule, args)
     bg = dgl.batch(gs)
     return bg, None
 
@@ -34,12 +31,6 @@ def update_adjacency_returnScore_batch(bg, edgeConditionModule, args=None):
     gscore = list(map(lambda g: list(update_adjacency(g, edgeConditionModule, args)), dgl.unbatch(bg))) # list of lists [graph, score]
     gs, scores = list(zip(*gscore))
     bg = dgl.batch(gs)
-    #gs = dgl.unbatch(bg)
-    #scores = []
-    #for i, g in enumerate(gs):
-    #    gs[i], score = update_adjacency_returnScore(g, edgeConditionModule, args)
-    #    scores.append(score)
-    #bg = dgl.batch(gs)
     return bg, torch.cat(scores, dim=0)
 
 
@@ -131,7 +122,7 @@ class edgeRefresh(nn.Module):
     def resetScores(self, score=None, ps=None, t=None):
         self.loadScore(score)
         self.loadProcessedScore(ut.variableInitializer(ps, []))
-        self.lastScoreCalculationTime = ut.variableInitializer(t, 0))
+        self.lastScoreCalculationTime = ut.variableInitializer(t, 0)
         
     def deleteGraphs(self):
         self.graph = None
