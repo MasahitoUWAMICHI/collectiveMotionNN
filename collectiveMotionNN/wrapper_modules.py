@@ -82,7 +82,7 @@ class dynamicGNDEmodule(nn.Module):
         
         self.forceUpdate = ut.variableInitializer(forceUpdate, False)
         
-        self.edgeRefresher = gu.edgeRefresh(self.edgeConditionModule, returnScore, scorePostProcessModule, scoreIntegrationModule, forceUpdate, rtol, atol, equal_nan)
+        self.edgeRefresher = gu.edgeRefresh(edgeConditionModule, returnScore, scorePostProcessModule, scoreIntegrationModule, forceUpdate, rtol, atol, equal_nan)
         
     def edgeInitialize(self, gr, args=None):
         return self.edgeRefresher.createEdge(gr, args)
