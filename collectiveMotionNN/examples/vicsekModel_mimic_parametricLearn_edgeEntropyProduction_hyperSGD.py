@@ -407,7 +407,7 @@ if __name__ == '__main__':
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, theta), validLoss (xy, theta), alpha, 1-beta1, 1-beta2')
+    print('epoch: trainLoss (xy, theta, score), validLoss (xy, theta, score), alpha, 1-beta1, 1-beta2')
     
     loss_history = []
     valid_loss_history = []
