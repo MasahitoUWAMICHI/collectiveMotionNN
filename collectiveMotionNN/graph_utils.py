@@ -92,17 +92,11 @@ class edgeRefresh(nn.Module):
         self.def_graph_updates()
         
     
-    def def_forceUpdate(self):
-        self.forward = self.forward_forceUpdate
-        
-    def def_noForceUpdate(self):
-        self.forward = self.forward_noForceUpdate
-        
     def def_forward(self):
         if self.forceUpdate:
-            self.def_forceUpdate()
+            self.forward = self.forward_forceUpdate
         else:
-            self.def_noForceUpdate()
+            self.forward = self.forward_noForceUpdate
             
     def reset_forceUpdateMode(self, forceUpdate):
         self.forceUpdate = forceUpdate
