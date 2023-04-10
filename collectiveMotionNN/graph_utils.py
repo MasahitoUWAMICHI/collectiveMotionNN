@@ -70,7 +70,7 @@ class edgeRefresh(nn.Module):
         
         self.def_forward()
         
-        self.resetScore()
+        self.resetScores()
         
 
     def def_noScore(self):
