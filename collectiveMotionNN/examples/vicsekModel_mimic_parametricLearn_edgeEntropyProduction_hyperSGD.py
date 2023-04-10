@@ -167,7 +167,7 @@ class myLoss(nn.Module):
         dxy = self.distanceCalc(x[..., :2], y[..., :2])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
         thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
-        scoreLoss = torch.square(torch.sum(score_x) - torch.sum(score_y))
+        scoreLoss = torch.mean(torch.square(score_xscore_y))
         return xyLoss, thetaLoss, scoreLoss
     
     
