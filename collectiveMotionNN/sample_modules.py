@@ -88,7 +88,7 @@ class distanceSigmoid(nn.Module):
         
         self.def_selfloop(selfloop)
         
-    def def_selfloop(self, selfloop)
+    def def_selfloop(self, selfloop):
         self.selfloop = selfloop
         if selfloop:
             self.triu = lambda x: torch.triu(x)
