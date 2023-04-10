@@ -417,6 +417,9 @@ if __name__ == '__main__':
             mw.begin()
             graph_batchsize = len(graph.batch_num_nodes())
             
+            print(graph.batch_num_nodes())
+            print(x_truth.shape)
+            
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
             Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
