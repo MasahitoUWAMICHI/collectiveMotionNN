@@ -81,17 +81,33 @@ class distance2edge_noSelfLoop(nn.Module):
     
         
 class distanceSigmoid(nn.Module):
-    def __init__(self, r_scale):
+    def __init__(self, r_scale, selfloop):
         super().__init__()
         
         self.r_scale = r_scale
         
+        self.def_selfloop(selfloop)
+        
+    def def_selfloop(self, selfloop)
+        self.selfloop = selfloop
+        if selfloop:
+            self.triu = lambda x: torch.triu(x)
+        else:
+            self.triu = lambda x: torch.triu(x, diagonal=1)
+        
     def forward(self, dr):
-        return torch.sigmoid(dr/self.r_scale)
+        dr0 = self.triu(dr/self.r_scale)
+        return torch.stack((self.triu(torch.sigmoid(dr0)).reshape(-1), dr0.reshape(-1)), dim=1) # probability score and logit 
+        
+class pAndLogit2KLdiv(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, x0, x1):
+        return torch.sum(torch.prod(x0 - x1, dim=1))
         
     
 class radiusgraphEdge(wm.edgeScoreCalculationModule):
-    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, scoreCalcModule=None):
+    def __init__(self, r0, r1=None, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, scoreCalcModule=None):
         super().__init__(returnScore)
            
         self.r0 = r0
@@ -101,8 +117,10 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         self.selfLoop = selfLoop
         
         self.edgeVariable = ut.variableInitializer(variableName, 'x')
+
+        self.r1 = ut.variableInitializer(r1, r0/10.0)
         
-        self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(r0/10.0))
+        self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(self.r1, selfloop))
         
         self.def_dr()
         
@@ -145,6 +163,6 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
 
     def forward_score(self, g, args=None):
         dr = self.calc_abs_distance(g, args)
-        return self.distance2edge(dr), self.calc_score(dr)
+        return self.distance2edge(dr), self.calc_score(self.r0 - dr)
     
     
