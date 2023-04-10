@@ -132,6 +132,10 @@ class edgeRefresh(nn.Module):
         self.loadScore(score)
         self.loadProcessedScore(ut.variableInitializer(ps, []))
         self.lastScoreCalculationTime = ut.variableInitializer(t, 0))
+        
+    def deleteGraphs(self):
+        self.graph = None
+        self.resetScores()
     
     def forward_forceUpdate(self, t, gr, dynamicVariable, ndataInOutModule, args=None):
         out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.update_adjacency, args)
