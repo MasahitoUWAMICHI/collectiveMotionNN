@@ -75,7 +75,7 @@ class dynamicGNDEmodule(nn.Module):
         
         self.calc_module = calc_module
 
-        self.edgeConditionModule = edgeConditionModule
+        #self.edgeConditionModule = edgeConditionModule
         
         self.forceUpdate = ut.variableInitializer(forceUpdate, False)
         
