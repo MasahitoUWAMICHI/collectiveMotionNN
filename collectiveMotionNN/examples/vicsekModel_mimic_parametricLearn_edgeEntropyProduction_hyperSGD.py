@@ -167,7 +167,7 @@ class myLoss(nn.Module):
         dxy = self.distanceCalc(x[..., :2], y[..., :2])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
         thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
-        scoreLoss = torch.mean(torch.square(score_x - score_y))
+        scoreLoss = torch.mean(torch.square(torch.sum(score_x, dim=-1, keepdim=True) - score_y))
         return xyLoss, thetaLoss, scoreLoss
     
     
@@ -433,7 +433,7 @@ if __name__ == '__main__':
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             
             score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
-            print(score_truth, score_pred)
+            print(score_truth.shape, score_pred.shape)
             
             xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
             #loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
@@ -464,14 +464,14 @@ if __name__ == '__main__':
                 Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
                 Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
                 _ = Vicsek_SDEwrapper.f(1, x_truth)
-                score_truth = torch.tensor(Vicsek_SDEwrapper.score(), device=device)
+                score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
                 Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
 
                 Vicsek_SDEwrapper.loadGraph(graph.to(device))
                 _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
                 
-                score_pred = torch.tensor(Vicsek_SDEwrapper.score(), device=device)
+                score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
                 
                 valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
