@@ -296,7 +296,7 @@ if __name__ == '__main__':
     
     
     Vicsek_Module = interactionModule(v0, w0, sigma, d).to(device)
-    edgeModule = gu.radiusgraphEdge(r0, periodic, selfloop).to(device)
+    edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop).to(device)
     
     Vicsek_SDEmodule = wm.dynamicGNDEmodule(Vicsek_Module, edgeModule).to(device)
     
