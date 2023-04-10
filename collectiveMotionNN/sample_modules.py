@@ -60,7 +60,7 @@ class distanceSigmoid(nn.Module):
         else:
             self.triu = lambda x: torch.triu(x, diagonal=1)
         
-    def forward(self, dr0):
+    def forward(self, dr):
         dr0 = self.triu(dr/self.r_scale)
         return torch.stack((self.triu(torch.sigmoid(dr0)).reshape(-1), dr0.reshape(-1)), dim=1) # probability score and logit 
         
