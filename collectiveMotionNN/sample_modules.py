@@ -135,7 +135,7 @@ class pAndLogit2KLdiv(nn.Module):
     def __init__(self):
         super().__init__()
     def forward(self, x0, x1):
-        return torch.mean(torch.tensor(list(map(lambda x: torch.sum(torch.prod(x[0] - x[1], dim=1)), zip(x0,x1))), device=x0[0].device))
+        return torch.tensor(list(map(lambda x: torch.sum(torch.prod(x[0] - x[1], dim=1)), zip(x0,x1))), device=x0[0].device)
     
 class scoreListModule(nn.Module):
     def __init__(self):
