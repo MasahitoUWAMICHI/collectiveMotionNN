@@ -118,7 +118,7 @@ class myDataset(torch.utils.data.Dataset):
     def from_t_batch(self, batch, t):
         _, x = self.loadData()
         
-        gr = gu.make_disconnectedGraph(x[t, batch], sm.multiVariableNdataInOut(['x', 'theta'], [2, 1]))
+        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'theta'], [2, 1]))
         
         x_truth = x[t+self.delayTruth, batch]
         
@@ -305,7 +305,7 @@ if __name__ == '__main__':
     graph_init = []
     for i in range(N_batch):
         x0.append(torch.cat((torch.rand([N_particles, 2]) * L, (torch.rand([N_particles, 1]) - 0.5) * (2*np.pi)), dim=-1))
-        graph_init.append(gu.make_disconnectedGraph(x0[i], sm.multiVariableNdataInOut(['x', 'theta'], [2, 1])))
+        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'theta'], [2, 1])))
     x0 = torch.concat(x0, dim=0)
     graph_init = dgl.batch(graph_init)
         
@@ -318,8 +318,8 @@ if __name__ == '__main__':
     
     
     Vicsek_SDEwrapper = wm.dynamicGSDEwrapper(Vicsek_SDEmodule, copy.deepcopy(graph_init).to(device), 
-                                          ndataInOutModule=sm.multiVariableNdataInOut(['x', 'theta'], [2, 1]), 
-                                          derivativeInOutModule=sm.multiVariableNdataInOut(['v', 'w'], [2, 1]),
+                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'theta'], [2, 1]), 
+                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [2, 1]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
     if not skipSimulate:
