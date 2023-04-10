@@ -17,9 +17,9 @@ class dynamicGODEwrapper(nn.Module):
 
         self.graph = graph
         
-        self.ndataInOutModule = ut.variableInitializer(ndataInOutModule, sm.singleVariableNdataInOut('x'))
+        self.ndataInOutModule = ut.variableInitializer(ndataInOutModule, gu.singleVariableNdataInOut('x'))
             
-        self.derivativeInOutModule = ut.variableInitializer(derivativeInOutModule, sm.singleVariableNdataInOut('v'))
+        self.derivativeInOutModule = ut.variableInitializer(derivativeInOutModule, gu.singleVariableNdataInOut('v'))
 
         self.edgeInitialize(args)
         
@@ -51,7 +51,7 @@ class dynamicGSDEwrapper(dynamicGODEwrapper):
     def __init__(self, dynamicGNDEmodule, graph=None, ndataInOutModule=None, derivativeInOutModule=None, noiseInOutModule=None, noise_type=None, sde_type=None, args=None):
         super().__init__(dynamicGNDEmodule, graph, ndataInOutModule, derivativeInOutModule, args)
         
-        self.noiseInOutModule = ut.variableInitializer(noiseInOutModule, sm.singleVariableNdataInOut('sigma'))
+        self.noiseInOutModule = ut.variableInitializer(noiseInOutModule, gu.singleVariableNdataInOut('sigma'))
 
         self.noise_type = ut.variableInitializer(noise_type, 'general')
         self.sde_type = ut.variableInitializer(sde_type, 'ito')
