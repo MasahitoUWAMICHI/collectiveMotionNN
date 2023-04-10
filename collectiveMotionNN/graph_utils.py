@@ -123,7 +123,7 @@ class edgeRefresh(nn.Module):
         out = self.update_adjacency(gr, args)
         return self.postProcess(out)
     
-    def postProcess_score(self, out)
+    def postProcess_score(self, out):
         self.processedScore = self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore)
         self.loadScore(out[1])
         return out[0]
