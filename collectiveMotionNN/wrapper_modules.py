@@ -91,6 +91,9 @@ class dynamicGNDEmodule(nn.Module):
     def g(self, t, x, gr, ndataInOutModule, args=None):
         gr = self.edgeRefresher(t, gr, x, ndataInOutModule, args)
         return self.calc_module.g(t, gr, args)
+    
+    def score(self):
+        return self.edgeRefresher.processedScore
 
     
     
