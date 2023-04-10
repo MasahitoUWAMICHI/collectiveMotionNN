@@ -104,7 +104,6 @@ class pAndLogit2KLdiv(nn.Module):
         super().__init__()
     def forward(self, x0, x1):
         return torch.sum(torch.prod(x0 - x1, dim=1))
-        
     
 class radiusgraphEdge(wm.edgeScoreCalculationModule):
     def __init__(self, r0, r1=None, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, scoreCalcModule=None):
@@ -165,4 +164,17 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         dr = self.calc_abs_distance(g, args)
         return self.distance2edge(dr), self.calc_score(self.r0 - dr)
     
+    
+class scoreListModule(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, postScore, preScore):
+        preScore.append(postScore)
+        return preScore
+    
+class scoreSumModule(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, postScore, preScore):
+        return postScore + preScore
     
