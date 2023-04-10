@@ -409,7 +409,7 @@ if __name__ == '__main__':
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, theta, score), validLoss (xy, theta, score), alpha, 1-beta1, 1-beta2')
+    print('epoch: trainLoss (xy, theta, score), validLoss (xy, theta, score), v0, w0, sigma, alpha, 1-beta1, 1-beta2')
     
     loss_history = []
     valid_loss_history = []
@@ -491,11 +491,17 @@ if __name__ == '__main__':
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e} Best'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.w0.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
             else:
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.3f} ({:.3f}, {:.3f}, {:.3f}), {:.2e}, {:.2e}, {:.2e}'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.w0.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         
     torch.save(torch.tensor(loss_history), save_loss_history)
