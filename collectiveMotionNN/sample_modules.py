@@ -122,7 +122,7 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
 
         r1 = ut.variableInitializer(r1, r0/10.0)
         
-        self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(r1, selfloop))
+        self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(r1, self.selfLoop))
         
         self.def_dr()
         
