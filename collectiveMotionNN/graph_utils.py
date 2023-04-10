@@ -31,7 +31,7 @@ def update_adjacency_returnScore_batch(bg, edgeConditionModule, args=None):
     gscore = list(map(lambda g: list(update_adjacency_returnScore(g, edgeConditionModule, args)), dgl.unbatch(bg))) # list of lists [graph, score]
     gs, scores = list(zip(*gscore))
     bg = dgl.batch(gs)
-    return bg, torch.cat(scores, dim=0)
+    return bg, scores
 
 
 def judge_skipUpdate(g, dynamicVariable, ndataInOutModule, rtol=1e-05, atol=1e-08, equal_nan=True):
