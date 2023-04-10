@@ -65,7 +65,7 @@ class distanceSigmoid(nn.Module):
         return torch.stack((self.triu(torch.sigmoid(dr0)).reshape(-1), dr0.reshape(-1)), dim=1) # probability score and logit 
         
 class radiusgraphEdge(wm.edgeScoreCalculationModule):
-    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, r1=None, scoreCalcModule=None):
+    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, r1=None, scoreCalcModule=None, eps=None):
         super().__init__(returnScore)
            
         self.r0 = r0
@@ -79,6 +79,8 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         r1 = ut.variableInitializer(r1, r0/10.0)
         
         self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(r1, self.selfLoop))
+        
+        self.eps = ut.variableInitializer(eps, 1e-5)
         
         self.def_dr()
         
@@ -113,7 +115,11 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
     
     def calc_abs_distance(self, g, args=None):
         dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
-        return torch.norm(dr, dim=-1, keepdim=False)
+        for i in range(dr.shape[-1]):
+            dr[:,:,i].fill_diagonal_(self.eps)
+        dr = torch.norm(dr, dim=-1, keepdim=False)
+        dr.fill_diagonal_(0.0)
+        return dr
         
     def forward_noScore(self, g, args=None):
         dr = self.calc_abs_distance(g, args)
