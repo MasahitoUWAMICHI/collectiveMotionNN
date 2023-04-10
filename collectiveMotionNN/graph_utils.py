@@ -75,7 +75,7 @@ class edgeRefresh(nn.Module):
 
     def def_noScore(self):
         self.update_adjacency = lambda gr, args=None: update_adjacency_batch(gr, self.edgeConditionModule, args)
-        self.postProcess = lambda x: x[0]
+        self.postProcess = lambda x, t=None: x[0]
         
     def def_score(self):
         self.update_adjacency = lambda gr, args=None: update_adjacency_returnScore_batch(gr, self.edgeConditionModule, args)
@@ -118,31 +118,36 @@ class edgeRefresh(nn.Module):
     def loadProcessedScore(self, ps):
         self.processedScore = ps
         
+    def loadTimeStamp(self, t):
+        self.lastScoreCalculationTime = t
+        
     def createEdge(self, gr, args=None):
         self.loadGraph(gr)
         out = self.update_adjacency(gr, args)
         return self.postProcess(out)
     
-    def postProcess_score(self, out):
-        self.processedScore = self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore)
-        self.loadScore(out[1])
+    def postProcess_score(self, out, t):
+        self.processedScore = torch.where(t > self.lastScoreCalculationTime, self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore), self.processedScore)
+        self.loadScore(torch.where(t > self.lastScoreCalculationTime, out[1], self.score))
+        self.loadTimeStamp(torch.where(t > self.lastScoreCalculationTime, t, self.lastScoreCalculationTime))
         return out[0]
     
     def resetScores(self, score=None, ps=None):
         self.loadScore(score)
         self.loadProcessedScore(ps)
+        self.lastScoreCalculationTime = -1
     
-    def forward_forceUpdate(self, gr, dynamicVariable, ndataInOutModule, args=None):
+    def forward_forceUpdate(self, t, gr, dynamicVariable, ndataInOutModule, args=None):
         out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.update_adjacency, args)
-        gr = self.postProcess(out)
+        gr = self.postProcess(out, t)
         self.loadGraph(gr)
         return gr
 
-    def forward_noForceUpdate(self, gr, dynamicVariable, ndataInOutModule, args=None):
+    def forward_noForceUpdate(self, t, gr, dynamicVariable, ndataInOutModule, args=None):
         if judge_skipUpdate(self.graph, dynamicVariable, ndataInOutModule, self.rtol, self.atol, self.equal_nan):
             return gr
         else:
-            gr = self.forward_forceUpdate(gr, dynamicVariable, ndataInOutModule, args)
+            gr = self.forward_forceUpdate(t, gr, dynamicVariable, ndataInOutModule, args)
             return gr
 
 
