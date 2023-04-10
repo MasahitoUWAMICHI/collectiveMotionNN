@@ -75,7 +75,7 @@ class edgeRefresh(nn.Module):
 
     def def_noScore(self):
         self.update_adjacency = lambda gr, args=None: update_adjacency_batch(gr, self.edgeConditionModule, args)
-        self.postProcess = lambda x, t=None: x[0]
+        self.postProcess = lambda x, flg=None: x[0]
         
     def def_score(self):
         self.update_adjacency = lambda gr, args=None: update_adjacency_returnScore_batch(gr, self.edgeConditionModule, args)
@@ -115,25 +115,27 @@ class edgeRefresh(nn.Module):
     def loadTimeStamp(self, t):
         self.lastScoreCalculationTime = t
         
-    def createEdge(self, gr, args=None):
+    def createEdge(self, gr, score=None, ps=None, t=None, args=None):
         self.loadGraph(gr)
         out = self.update_adjacency(gr, args)
-        return self.postProcess(out)
-    
-    def postProcess_score(self, out, t):
-        self.processedScore = torch.where(t > self.lastScoreCalculationTime, self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore), self.processedScore)
-        self.loadScore(torch.where(t > self.lastScoreCalculationTime, out[1], self.score))
-        self.loadTimeStamp(torch.where(t > self.lastScoreCalculationTime, t, self.lastScoreCalculationTime))
+        self.resetScores(ut.variableInitializer(score, out[1]), ps, t)
         return out[0]
     
-    def resetScores(self, score=None, ps=None):
+    def postProcess_score(self, out, flg):
+        if flg:
+            self.processedScore = self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore)
+            self.loadScore(out[1])
+            self.loadTimeStamp(t)
+        return out[0]
+    
+    def resetScores(self, score=None, ps=None, t=None):
         self.loadScore(score)
-        self.loadProcessedScore(ps)
-        self.lastScoreCalculationTime = -1
+        self.loadProcessedScore(ut.variableInitializer(ps, []))
+        self.lastScoreCalculationTime = ut.variableInitializer(t, 0))
     
     def forward_forceUpdate(self, t, gr, dynamicVariable, ndataInOutModule, args=None):
         out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.update_adjacency, args)
-        gr = self.postProcess(out, t)
+        gr = self.postProcess(out, t>self.lastScoreCalculationTime)
         self.loadGraph(gr)
         return gr
 
