@@ -356,6 +356,8 @@ if __name__ == '__main__':
     
     Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(True)
     
+    print(Vicsek_SDEwrapper.state_dict())
+    
         
     optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(lr_hyperSGD))
 
