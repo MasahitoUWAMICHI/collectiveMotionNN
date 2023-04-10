@@ -424,7 +424,7 @@ if __name__ == '__main__':
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
             Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
             _ = Vicsek_SDEwrapper.f(1, x_truth)
-            score_truth = torch.tensor(Vicsek_SDEwrapper.score(), device=device)
+            score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
             
             
@@ -432,7 +432,7 @@ if __name__ == '__main__':
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             
-            score_pred = torch.tensor(Vicsek_SDEwrapper.score(), device=device)
+            score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
             print(score_truth, score_pred)
             
             xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
