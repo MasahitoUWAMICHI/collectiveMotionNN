@@ -112,8 +112,8 @@ class edgeRefresh(nn.Module):
         self.resetScores(ut.variableInitializer(score, out[1]), ps, t)
         return out[0]
     
-    def postProcess_score(self, out, flg):
-        if flg:
+    def postProcess_score(self, out, t):
+        if t > self.lastScoreCalculationTime:
             self.processedScore = self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore)
             self.loadScore(out[1])
             self.loadTimeStamp(t)
@@ -130,7 +130,7 @@ class edgeRefresh(nn.Module):
     
     def forward_forceUpdate(self, t, gr, dynamicVariable, ndataInOutModule, args=None):
         out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.update_adjacency, args)
-        gr = self.postProcess(out, t>self.lastScoreCalculationTime)
+        gr = self.postProcess(out, t)
         self.loadGraph(gr)
         return gr
 
