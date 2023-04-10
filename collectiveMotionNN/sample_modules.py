@@ -7,45 +7,7 @@ import collectiveMotionNN.wrapper_modules as wm
 
 
 
-class singleVariableNdataInOut(nn.Module):
-    def __init__(self, variableName):
-        super().__init__()
-        
-        self.variableName = variableName
-    
-    def input(self, gr, variableValue):
-        gr.ndata[self.variableName] = variableValue
-        return gr
 
-    def output(self, gr):
-        return gr.ndata[self.variableName]
-    
-class multiVariableNdataInOut(nn.Module):
-    def __init__(self, variableName, variableNDims):
-        super().__init__()
-        
-        assert len(variableName) == len(variableNDims)
-        
-        self.variableName = variableName
-        self.variableNDims = variableNDims
-        
-        self.initializeIndices()
-        
-    def initializeIndices(self):
-        self.variableIndices = np.cumsum(np.array([0]+list(self.variableNDims), dtype=int))
-    
-    def input(self, gr, variableValue):
-        for vN, vD0, vD1 in zip(self.variableName, self.variableIndices[:-1], self.variableIndices[1:]):
-            gr.ndata[vN] = variableValue[..., vD0:vD1]
-        return gr
-
-    def output(self, gr):
-        return torch.cat([gr.ndata[vN] for vN in self.variableName], dim=-1)
-    
-    
-    
-    
-    
     
 
 
