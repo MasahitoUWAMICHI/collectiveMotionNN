@@ -428,7 +428,7 @@ if __name__ == '__main__':
             Vicsek_SDEwrapper.loadGraph(graph.to(device))
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
-            xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, torch.tensor(Vicsek_SDEwrapper.score(), score_truth, device=device))
+            xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, torch.tensor(Vicsek_SDEwrapper.score(), device=device), score_truth)
             #loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
             loss = xyloss + thetaLoss_weight * thetaloss + scoreLoss_weight * scoreloss
             loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
@@ -463,7 +463,7 @@ if __name__ == '__main__':
                 Vicsek_SDEwrapper.loadGraph(graph.to(device))
                 _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
-                valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, torch.tensor(Vicsek_SDEwrapper.score(), score_truth, device=device))
+                valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, torch.tensor(Vicsek_SDEwrapper.score(), device=device), score_truth)
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
                 valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
                 valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
