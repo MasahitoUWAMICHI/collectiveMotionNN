@@ -82,7 +82,7 @@ class edgeRefresh(nn.Module):
     def reset_returnScoreMode(self, returnScore):
         self.returnScore = returnScore
         self.def_graph_updates()
-        
+        self.edgeConditionModule.set_returnScore(returnScore)
     
     def def_forward(self):
         if self.forceUpdate:
