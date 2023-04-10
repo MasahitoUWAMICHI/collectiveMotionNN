@@ -60,16 +60,10 @@ class distanceSigmoid(nn.Module):
         else:
             self.triu = lambda x: torch.triu(x, diagonal=1)
         
-    def forward(self, dr):
+    def forward(self, dr0):
         dr0 = self.triu(dr/self.r_scale)
         return torch.stack((self.triu(torch.sigmoid(dr0)).reshape(-1), dr0.reshape(-1)), dim=1) # probability score and logit 
         
-class pAndLogit2KLdiv(nn.Module):
-    def __init__(self):
-        super().__init__()
-    def forward(self, x0, x1):
-        return torch.sum(torch.prod(x0 - x1, dim=1))
-    
 class radiusgraphEdge(wm.edgeScoreCalculationModule):
     def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, r1=None, scoreCalcModule=None):
         super().__init__(returnScore)
@@ -129,6 +123,13 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         dr = self.calc_abs_distance(g, args)
         return self.distance2edge(dr), self.calc_score(self.r0 - dr)
     
+    
+    
+class pAndLogit2KLdiv(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, x0, x1):
+        return torch.sum(torch.prod(x0 - x1, dim=1))
     
 class scoreListModule(nn.Module):
     def __init__(self):
