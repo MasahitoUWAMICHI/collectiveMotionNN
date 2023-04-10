@@ -17,9 +17,10 @@ def update_adjacency(g, edgeConditionModule, args=None):
     return g
 
 def update_adjacency_batch(bg, edgeConditionModule, args=None):
-    gs = dgl.unbatch(bg)
-    for g in gs:
-        update_adjacency(g, edgeConditionModule, args)
+    gs = list(map(lambda g: update_adjacency(g, edgeConditionModule, args), dgl.unbatch(bg)))
+    #gs = dgl.unbatch(bg)
+    #for g in gs:
+    #    update_adjacency(g, edgeConditionModule, args)
     bg = dgl.batch(gs)
     return bg, None
 
@@ -30,13 +31,16 @@ def update_adjacency_returnScore(g, edgeConditionModule, args=None):
     return g, score
 
 def update_adjacency_returnScore_batch(bg, edgeConditionModule, args=None):
-    gs = dgl.unbatch(bg)
-    scores = []
-    for i, g in enumerate(gs):
-        gs[i], score = update_adjacency_returnScore(g, edgeConditionModule, args)
-        scores.append(score)
+    gscore = list(map(lambda g: list(update_adjacency(g, edgeConditionModule, args)), dgl.unbatch(bg))) # list of lists [graph, score]
+    gs, scores = list(zip(*gscore))
     bg = dgl.batch(gs)
-    return bg, scores
+    #gs = dgl.unbatch(bg)
+    #scores = []
+    #for i, g in enumerate(gs):
+    #    gs[i], score = update_adjacency_returnScore(g, edgeConditionModule, args)
+    #    scores.append(score)
+    #bg = dgl.batch(gs)
+    return bg, list(scores)
 
 
 def judge_skipUpdate(g, dynamicVariable, ndataInOutModule, rtol=1e-05, atol=1e-08, equal_nan=True):
