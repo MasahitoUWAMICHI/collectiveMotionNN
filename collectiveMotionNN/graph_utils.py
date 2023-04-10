@@ -46,9 +46,9 @@ def update_adjacency_returnScore_batch(bg, edgeConditionModule, args=None):
 def judge_skipUpdate(g, dynamicVariable, ndataInOutModule, rtol=1e-05, atol=1e-08, equal_nan=True):
     return torch.allclose(ndataInOutModule.output(g), dynamicVariable, rtol, atol, equal_nan)
 
-def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, edgeConditionModule, updateFunc, args=None):
+def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, updateFunc, args=None):
     gr = ndataInOutModule.input(gr, dynamicVariable)
-    return updateFunc(gr, edgeConditionModule, args)
+    return updateFunc(gr, args)
 
     
 class edgeRefresh(nn.Module):
@@ -133,7 +133,7 @@ class edgeRefresh(nn.Module):
         self.loadProcessedScore(ps)
     
     def forward_forceUpdate(self, gr, dynamicVariable, ndataInOutModule, args=None):
-        out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.edgeConditionModule, self.update_adjacency, args)
+        out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.update_adjacency, args)
         gr = self.postProcess(out)
         self.loadGraph(gr)
         return gr
