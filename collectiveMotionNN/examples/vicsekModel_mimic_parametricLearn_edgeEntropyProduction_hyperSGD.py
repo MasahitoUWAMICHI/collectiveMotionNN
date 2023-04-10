@@ -433,7 +433,7 @@ if __name__ == '__main__':
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             
             score_pred = torch.tensor(Vicsek_SDEwrapper.score(), device=device)
-            print(score_trutn, score_pred)
+            print(score_truth, score_pred)
             
             xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
             #loss = (xyloss + thetaLoss_weight * thetaloss) * graph_batchsize
