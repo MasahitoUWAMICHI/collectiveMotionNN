@@ -440,17 +440,16 @@ def main(args):
             _ = Vicsek_SDEwrapper.f(1, x_truth)
             score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
-            
+            print(score_truth)
             
             Vicsek_SDEwrapper.loadGraph(graph.to(device))
             
             bm = BrownianInterval(t0=t_learn_save[0], t1=t_learn_save[-1], 
-                          size=(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).shape[0], 1), 
-                                dt=dt_train, device=device)
+                                  size=(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).shape[0], 1), 
+                                  dt=dt_train, device=device)
             
             x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                             t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)
-            print(x_pred)
             
             #_, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
             #                     t_learn_span.to(device), save_at=t_learn_save.to(device))
@@ -489,8 +488,8 @@ def main(args):
                 Vicsek_SDEwrapper.loadGraph(graph.to(device))
                 
                 bm = BrownianInterval(t0=t_learn_save[0], t1=t_learn_save[-1], 
-                              size=(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).shape[0], 1), 
-                                    dt=dt_train, device=device)
+                                      size=(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).shape[0], 1), 
+                                      dt=dt_train, device=device)
 
                 x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                 t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)
