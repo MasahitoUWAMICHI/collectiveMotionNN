@@ -389,7 +389,8 @@ def main(args):
     t_learn_span = torch.arange(0, t_pred_max+dt_train, dt_train)
     t_learn_save = torch.tensor([t_pred_max])
     
-    
+    print(t_learn_span)
+    print(t_learn_save)
     
     vicsek_dataset = myDataset(save_x_SDE, delayTruth=delayPredict)
     vicsek_dataset.initialize()
