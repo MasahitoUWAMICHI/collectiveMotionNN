@@ -1,3 +1,4 @@
 from setuptools import setup
 
-setup(packages=['examples'])
+setup(packages=['examples'],
+      package_dir={'examples': 'collectiveMotionNN/examples'})
