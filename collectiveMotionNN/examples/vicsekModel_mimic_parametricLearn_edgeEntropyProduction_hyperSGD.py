@@ -184,72 +184,8 @@ class myLoss(nn.Module):
     
     
     
-def main():
+def main(args):
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--v0', type=float)
-    parser.add_argument('--w0', type=float)
-    parser.add_argument('--sigma', type=float)
-    parser.add_argument('--d', type=float)
-    
-    parser.add_argument('--r0', type=float)
-    
-    parser.add_argument('--L', type=float)
-    
-    parser.add_argument('--N_particles', type=int)
-    parser.add_argument('--N_batch', type=int)
-
-    parser.add_argument('--t_max', type=float)
-    parser.add_argument('--dt_step', type=float)
-    parser.add_argument('--dt_save', type=float)
-
-    parser.add_argument('--periodic', type=float)
-    parser.add_argument('--selfloop', type=strtobool)
-    
-    parser.add_argument('--device', type=str)
-    parser.add_argument('--save_x_SDE', type=str)
-    parser.add_argument('--save_t_SDE', type=str)
-    parser.add_argument('--save_model', type=str)
-
-    parser.add_argument('--method_SDE', type=str)
-    parser.add_argument('--noise_type', type=str)
-    parser.add_argument('--sde_type', type=str)
-
-    parser.add_argument('--bm_levy', type=str)
-    
-
-    parser.add_argument('--skipSimulate', type=strtobool)
-    
-    parser.add_argument('--v0_init', type=float)
-    parser.add_argument('--w0_init', type=float)
-    parser.add_argument('--sigma_init', type=float)
-
-    
-    parser.add_argument('--delayPredict', type=int)
-    parser.add_argument('--dt_train', type=float)
-    
-    parser.add_argument('--method_ODE', type=str)
-    parser.add_argument('--N_epoch', type=int)
-    parser.add_argument('--N_train_batch', type=int)
-    
-    parser.add_argument('--ratio_valid', type=float)
-    parser.add_argument('--ratio_test', type=float)
-    parser.add_argument('--split_seed', type=int)
-    
-    parser.add_argument('--lr', type=float)
-    parser.add_argument('--lr_hyperSGD', type=float)
-    parser.add_argument('--thetaLoss_weight', type=float)
-    parser.add_argument('--scoreLoss_weight', type=float)
-    
-    parser.add_argument('--save_learned_model', type=str)
-    parser.add_argument('--save_loss_history', type=str)
-    parser.add_argument('--save_validloss_history', type=str)
-    
-    
-    #args = parser.parse_args()
-    args = parser.parse_args(args=[])
-    
-    
     v0 = ut.variableInitializer(args.v0, 0.03)
     w0 = ut.variableInitializer(args.w0, 1.0)
     
@@ -528,6 +464,68 @@ def main():
     
     
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--v0', type=float)
+    parser.add_argument('--w0', type=float)
+    parser.add_argument('--sigma', type=float)
+    parser.add_argument('--d', type=float)
+    
+    parser.add_argument('--r0', type=float)
+    
+    parser.add_argument('--L', type=float)
+    
+    parser.add_argument('--N_particles', type=int)
+    parser.add_argument('--N_batch', type=int)
+
+    parser.add_argument('--t_max', type=float)
+    parser.add_argument('--dt_step', type=float)
+    parser.add_argument('--dt_save', type=float)
+
+    parser.add_argument('--periodic', type=float)
+    parser.add_argument('--selfloop', type=strtobool)
+    
+    parser.add_argument('--device', type=str)
+    parser.add_argument('--save_x_SDE', type=str)
+    parser.add_argument('--save_t_SDE', type=str)
+    parser.add_argument('--save_model', type=str)
+
+    parser.add_argument('--method_SDE', type=str)
+    parser.add_argument('--noise_type', type=str)
+    parser.add_argument('--sde_type', type=str)
+
+    parser.add_argument('--bm_levy', type=str)
+    
+
+    parser.add_argument('--skipSimulate', type=strtobool)
+    
+    parser.add_argument('--v0_init', type=float)
+    parser.add_argument('--w0_init', type=float)
+    parser.add_argument('--sigma_init', type=float)
+
+    
+    parser.add_argument('--delayPredict', type=int)
+    parser.add_argument('--dt_train', type=float)
+    
+    parser.add_argument('--method_ODE', type=str)
+    parser.add_argument('--N_epoch', type=int)
+    parser.add_argument('--N_train_batch', type=int)
+    
+    parser.add_argument('--ratio_valid', type=float)
+    parser.add_argument('--ratio_test', type=float)
+    parser.add_argument('--split_seed', type=int)
+    
+    parser.add_argument('--lr', type=float)
+    parser.add_argument('--lr_hyperSGD', type=float)
+    parser.add_argument('--thetaLoss_weight', type=float)
+    parser.add_argument('--scoreLoss_weight', type=float)
+    
+    parser.add_argument('--save_learned_model', type=str)
+    parser.add_argument('--save_loss_history', type=str)
+    parser.add_argument('--save_validloss_history', type=str)
+    
+    
+    args = parser.parse_args()
+    
     main()
     
         
