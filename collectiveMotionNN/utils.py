@@ -2,7 +2,6 @@ import torch
 from torch import nn
 
 def variableInitializer(val, defaultVal):
-    print(val)
     if val is None:
         return defaultVal
     else:
