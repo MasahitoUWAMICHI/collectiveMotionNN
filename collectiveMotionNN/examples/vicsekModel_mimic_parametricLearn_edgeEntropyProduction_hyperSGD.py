@@ -184,9 +184,7 @@ class myLoss(nn.Module):
     
     
     
-    
-    
-if __name__ == '__main__':
+def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--v0', type=float)
@@ -248,7 +246,8 @@ if __name__ == '__main__':
     parser.add_argument('--save_validloss_history', type=str)
     
     
-    args = parser.parse_args()
+    #args = parser.parse_args()
+    args = parser.parse_args(args=[])
     
     
     v0 = ut.variableInitializer(args.v0, 0.03)
@@ -316,9 +315,7 @@ if __name__ == '__main__':
     save_loss_history = ut.variableInitializer(args.save_loss_history, 'Vicsek_parametric_loss_history.pt')
     save_validloss_history = ut.variableInitializer(args.save_validloss_history, 'Vicsek_parametric_validloss_history.pt')
     
-    
-    
-    
+  
     
     Vicsek_Module = interactionModule(v0, w0, sigma, d).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop).to(device)
@@ -529,6 +526,9 @@ if __name__ == '__main__':
 
     torch.save(torch.tensor(valid_loss_history), save_validloss_history)
     
-
+    
+if __name__ == '__main__':
+    main()
+    
         
 
