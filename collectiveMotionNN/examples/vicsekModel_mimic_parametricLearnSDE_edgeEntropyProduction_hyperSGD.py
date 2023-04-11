@@ -389,9 +389,6 @@ def main(args):
     t_learn_span = torch.arange(0, t_pred_max+dt_train, dt_train)
     t_learn_save = torch.tensor([t_pred_max])
     
-    print(t_learn_span)
-    print(t_learn_save)
-    
     vicsek_dataset = myDataset(save_x_SDE, delayTruth=delayPredict)
     vicsek_dataset.initialize()
     
@@ -441,7 +438,6 @@ def main(args):
             _ = Vicsek_SDEwrapper.f(1, x_truth)
             score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
-            print(score_truth)
             
             Vicsek_SDEwrapper.loadGraph(graph.to(device))
             
@@ -451,6 +447,8 @@ def main(args):
             
             x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                             t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)
+            
+            print(Vicsek_SDEwrapper.score())
             
             #_, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
             #                     t_learn_span.to(device), save_at=t_learn_save.to(device))
