@@ -1,3 +1,3 @@
 from setuptools import setup
 
-setup(packages=['example'])
+setup(packages=['examples'])
