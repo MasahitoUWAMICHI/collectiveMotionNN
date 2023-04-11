@@ -450,6 +450,7 @@ def main(args):
             
             x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                             t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)
+            print(x_pred)
             
             #_, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
             #                     t_learn_span.to(device), save_at=t_learn_save.to(device))
