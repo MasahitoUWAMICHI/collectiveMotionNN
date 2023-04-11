@@ -25,7 +25,7 @@ from distutils.util import strtobool
 import cloudpickle
  
 class interactionModule(nn.Module):
-    def __init__(self, u0, w0, sigma=0.1, d=1, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
+    def __init__(self, v0, w0, sigma=0.1, d=1, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
         super().__init__()
         
         self.v0 = nn.Parameter(torch.tensor(v0, requires_grad=True))
