@@ -435,6 +435,7 @@ def main(args):
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
             Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+            print(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph))
             _ = Vicsek_SDEwrapper.f(1, x_truth)
             score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
