@@ -1,1 +1,3 @@
-__all__ = ["vicsekModel_mimic_parametricLearn_edgeEntropyProduction_hyperSGD"]
+__all__ = ["differentiableVicsekModel",
+           "differentiableVicsekModel_parametricODELearn",
+           "differentiableVicsekModel_parametricSDELearn"]
