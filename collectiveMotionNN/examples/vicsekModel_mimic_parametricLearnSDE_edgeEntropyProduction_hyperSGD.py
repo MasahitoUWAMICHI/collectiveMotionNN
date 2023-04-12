@@ -463,10 +463,11 @@ def main(args):
             loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             mw.zero_grad()
+            loss.backward()
             for key in mw.optimizer.parameters.keys():
                 mw.optimizer.parameters[key].retain_grad()
-            loss.backward()
             mw.step()
+            print('1')
             
         mw.begin() # remove graph for autograd
         
