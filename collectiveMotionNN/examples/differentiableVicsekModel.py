@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+import collections
+
 import collectiveMotionNN.utils as ut
 import collectiveMotionNN.graph_utils as gu
 
@@ -65,6 +67,35 @@ class interactionModule(nn.Module):
         self.prepare_sigma()
         g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.positionName].shape[0], 1, 1).to(g.device)
         return g
+    
+class interactionModule_nonParametric(interactionModule):
+    def __init__(self, fNNshape=None, fBias=None, sigma=0.1, gNNshape=None, gBias=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
+        super().__init__(0, 0, sigma, positionName, velocityName, polarityName, torqueName, noiseName, messageName)
+        
+        self.fNNshape = ut.variableInitializer(fNNshape, [128, 128, 128])
+        self.gNNshape = ut.variableInitializer(gNNshape, None)
+        
+        self.fBias = ut.variableInitializer(fBias, True)
+        self.gBias = ut.variableInitializer(gBias, True)
+        
+        self.init_fg()
+        
+    def createNNsequence(self, N_in, NNshape, N_out, bias):
+        NNseq = collections.OrderedDict([])
+        for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
+            NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=bias)
+            NNseq['ReLU'+str(i)] = nn.ReLU()
+        NNseq.pop('ReLU'+str(i))
+        
+        return nn.Sequential(NNseq)
+    
+    def init_fg(self):
+        self.fNN = self.createNNsequence(4, self.fNNshape, 3, self.fBias)
+        if self.gNNshape is None:
+            self.gNN = None
+        else:
+            self.gNN = self.createNNsequence(4, self.gNNshape, 3, self.gBias)
+            
     
     
 class myDataset(torch.utils.data.Dataset):
