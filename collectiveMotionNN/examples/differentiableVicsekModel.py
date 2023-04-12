@@ -190,17 +190,33 @@ class cosLoss(nn.Module):
         return 1 - torch.cos(x - y).mean()
     
 class myLoss(nn.Module):
-    def __init__(self, distanceCalc):
+    def __init__(self, distanceCalc, useScore):
         super().__init__()
         
         self.distanceCalc = distanceCalc
+        self.useScore = useScore
                 
         self.xyLoss = nn.MSELoss()
         self.thetaLoss = cosLoss()
         
-    def forward(self, x, y, score_x, score_y):
+    def forward_score(self, x, y, score_x, score_y):
         dxy = self.distanceCalc(x[..., :2], y[..., :2])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
         thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
         scoreLoss = torch.mean(torch.square(torch.sum(score_x, dim=-1, keepdim=True) - score_y))
         return xyLoss, thetaLoss, scoreLoss
+       
+    def forward_noScore(self, x, y):
+        dxy = self.distanceCalc(x[..., :2], y[..., :2])
+        xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
+        thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
+        return xyLoss, thetaLoss
+       
+    def def_forward(self):
+        if self.useScore:
+            self.forward = self.forward_score
+        else:
+            self.forward = self.forward_noScore
+        
+     
+     
