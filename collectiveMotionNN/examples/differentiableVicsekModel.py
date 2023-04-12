@@ -94,7 +94,7 @@ class interactionModule_nonParametric_torque(interactionModule):
         self.fNN = self.createNNsequence(4, self.fNNshape, 1, self.fBias)
             
     def calc_message(self, edges):
-        dr = distanceCalcModule(edges.dst[self.positionName], edges.src[self.positionName])
+        dr = self.distanceCalcModule(edges.dst[self.positionName], edges.src[self.positionName])
         dtheta = (edges.dst[self.polarityName] - edges.src[self.polarityName])
         c = torch.cos(dtheta)
         s = torch.sin(dtheta)
