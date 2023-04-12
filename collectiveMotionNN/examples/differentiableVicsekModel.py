@@ -68,17 +68,18 @@ class interactionModule(nn.Module):
         g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.positionName].shape[0], 1, 1).to(g.device)
         return g
     
-class interactionModule_nonParametric(interactionModule):
-    def __init__(self, fNNshape=None, fBias=None, sigma=0.1, gNNshape=None, gBias=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
-        super().__init__(0, 0, sigma, positionName, velocityName, polarityName, torqueName, noiseName, messageName)
+class interactionModule_nonParametric_torque(interactionModule):
+    def __init__(self, distanceCalcModule, v0=None, sigma=None, fNNshape=None, fBias=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
+        super().__init__(0, 0, 0, 0, positionName, velocityName, polarityName, torqueName, noiseName, messageName)
+        self.reset_parameter(v0, None, sigma)
+                 
+        self.distanceCalcModule = distanceCalcModule
         
         self.fNNshape = ut.variableInitializer(fNNshape, [128, 128, 128])
-        self.gNNshape = ut.variableInitializer(gNNshape, None)
         
         self.fBias = ut.variableInitializer(fBias, True)
-        self.gBias = ut.variableInitializer(gBias, True)
         
-        self.init_fg()
+        self.init_f()
         
     def createNNsequence(self, N_in, NNshape, N_out, bias):
         NNseq = collections.OrderedDict([])
@@ -89,13 +90,22 @@ class interactionModule_nonParametric(interactionModule):
         
         return nn.Sequential(NNseq)
     
-    def init_fg(self):
-        self.fNN = self.createNNsequence(4, self.fNNshape, 3, self.fBias)
-        if self.gNNshape is None:
-            self.gNN = None
-        else:
-            self.gNN = self.createNNsequence(4, self.gNNshape, 3, self.gBias)
+    def init_f(self):
+        self.fNN = self.createNNsequence(4, self.fNNshape, 1, self.fBias)
             
+    def calc_message(self, edges):
+        dr = distanceCalcModule(edges.dst[self.positionName], edges.src[self.positionName])
+        dtheta = (edges.dst[self.polarityName] - edges.src[self.polarityName])
+        c = torch.cos(dtheta)
+        s = torch.sin(dtheta)
+        c_src = torch.cos(edges.src[self.polarityName])
+        s_src = torch.sin(edges.src[self.polarityName])
+        dx = dr[..., 0:1] * c_src + dr[..., 1:2] * s_src
+        dy = -dr[..., 0:1] * s_src + dr[..., 1:2] * c_src
+        return {self.messageName: self.fNN(torch.cat((dx, dy, c, s), -1))}
+            
+    def aggregate_message(self, nodes):
+        return {self.torqueName : torch.mean(nodes.mailbox[self.messageName], 1)}
     
     
 class myDataset(torch.utils.data.Dataset):
