@@ -86,74 +86,110 @@ def main_parser():
     parser.add_argument('--save_validloss_history', type=str)
     return parser
     
-def main(args):
-
-    v0 = ut.variableInitializer(args.v0, 0.03)
-    w0 = ut.variableInitializer(args.w0, 1.0)
+def parser2main(args):
+    main(v0=args.v0, w0=args.w0, sigma=args.sigma, d=args.d, r0=args.r0, L=args.L,
+         N_particles=args.N_particles, N_batch=args.N_batch, 
+         t_max=args.t_max, dt_step=args.dt_step, dt_save=args.dt_save, 
+         periodic=args.periodic, selfloop=args.selfloop, 
+         device=args.device,
+         save_x_SDE=args.save_x_SDE, save_t_SDE=args.save_t_SDE, save_model=args.save_model,
+         method_SDE=args.method_SDE, noise_type=args.noise_type, sde_type=args.sde_type, bm_levy=args.bm_levy,
+         skipSimulate=args.skipSimulate,
+         v0_init=args.v0_init, w0_init=args.w0_init, sigma_init=args.sigma_init, 
+         delayPredict=args.delayPredict, dt_train=args.dt_train, 
+         method_ODE=args.method_ODE, 
+         N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, 
+         ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
+         split_seed=args.split_seed,
+         lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
+         thetaLoss_weight=args.thetaLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
+         save_learned_model=args.save_learned_model, 
+         save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history)
     
-    sigma = ut.variableInitializer(args.sigma, 0.3)
+def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
+         N_particles=None, N_batch=None, 
+         t_max=None, dt_step=None, dt_save=None, 
+         periodic=None, selfloop=None, 
+         device=None,
+         save_x_SDE=None, save_t_SDE=None, save_model=None,
+         method_SDE=None, noise_type=None, sde_type=None, bm_levy=None,
+         skipSimulate=None,
+         v0_init=None, w0_init=None, sigma_init=None, 
+         delayPredict=None, dt_train=None, 
+         method_ODE=None, 
+         N_epoch=None, N_train_batch=None, 
+         ratio_valid=None, ratio_test=None,
+         split_seed=None,
+         lr=None, lr_hyperSGD=None, 
+         thetaLoss_weight=None, scoreLoss_weight=None, 
+         save_learned_model=None, 
+         save_loss_history=None, save_validloss_history=None):
+
+    v0 = ut.variableInitializer(v0, 0.03)
+    w0 = ut.variableInitializer(w0, 1.0)
+    
+    sigma = ut.variableInitializer(sigma, 0.3)
         
-    d = ut.variableInitializer(args.d, 1)
+    d = ut.variableInitializer(d, 1)
     
-    r0 = ut.variableInitializer(args.r0, 1.0)
-    L = ut.variableInitializer(args.L, 5.0)
+    r0 = ut.variableInitializer(r0, 1.0)
+    L = ut.variableInitializer(L, 5.0)
     
-    N_particles = ut.variableInitializer(args.N_particles, int(100))
-    N_batch = ut.variableInitializer(args.N_batch, int(5))
+    N_particles = ut.variableInitializer(N_particles, int(100))
+    N_batch = ut.variableInitializer(N_batch, int(5))
     
-    t_max = ut.variableInitializer(args.t_max, 50.0)
-    dt_step = ut.variableInitializer(args.dt_step, 0.1)
-    dt_save = ut.variableInitializer(args.dt_save, 1.0)
+    t_max = ut.variableInitializer(t_max, 50.0)
+    dt_step = ut.variableInitializer(dt_step, 0.1)
+    dt_save = ut.variableInitializer(dt_save, 1.0)
     
-    periodic = ut.variableInitializer(args.periodic, None)
-    selfloop = ut.variableInitializer(args.selfloop, False)
+    periodic = ut.variableInitializer(periodic, None)
+    selfloop = ut.variableInitializer(selfloop, False)
     
-    device = ut.variableInitializer(args.device, 'cuda' if torch.cuda.is_available() else 'cpu')
-    save_x_SDE = ut.variableInitializer(args.save_x_SDE, 'Vicsek_SDE_traj.pt')
-    save_t_SDE = ut.variableInitializer(args.save_t_SDE, 'Vicsek_SDE_t_eval.pt')
-    save_model = ut.variableInitializer(args.save_model, 'Vicsek_SDE_model.pt')
+    device = ut.variableInitializer(device, 'cuda' if torch.cuda.is_available() else 'cpu')
+    save_x_SDE = ut.variableInitializer(save_x_SDE, 'Vicsek_SDE_traj.pt')
+    save_t_SDE = ut.variableInitializer(save_t_SDE, 'Vicsek_SDE_t_eval.pt')
+    save_model = ut.variableInitializer(save_model, 'Vicsek_SDE_model.pt')
     
-    method_SDE = ut.variableInitializer(args.method_SDE, 'euler')
-    noise_type = ut.variableInitializer(args.noise_type, 'general')
-    sde_type = ut.variableInitializer(args.sde_type, 'ito')
+    method_SDE = ut.variableInitializer(method_SDE, 'euler')
+    noise_type = ut.variableInitializer(noise_type, 'general')
+    sde_type = ut.variableInitializer(sde_type, 'ito')
     
-    bm_levy = ut.variableInitializer(args.bm_levy, 'none')
+    bm_levy = ut.variableInitializer(bm_levy, 'none')
     
 
-    skipSimulate = ut.variableInitializer(args.skipSimulate, False)
+    skipSimulate = ut.variableInitializer(skipSimulate, False)
     
     
-    v0_init = ut.variableInitializer(args.v0_init, None)
-    w0_init = ut.variableInitializer(args.w0_init, None)
+    v0_init = ut.variableInitializer(v0_init, None)
+    w0_init = ut.variableInitializer(w0_init, None)
     
-    sigma_init = ut.variableInitializer(args.sigma_init, None)
+    sigma_init = ut.variableInitializer(sigma_init, None)
 
     
-    delayPredict = ut.variableInitializer(args.delayPredict, 1)
-    dt_train = ut.variableInitializer(args.dt_train, dt_step)
+    delayPredict = ut.variableInitializer(delayPredict, 1)
+    dt_train = ut.variableInitializer(dt_train, dt_step)
 
-    method_ODE = ut.variableInitializer(args.method_ODE, 'euler')
-    N_epoch = ut.variableInitializer(args.N_epoch, 10)
-    N_train_batch = ut.variableInitializer(args.N_train_batch, 8)
+    method_ODE = ut.variableInitializer(method_ODE, 'euler')
+    N_epoch = ut.variableInitializer(N_epoch, 10)
+    N_train_batch = ut.variableInitializer(N_train_batch, 8)
 
-    ratio_valid = ut.variableInitializer(args.ratio_valid, 1.0 / N_batch)
-    ratio_test = ut.variableInitializer(args.ratio_test, 0.0)
+    ratio_valid = ut.variableInitializer(ratio_valid, 1.0 / N_batch)
+    ratio_test = ut.variableInitializer(ratio_test, 0.0)
 
-    if args.split_seed is None:
+    if split_seed is None:
         split_seed = torch.Generator()
     else:
-        split_seed = torch.Generator().manual_seed(args.split_seed)
+        split_seed = torch.Generator().manual_seed(split_seed)
     
-    lr = ut.variableInitializer(args.lr, 1e-3)
-    lr_hyperSGD = ut.variableInitializer(args.lr_hyperSGD, 1e-3)
-    thetaLoss_weight = ut.variableInitializer(args.thetaLoss_weight, 1.0)
-    scoreLoss_weight = ut.variableInitializer(args.scoreLoss_weight, 1.0)
+    lr = ut.variableInitializer(lr, 1e-3)
+    lr_hyperSGD = ut.variableInitializer(lr_hyperSGD, 1e-3)
+    thetaLoss_weight = ut.variableInitializer(thetaLoss_weight, 1.0)
+    scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     
-    save_learned_model = ut.variableInitializer(args.save_learned_model, 'Vicsek_parametricSDE_learned_model.pt')
-    save_loss_history = ut.variableInitializer(args.save_loss_history, 'Vicsek_parametricSDE_loss_history.pt')
-    save_validloss_history = ut.variableInitializer(args.save_validloss_history, 'Vicsek_parametricSDE_validloss_history.pt')
+    save_learned_model = ut.variableInitializer(save_learned_model, 'Vicsek_parametricSDE_learned_model.pt')
+    save_loss_history = ut.variableInitializer(save_loss_history, 'Vicsek_parametricSDE_loss_history.pt')
+    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Vicsek_parametricSDE_validloss_history.pt')
     
-  
     
     Vicsek_Module = dvm.interactionModule(v0, w0, sigma, d).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop).to(device)
@@ -185,7 +221,7 @@ def main(args):
     if not skipSimulate:
     
         bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                          size=(x0.shape[0], 1), dt=dt_step, device=device)
+                          size=(x0.shape[0], 1), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
         with torch.no_grad():
             y = sdeint(Vicsek_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
@@ -286,7 +322,7 @@ def main(args):
             
             bm = BrownianInterval(t0=t_learn_save[0], t1=t_learn_save[-1], 
                                   size=(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).shape[0], 1), 
-                                  dt=dt_train, device=device)
+                                  dt=dt_train, levy_area_approximation=bm_levy, device=device)
             
             x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                             t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)[1]
@@ -334,7 +370,7 @@ def main(args):
                 
                 bm = BrownianInterval(t0=t_learn_save[0], t1=t_learn_save[-1], 
                                       size=(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).shape[0], 1), 
-                                      dt=dt_train, device=device)
+                                      dt=dt_train, levy_area_approximation=bm_levy, device=device)
 
                 x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                 t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)[1]
