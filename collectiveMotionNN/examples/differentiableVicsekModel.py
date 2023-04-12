@@ -62,6 +62,7 @@ class interactionModule(nn.Module):
         return g
       
     def g(self, t, g, args=None):
+        self.prepare_sigma()
         g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.positionName].shape[0], 1, 1).to(g.device)
         return g
     
