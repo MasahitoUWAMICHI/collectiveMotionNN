@@ -223,7 +223,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     if not skipSimulate:
     
         bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                          size=(x0.shape[0], 1), dt=dt_step, device=device)
+                          size=(x0.shape[0], 1), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
         with torch.no_grad():
             y = sdeint(Vicsek_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
