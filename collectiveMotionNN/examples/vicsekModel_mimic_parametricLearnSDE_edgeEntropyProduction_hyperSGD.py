@@ -5,7 +5,7 @@ from torch import nn
 import copy
 
 from torchsde import BrownianInterval, sdeint
-from torchdyn.core import NeuralODE
+#from torchdyn.core import NeuralODE
 
 import dgl
 import dgl.function as fn
@@ -429,7 +429,6 @@ def main(args):
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
             mw.begin()
-            mw.zero_grad()
             graph_batchsize = len(graph.batch_num_nodes())
             
             
@@ -463,9 +462,10 @@ def main(args):
             loss = xyloss + thetaLoss_weight * thetaloss + scoreLoss_weight * scoreloss
             loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
-            loss.backward()
+            mw.zero_grad()
             for key in mw.optimizer.parameters.keys():
                 mw.optimizer.parameters[key].retain_grad()
+            loss.backward()
             mw.step()
             
         mw.begin() # remove graph for autograd
