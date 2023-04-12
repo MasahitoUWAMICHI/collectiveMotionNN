@@ -199,6 +199,8 @@ class myLoss(nn.Module):
         self.xyLoss = nn.MSELoss()
         self.thetaLoss = cosLoss()
         
+        self.def_forward()
+        
     def forward_score(self, x, y, score_x, score_y):
         dxy = self.distanceCalc(x[..., :2], y[..., :2])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
