@@ -78,10 +78,12 @@ class interactionModule(nn.Module):
     def f(self, t, g, args=None):
         g.ndata[self.velocityName] = self.v0 * torch.cat((torch.cos(g.ndata[self.polarityName]), torch.sin(g.ndata[self.polarityName])), -1)
         g.update_all(self.calc_message, self.aggregate_message)
+        print('f')
         return g
       
     def g(self, t, g, args=None):
         g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.positionName].shape[0], 1, 1).to(g.device)
+        print('g')
         return g
     
     
