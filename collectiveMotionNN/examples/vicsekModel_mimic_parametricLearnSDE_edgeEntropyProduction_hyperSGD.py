@@ -458,7 +458,6 @@ def main(args):
             #                     t_learn_span.to(device), save_at=t_learn_save.to(device))
             
             score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
-            print(score_pred)
             
             xyloss, thetaloss, scoreloss = lossFunc(x_pred, x_truth, score_pred, score_truth)
             loss = xyloss + thetaLoss_weight * thetaloss + scoreLoss_weight * scoreloss
