@@ -78,12 +78,10 @@ class interactionModule(nn.Module):
     def f(self, t, g, args=None):
         g.ndata[self.velocityName] = self.v0 * torch.cat((torch.cos(g.ndata[self.polarityName]), torch.sin(g.ndata[self.polarityName])), -1)
         g.update_all(self.calc_message, self.aggregate_message)
-        print('f')
         return g
       
     def g(self, t, g, args=None):
         g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.positionName].shape[0], 1, 1).to(g.device)
-        print('g')
         return g
     
     
@@ -437,7 +435,6 @@ def main(args):
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
             Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-            print(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph))
             _ = Vicsek_SDEwrapper.f(1, x_truth)
             score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
             Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
@@ -448,11 +445,9 @@ def main(args):
                                   size=(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).shape[0], 1), 
                                   dt=dt_train, device=device)
             
-            print(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph))
             x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                             t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)[1]
             
-            print(x_pred)
             #if len(Vicsek_SDEwrapper.score()) == 0:
             #    Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
             #    _ = Vicsek_SDEwrapper.f(1, x_pred)
