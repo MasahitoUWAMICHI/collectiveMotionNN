@@ -382,14 +382,14 @@ def main(args):
     
     
     
-    neuralDE = NeuralODE(Vicsek_SDEwrapper, solver=method_ODE).to(device)
+    #neuralDE = NeuralODE(Vicsek_SDEwrapper, solver=method_ODE).to(device)
     
     
     
     t_pred_max = dt_save * float(delayPredict)
     
-    t_learn_span = torch.arange(0, t_pred_max+dt_train, dt_train)
-    t_learn_save = torch.tensor([t_pred_max])
+    #t_learn_span = torch.arange(0, t_pred_max+dt_train, dt_train)
+    t_learn_save = torch.tensor([0, t_pred_max])
     
     vicsek_dataset = myDataset(save_x_SDE, delayTruth=delayPredict)
     vicsek_dataset.initialize()
@@ -450,7 +450,7 @@ def main(args):
             
             print(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph))
             x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
-                            t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)
+                            t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)[1]
             
             print(x_pred)
             #if len(Vicsek_SDEwrapper.score()) == 0:
@@ -499,7 +499,7 @@ def main(args):
                                       dt=dt_train, device=device)
 
                 x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
-                                t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)
+                                t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)[1]
             
                 #_, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                 #                     t_learn_span.to(device), save_at=t_learn_save.to(device))
