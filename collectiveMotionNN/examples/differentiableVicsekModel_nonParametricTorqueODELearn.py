@@ -81,6 +81,7 @@ def main_parser():
     parser.add_argument('--lr_hyperSGD', type=float)
     parser.add_argument('--thetaLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
+    parser.add_argument('--useScore', type=strtobool)
     
     parser.add_argument('--save_learned_model', type=str)
     parser.add_argument('--save_loss_history', type=str)
@@ -104,6 +105,7 @@ def parser2main(args):
          split_seed=args.split_seed,
          lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
          thetaLoss_weight=args.thetaLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
+         useScore=args.useScore,
          save_learned_model=args.save_learned_model, 
          save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history)
     
@@ -123,6 +125,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
          split_seed=None,
          lr=None, lr_hyperSGD=None, 
          thetaLoss_weight=None, scoreLoss_weight=None, 
+         useScore=None,
          save_learned_model=None, 
          save_loss_history=None, save_validloss_history=None):
 
@@ -187,6 +190,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     lr_hyperSGD = ut.variableInitializer(lr_hyperSGD, 1e-3)
     thetaLoss_weight = ut.variableInitializer(thetaLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
+    useScore = ut.variableInitializer(useScore, False)
     
     save_learned_model = ut.variableInitializer(save_learned_model, 'Vicsek_nonParametricTorque_learned_model.pt')
     save_loss_history = ut.variableInitializer(save_loss_history, 'Vicsek_nonParametricTorque_loss_history.pt')
@@ -255,7 +259,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [2, 1]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
-    Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(True)
+    Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(useScore)
     
     print(Vicsek_SDEwrapper.state_dict())
     
@@ -298,9 +302,9 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     
     
     if periodic is None:
-        lossFunc = dvm.myLoss(ut.euclidDistance_nonPeriodic())
+        lossFunc = dvm.myLoss(ut.euclidDistance_nonPeriodic(), useScore)
     else:
-        lossFunc = dvm.myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)))
+        lossFunc = dvm.myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)), useScore)
         
     
     
@@ -322,21 +326,29 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
             
             
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
-            Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-            Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-            _ = Vicsek_SDEwrapper.f(1, x_truth)
-            score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
-            Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+            
+            if useScore:
+                Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+                _ = Vicsek_SDEwrapper.f(1, x_truth)
+                score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
+                Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
             
             
             Vicsek_SDEwrapper.loadGraph(graph.to(device))
             _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
-            
-            score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
-            
-            xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-            loss = xyloss + thetaLoss_weight * thetaloss + scoreLoss_weight * scoreloss
+                        
+            if useScore:
+                score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
+                
+                xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                loss = xyloss + thetaLoss_weight * thetaloss + scoreLoss_weight * scoreloss
+            else:
+                xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
+                scoreloss = torch.full([1], torch.nan)
+                loss = xyloss + thetaLoss_weight * thetaloss
+
             loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             mw.zero_grad()
@@ -358,29 +370,42 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
                 graph_batchsize = len(graph.batch_num_nodes())
                 
                 x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
-                Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-                _ = Vicsek_SDEwrapper.f(1, x_truth)
-                score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
-                Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+                
+                if useScore:
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                    Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+                    _ = Vicsek_SDEwrapper.f(1, x_truth)
+                    score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
 
                 Vicsek_SDEwrapper.loadGraph(graph.to(device))
                 _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
                 
-                score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
+                if useScore:
+                    score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
                 
-                valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-                valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
-                valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
-                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss + scoreLoss_weight * valid_scoreloss)
+                    valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                    valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
+                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
+                    valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss + scoreLoss_weight * valid_scoreloss)
+                    
+                else:
+                    valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth)
+                    valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
+                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
+                    valid_scoreloss_total = torch.full([1], torch.nan)
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
+                    
+                    
                 data_count = data_count + graph_batchsize
                 
             valid_loss = valid_loss / data_count
             valid_xyloss_total = valid_xyloss_total / data_count
             valid_thetaloss_total = valid_thetaloss_total / data_count
             valid_scoreloss_total = valid_scoreloss_total / data_count
+                
             valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item(), valid_scoreloss.item()]
             
             if valid_loss < best_valid_loss:
