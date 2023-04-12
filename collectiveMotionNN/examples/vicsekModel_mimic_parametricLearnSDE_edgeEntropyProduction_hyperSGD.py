@@ -445,10 +445,15 @@ def main(args):
                                   size=(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).shape[0], 1), 
                                   dt=dt_train, device=device)
             
+            print(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph))
             x_pred = sdeint(Vicsek_SDEwrapper, Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
                             t_learn_save.to(device), bm=bm, dt=dt_train, method=method_SDE)
             
-            print(Vicsek_SDEwrapper.score())
+            print(x_pred)
+            #if len(Vicsek_SDEwrapper.score()) == 0:
+            #    Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+            #    _ = Vicsek_SDEwrapper.f(1, x_pred)
+                
             
             #_, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
             #                     t_learn_span.to(device), save_at=t_learn_save.to(device))
