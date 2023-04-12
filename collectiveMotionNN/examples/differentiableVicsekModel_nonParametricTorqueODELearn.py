@@ -406,7 +406,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
             valid_thetaloss_total = valid_thetaloss_total / data_count
             valid_scoreloss_total = valid_scoreloss_total / data_count
                 
-            valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item(), valid_scoreloss.item()]
+            valid_loss_history[-1] = [valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item()]
             
             if valid_loss < best_valid_loss:
                 Vicsek_SDEwrapper.deleteGraph()
