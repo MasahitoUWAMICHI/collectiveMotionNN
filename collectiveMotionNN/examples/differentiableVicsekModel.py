@@ -70,7 +70,7 @@ class interactionModule(nn.Module):
     
 class interactionModule_nonParametric_torque(interactionModule):
     def __init__(self, distanceCalcModule, v0=None, sigma=None, fNNshape=None, fBias=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
-        super().__init__(0, 0, 0, 0, positionName, velocityName, polarityName, torqueName, noiseName, messageName)
+        super().__init__(0.0, 0.0, 0.0, 0, positionName, velocityName, polarityName, torqueName, noiseName, messageName)
         self.reset_parameter(v0, None, sigma)
                  
         self.distanceCalcModule = distanceCalcModule
