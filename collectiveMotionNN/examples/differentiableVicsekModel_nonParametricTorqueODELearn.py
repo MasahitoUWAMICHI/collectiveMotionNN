@@ -62,9 +62,9 @@ def main_parser():
     parser.add_argument('--skipSimulate', type=strtobool)
     
     parser.add_argument('--v0_init', type=float)
-    parser.add_argument('--w0_init', type=float)
     parser.add_argument('--sigma_init', type=float)
-
+    parser.add_argument('--fNNshape', type=list)
+    parser.add_argument('--fBias', type=strtobool)
     
     parser.add_argument('--delayPredict', type=int)
     parser.add_argument('--dt_train', type=float)
