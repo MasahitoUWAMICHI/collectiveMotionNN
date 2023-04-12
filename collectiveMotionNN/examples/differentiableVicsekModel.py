@@ -190,7 +190,7 @@ class cosLoss(nn.Module):
         return 1 - torch.cos(x - y).mean()
     
 class myLoss(nn.Module):
-    def __init__(self, distanceCalc, useScore):
+    def __init__(self, distanceCalc, useScore=True):
         super().__init__()
         
         self.distanceCalc = distanceCalc
