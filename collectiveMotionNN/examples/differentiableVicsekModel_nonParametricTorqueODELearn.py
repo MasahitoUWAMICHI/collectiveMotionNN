@@ -413,6 +413,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
                 Vicsek_SDEwrapper.deleteGraph()
                 with open(save_learned_model, mode='wb') as f:
                     cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
+                    Vicsek_SDEwrapper.to(device)
                 best_valid_loss = valid_loss
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e} Best'.format(
                     epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
