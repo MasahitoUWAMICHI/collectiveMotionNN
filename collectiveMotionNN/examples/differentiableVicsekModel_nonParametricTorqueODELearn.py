@@ -320,8 +320,8 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     valid_loss_history = []
         
     for epoch in range(N_epoch):
+        print(Vicsek_SDEwrapper.state_dict())
         for graph, x_truth in train_loader:
-            print(epoch)
             mw.begin()
             graph_batchsize = len(graph.batch_num_nodes())
             
