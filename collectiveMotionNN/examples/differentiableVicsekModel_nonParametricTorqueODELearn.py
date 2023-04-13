@@ -250,9 +250,9 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     
 
     
-    Vicsek_Module = dvm.interactionModule_nonParametric_torque(edgeModule.distanceCalc, v0_init, sigma_init, fNNshape, fBias).to(device)
+    Vicsek_Module = dvm.interactionModule_nonParametric_torque(edgeModule.distanceCalc.to(device), v0_init, sigma_init, fNNshape, fBias).to(device)
     
-    Vicsek_SDEmodule = wm.dynamicGNDEmodule(Vicsek_Module.to(device), edgeModule, returnScore=False, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()).to(device)
+    Vicsek_SDEmodule = wm.dynamicGNDEmodule(Vicsek_Module.to(device), edgeModule.to(device), returnScore=False, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()).to(device)
     
     Vicsek_SDEwrapper = wm.dynamicGSDEwrapper(Vicsek_SDEmodule, copy.deepcopy(graph_init).to(device), 
                                           ndataInOutModule=gu.multiVariableNdataInOut(['x', 'theta'], [2, 1]), 
