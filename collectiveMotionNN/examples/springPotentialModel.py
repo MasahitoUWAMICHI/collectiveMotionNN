@@ -80,22 +80,36 @@ class interactionModule(nn.Module):
         else:
             nn.init.constant_(self.sigma, sigma)
 
-        
         self.prepare_sigma()
         
     def prepare_sigma(self):
         self.sigmaMatrix = torch.cat((torch.zeros([self.Ndim,self.Ndim], device=self.sigma.device), self.sigma*torch.ones([self.Ndim,self.Ndim], device=self.sigma.device)), dim=0)
             
+    def def_nonPeriodic(self):
+        self.distanceCalc = ut.euclidDistance_nonPeriodic()
+        
+    def def_periodic(self):
+        self.distanceCalc = ut.euclidDistance_periodic(self.periodic)
+        
+    def def_dr(self):
+        if self.periodic is None:
+            self.def_nonPeriodic()
+        else:
+            self.def_periodic()
+            
     def calc_message(self, edges):
-        dtheta = (edges.src[self.polarityName] - edges.dst[self.polarityName]) * self.d
-        return {self.messageName: torch.cat((torch.cos(dtheta), torch.sin(dtheta)), -1)}
+        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+
+        abs_dr = torch.norm(dr, dim=-1, keepdim=True)
+        unit_dr = nn.functional.normalize(dr, dim=-1)
+        
+        return {self.messageName: self.sp.force(abs_dr) * unit_dr}
     
     def aggregate_message(self, nodes):
-        mean_cs = torch.mean(nodes.mailbox[self.messageName], 1)
-        return {self.torqueName : self.w0 * nn.functional.normalize(mean_cs, dim=-1)[..., 1:2]}
+        sum_force = torch.sum(nodes.mailbox[self.messageName], 1)
+        return {self.accelerationName : sum_force - self.gamma * g.ndata[self.velocityName]}
         
     def f(self, t, g, args=None):
-        g.ndata[self.velocityName] = self.v0 * torch.cat((torch.cos(g.ndata[self.polarityName]), torch.sin(g.ndata[self.polarityName])), -1)
         g.update_all(self.calc_message, self.aggregate_message)
         return g
       
@@ -104,12 +118,10 @@ class interactionModule(nn.Module):
         g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.positionName].shape[0], 1, 1).to(g.device)
         return g
     
-class interactionModule_nonParametric_torque(interactionModule):
+class interactionModule_nonParametric_acceleration(interactionModule):
     def __init__(self, distanceCalcModule, v0=None, sigma=None, fNNshape=None, fBias=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
         super().__init__(0.0, 0.0, 0.0, 1, positionName, velocityName, polarityName, torqueName, noiseName, messageName)
         self.reset_parameter(v0, None, sigma)
-                 
-        self.distanceCalcModule = distanceCalcModule
         
         self.fNNshape = ut.variableInitializer(fNNshape, [128, 128, 128])
         
@@ -127,7 +139,7 @@ class interactionModule_nonParametric_torque(interactionModule):
         return nn.Sequential(NNseq)
     
     def init_f(self):
-        self.fNN = self.createNNsequence(4, self.fNNshape, 1, self.fBias)
+        self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias)
             
     def calc_message(self, edges):
         dr = self.distanceCalcModule(edges.dst[self.positionName], edges.src[self.positionName])
