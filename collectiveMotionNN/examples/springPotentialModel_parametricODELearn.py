@@ -86,6 +86,7 @@ def main_parser():
     parser.add_argument('--lr_hyperSGD', type=float)
     parser.add_argument('--vLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
+    parser.add_argument('--useScore', type=strtobool)
     
     parser.add_argument('--save_learned_model', type=str)
     parser.add_argument('--save_loss_history', type=str)
@@ -109,6 +110,7 @@ def parser2main(args):
          split_seed=args.split_seed,
          lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
+         useScore=args.useScore,
          save_learned_model=args.save_learned_model, 
          save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history)
     
@@ -128,6 +130,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          split_seed=None,
          lr=None, lr_hyperSGD=None, 
          vLoss_weight=None, scoreLoss_weight=None, 
+         useScore=None,
          save_learned_model=None, 
          save_loss_history=None, save_validloss_history=None):
 
@@ -195,6 +198,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     lr_hyperSGD = ut.variableInitializer(lr_hyperSGD, 1e-3)
     vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
+    useScore = ut.variableInitializer(useScore, False)
     
     save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_parametric_learned_model.pt')
     save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_parametric_loss_history.pt')
@@ -256,9 +260,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     
-    SP_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(v0_init, w0_init, sigma_init)
+    SP_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(c_init, r_c_init, gamma_init, sigma_init)
     
-    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(True)
+    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(useScore)
     
     print(SP_SDEwrapper.state_dict())
     
@@ -323,23 +327,31 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             mw.begin()
             graph_batchsize = len(graph.batch_num_nodes())
             
-            
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
-            SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-            SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-            _ = SP_SDEwrapper.f(1, x_truth)
-            score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
-            SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+            
+            if useScore:
+                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+                _ = SP_SDEwrapper.f(1, x_truth)
+                score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
+                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
             
             
             SP_SDEwrapper.loadGraph(graph.to(device))
             _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             
-            score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
+
+            if useScore:
+                score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
             
-            xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-            loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
+                xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
+            else:
+                xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
+                scoreloss = torch.full([1], torch.nan)
+                loss = xyloss + thetaLoss_weight * thetaloss
+                
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             mw.zero_grad()
@@ -361,23 +373,34 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 graph_batchsize = len(graph.batch_num_nodes())
                 
                 x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
-                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-                _ = SP_SDEwrapper.f(1, x_truth)
-                score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
-                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+                
+                if useScore:
+                    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                    SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+                    _ = SP_SDEwrapper.f(1, x_truth)
+                    score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
+                    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
 
                 SP_SDEwrapper.loadGraph(graph.to(device))
                 _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
                 
-                score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
+                if useScore:                
+                    score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
                 
-                valid_xyloss, valid_vloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-                valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
-                valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
-                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss + scoreLoss_weight * valid_scoreloss)
+                    valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                    valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
+                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
+                    valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss + scoreLoss_weight * valid_scoreloss)
+                    
+                else:
+                    valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth)
+                    valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
+                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
+                    valid_scoreloss_total = torch.full([1], torch.nan)
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
+                    
                 data_count = data_count + graph_batchsize
                 
             valid_loss = valid_loss / data_count
