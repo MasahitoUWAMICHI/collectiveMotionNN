@@ -70,7 +70,7 @@ class interactionModule(nn.Module):
         if gamma is None:
             nn.init.uniform_(self.gamma)
         else:
-            nn.init.constant_(self.sigma, gamma)
+            nn.init.constant_(self.gamma, gamma)
 
         if sigma is None:
             nn.init.uniform_(self.sigma)
