@@ -147,12 +147,14 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
     
 class myDataset(torch.utils.data.Dataset):
-    def __init__(self, dataPath, len=None, delayTruth=1):
+    def __init__(self, dataPath, Ndim=2, len=None, delayTruth=1):
         super().__init__()
         
         self.dataPath = dataPath
         
         self.delayTruth = delayTruth
+        
+        self.Ndim = Ndim
                 
         if len is None:
             self.initialize()
@@ -191,7 +193,7 @@ class myDataset(torch.utils.data.Dataset):
     def from_t_batch(self, batch, t):
         _, x = self.loadData()
         
-        gr = gu.make_disconnectedGraph(x[t, batch], gu.singleVariableNdataInOut('x'))
+        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'v'], [self.Ndim, self.Ndim]))
         
         x_truth = x[t+self.delayTruth, batch]
         
@@ -222,19 +224,23 @@ class batchedSubset(torch.utils.data.Subset):
     
     
 class myLoss(nn.Module):
-    def __init__(self, distanceCalc, useScore=True):
+    def __init__(self, distanceCalc, Ndim=2, useScore=True):
         super().__init__()
         
         self.distanceCalc = distanceCalc
         self.useScore = useScore
                 
         self.xyLoss = nn.MSELoss()
+        self.vLoss = nn.MSELoss()
+        
+        self.Ndim = Ndim
         
         self.def_forward()
         
     def forward_score(self, x, y, score_x, score_y):
-        dxy = self.distanceCalc(x, y)
+        dxy = self.distanceCalc(x[...,:self.Ndim], y[...,:self.Ndim])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
+        vLoss = self.xyLoss(x[...,self.Ndim:(2*self.Ndim)], y[...,self.Ndim:(2*self.Ndim)])
         scoreLoss = torch.mean(torch.square(torch.sum(score_x, dim=-1, keepdim=True) - score_y))
         return xyLoss, scoreLoss
        
