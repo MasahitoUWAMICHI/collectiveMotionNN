@@ -202,7 +202,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
   
     
-    SP_Module = dvm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
+    SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop).to(device)
     
     SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module, edgeModule, returnScore=False, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()).to(device)
@@ -281,7 +281,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     
-    vicsek_dataset = dvm.myDataset(save_x_SDE, delayTruth=delayPredict)
+    vicsek_dataset = spm.myDataset(save_x_SDE, delayTruth=delayPredict)
     vicsek_dataset.initialize()
     
     N_valid = int(vicsek_dataset.N_batch * ratio_valid)
@@ -290,9 +290,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     range_split = torch.utils.data.random_split(range(vicsek_dataset.N_batch), [N_train, N_valid, N_test], generator=split_seed)
     
-    train_dataset = dvm.batchedSubset(vicsek_dataset, [i for i in range_split[0]])
-    valid_dataset = dvm.batchedSubset(vicsek_dataset, [i for i in range_split[1]])
-    test_dataset = dvm.batchedSubset(vicsek_dataset, [i for i in range_split[2]])
+    train_dataset = spm.batchedSubset(vicsek_dataset, [i for i in range_split[0]])
+    valid_dataset = spm.batchedSubset(vicsek_dataset, [i for i in range_split[1]])
+    test_dataset = spm.batchedSubset(vicsek_dataset, [i for i in range_split[2]])
     
     train_loader = GraphDataLoader(train_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
     valid_loader = GraphDataLoader(valid_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
@@ -301,9 +301,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     if periodic is None:
-        lossFunc = dvm.myLoss(ut.euclidDistance_nonPeriodic())
+        lossFunc = spm.myLoss(ut.euclidDistance_nonPeriodic())
     else:
-        lossFunc = dvm.myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)))
+        lossFunc = spm.myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)))
         
     
     
