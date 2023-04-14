@@ -241,9 +241,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
 
         y = y.to('cpu')
         if not(periodic is None):
-            y[..., :2] = torch.remainder(y[..., :2], periodic)
+            y[..., :N_dim] = torch.remainder(y[..., :N_dim], periodic)
 
-        y = y.reshape((t_save.shape[0], N_batch, N_particles, 3))
+        y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim))
 
         torch.save(y, save_x_SDE)
 
