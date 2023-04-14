@@ -242,12 +242,13 @@ class myLoss(nn.Module):
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
         vLoss = self.xyLoss(x[...,self.Ndim:(2*self.Ndim)], y[...,self.Ndim:(2*self.Ndim)])
         scoreLoss = torch.mean(torch.square(torch.sum(score_x, dim=-1, keepdim=True) - score_y))
-        return xyLoss, scoreLoss
+        return xyLoss, vLoss, scoreLoss
        
     def forward_noScore(self, x, y):
-        dxy = self.distanceCalc(x, y)
+        dxy = self.distanceCalc(x[...,:self.Ndim], y[...,:self.Ndim])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
-        return xyLoss
+        vLoss = self.xyLoss(x[...,self.Ndim:(2*self.Ndim)], y[...,self.Ndim:(2*self.Ndim)])
+        return xyLoss, vLoss
        
     def def_forward(self):
         if self.useScore:
