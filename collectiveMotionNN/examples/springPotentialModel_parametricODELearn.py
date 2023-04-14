@@ -134,15 +134,15 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          save_learned_model=None, 
          save_loss_history=None, save_validloss_history=None):
 
-    c = ut.variableInitializer(c, 10.0)
-    r_c = ut.variableInitializer(r_c, 2.0)
+    c = ut.variableInitializer(c, 0.01)
+    r_c = ut.variableInitializer(r_c, 1.0)
     p = ut.variableInitializer(p, 2.0)
     
     gamma = ut.variableInitializer(gamma, 0.1)
     sigma = ut.variableInitializer(sigma, 0.01)
     
     
-    r0 = ut.variableInitializer(r0, 3.0)
+    r0 = ut.variableInitializer(r0, 5.0)
     L = ut.variableInitializer(L, 5.0)
     v0 = ut.variableInitializer(v0, 0.01)
     
