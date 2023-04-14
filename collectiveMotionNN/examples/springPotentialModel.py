@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 from torch import nn
 
@@ -14,7 +16,7 @@ class springPotential(nn.Module):
         self.c = nn.Parameter(torch.tensor(c, requires_grad=True))
         self.r_c = nn.Parameter(torch.tensor(r_c, requires_grad=True))
 
-        self.p = nn.Parameter(torch.tensor(p, requires_grad=True))
+        self.p = p
         
     def potential(self, r):
         return self.c * (r - self.r_c)**self.p
@@ -54,7 +56,7 @@ class interactionModule(nn.Module):
         self.messageName = ut.variableInitializer(messageName, 'm')
         
         
-    def reset_parameter(self, c=None, r_c=None, p=None, gamma=None, sigma=None):
+    def reset_parameter(self, c=None, r_c=None, gamma=None, sigma=None):
         if c is None:
             nn.init.uniform_(self.sp.c)
         else:
@@ -64,12 +66,7 @@ class interactionModule(nn.Module):
             nn.init.uniform_(self.sp.r_c)
         else:
             nn.init.constant_(self.sp.r_c, r_c)
-            
-        if p is None:
-            nn.init.uniform_(self.sp.p)
-        else:
-            nn.init.constant_(self.sp.p, p)
-            
+                        
         if gamma is None:
             nn.init.uniform_(self.gamma)
         else:
@@ -119,9 +116,9 @@ class interactionModule(nn.Module):
         return g
     
 class interactionModule_nonParametric_acceleration(interactionModule):
-    def __init__(self, distanceCalcModule, v0=None, sigma=None, fNNshape=None, fBias=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
-        super().__init__(0.0, 0.0, 0.0, 1, positionName, velocityName, polarityName, torqueName, noiseName, messageName)
-        self.reset_parameter(v0, None, sigma)
+    def __init__(self, gamma=None, sigma=None, Ndim=2, fNNshape=None, fBias=None, periodic=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+        super().__init__(0.0, 0.0, 2, 0.0, 0.0, Ndim, periodic, positionName, velocityName, accelerationName, noiseName, messageName)
+        self.reset_parameter(None, None, gamma, sigma)
         
         self.fNNshape = ut.variableInitializer(fNNshape, [128, 128, 128])
         
@@ -142,19 +139,12 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias)
             
     def calc_message(self, edges):
-        dr = self.distanceCalcModule(edges.dst[self.positionName], edges.src[self.positionName])
-        dtheta = (edges.dst[self.polarityName] - edges.src[self.polarityName])
-        c = torch.cos(dtheta)
-        s = torch.sin(dtheta)
-        c_src = torch.cos(edges.src[self.polarityName])
-        s_src = torch.sin(edges.src[self.polarityName])
-        dx = dr[..., 0:1] * c_src + dr[..., 1:2] * s_src
-        dy = -dr[..., 0:1] * s_src + dr[..., 1:2] * c_src
-        return {self.messageName: self.fNN(torch.cat((dx, dy, c, s), -1))}
-            
-    def aggregate_message(self, nodes):
-        return {self.torqueName : torch.mean(nodes.mailbox[self.messageName], 1)}
-    
+        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+        abs_dr = torch.norm(dr, dim=-1, keepdim=True)
+        unit_dr = nn.functional.normalize(dr, dim=-1)
+        
+        return {self.messageName: self.fNN(abs_dr) * unit_dr}
+        
     
 class myDataset(torch.utils.data.Dataset):
     def __init__(self, dataPath, len=None, delayTruth=1):
@@ -201,7 +191,7 @@ class myDataset(torch.utils.data.Dataset):
     def from_t_batch(self, batch, t):
         _, x = self.loadData()
         
-        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'theta'], [2, 1]))
+        gr = gu.make_disconnectedGraph(x[t, batch], gu.singleVariableNdataInOut('x'))
         
         x_truth = x[t+self.delayTruth, batch]
         
@@ -231,12 +221,6 @@ class batchedSubset(torch.utils.data.Subset):
     
     
     
-class cosLoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-    def forward(self, x, y):
-        return 1 - torch.cos(x - y).mean()
-    
 class myLoss(nn.Module):
     def __init__(self, distanceCalc, useScore=True):
         super().__init__()
@@ -245,22 +229,19 @@ class myLoss(nn.Module):
         self.useScore = useScore
                 
         self.xyLoss = nn.MSELoss()
-        self.thetaLoss = cosLoss()
         
         self.def_forward()
         
     def forward_score(self, x, y, score_x, score_y):
-        dxy = self.distanceCalc(x[..., :2], y[..., :2])
+        dxy = self.distanceCalc(x, y)
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
-        thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
         scoreLoss = torch.mean(torch.square(torch.sum(score_x, dim=-1, keepdim=True) - score_y))
-        return xyLoss, thetaLoss, scoreLoss
+        return xyLoss, scoreLoss
        
     def forward_noScore(self, x, y):
-        dxy = self.distanceCalc(x[..., :2], y[..., :2])
+        dxy = self.distanceCalc(x, y)
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
-        thetaLoss = self.thetaLoss(x[..., 2], y[..., 2])
-        return xyLoss, thetaLoss
+        return xyLoss
        
     def def_forward(self):
         if self.useScore:
