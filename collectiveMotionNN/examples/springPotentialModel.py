@@ -104,7 +104,8 @@ class interactionModule(nn.Module):
     
     def aggregate_message(self, nodes):
         sum_force = torch.sum(nodes.mailbox[self.messageName], 1)
-        return {self.accelerationName : sum_force - self.gamma * g.ndata[self.velocityName]}
+        print(nodes)
+        return {self.accelerationName : sum_force - self.gamma * nodes[self.velocityName]}
         
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
