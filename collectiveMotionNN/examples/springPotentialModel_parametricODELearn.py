@@ -155,9 +155,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     selfloop = ut.variableInitializer(selfloop, False)
     
     device = ut.variableInitializer(device, 'cuda' if torch.cuda.is_available() else 'cpu')
-    save_x_SDE = ut.variableInitializer(save_x_SDE, 'Vicsek_SDE_traj.pt')
-    save_t_SDE = ut.variableInitializer(save_t_SDE, 'Vicsek_SDE_t_eval.pt')
-    save_model = ut.variableInitializer(save_model, 'Vicsek_SDE_model.pt')
+    save_x_SDE = ut.variableInitializer(save_x_SDE, 'Spring_SDE_traj.pt')
+    save_t_SDE = ut.variableInitializer(save_t_SDE, 'Spring_SDE_t_eval.pt')
+    save_model = ut.variableInitializer(save_model, 'Spring_SDE_model.pt')
     
     method_SDE = ut.variableInitializer(method_SDE, 'euler')
     noise_type = ut.variableInitializer(noise_type, 'general')
@@ -196,16 +196,16 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     
-    save_learned_model = ut.variableInitializer(save_learned_model, 'Vicsek_parametric_learned_model.pt')
-    save_loss_history = ut.variableInitializer(save_loss_history, 'Vicsek_parametric_loss_history.pt')
-    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Vicsek_parametric_validloss_history.pt')
+    save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_parametric_learned_model.pt')
+    save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_parametric_loss_history.pt')
+    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_parametric_validloss_history.pt')
     
   
     
-    Vicsek_Module = dvm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
+    SP_Module = dvm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop).to(device)
     
-    Vicsek_SDEmodule = wm.dynamicGNDEmodule(Vicsek_Module, edgeModule, returnScore=False, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()).to(device)
+    SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module, edgeModule, returnScore=False, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()).to(device)
     
     
     x0 = []
@@ -224,7 +224,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     
-    Vicsek_SDEwrapper = wm.dynamicGSDEwrapper(Vicsek_SDEmodule, copy.deepcopy(graph_init).to(device), 
+    SP_SDEwrapper = wm.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
                                           ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim]), 
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [N_dim, N_dim]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
@@ -235,9 +235,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                           size=(x0.shape[0], N_dim), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
         with torch.no_grad():
-            y = sdeint(Vicsek_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
+            y = sdeint(SP_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
 
-        print(Vicsek_SDEwrapper.graph)
+        print(SP_SDEwrapper.graph)
 
         y = y.to('cpu')
         if not(periodic is None):
@@ -250,27 +250,27 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         torch.save(t_save.to('cpu'), save_t_SDE)
 
         with open(save_model, mode='wb') as f:
-            cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
+            cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
     
 
     
     
     
-    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(v0_init, w0_init, sigma_init)
+    SP_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(v0_init, w0_init, sigma_init)
     
-    Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(True)
+    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(True)
     
-    print(Vicsek_SDEwrapper.state_dict())
+    print(SP_SDEwrapper.state_dict())
     
         
     optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(lr_hyperSGD))
 
-    mw = gdtuo.ModuleWrapper(Vicsek_SDEwrapper, optimizer=optim)
+    mw = gdtuo.ModuleWrapper(SP_SDEwrapper, optimizer=optim)
     mw.initialize()
     
     
     
-    neuralDE = NeuralODE(Vicsek_SDEwrapper, solver=method_ODE).to(device)
+    neuralDE = NeuralODE(SP_SDEwrapper, solver=method_ODE).to(device)
     
     
     
@@ -325,18 +325,18 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             
             
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
-            Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-            Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-            _ = Vicsek_SDEwrapper.f(1, x_truth)
-            score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
-            Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+            SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+            SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+            _ = SP_SDEwrapper.f(1, x_truth)
+            score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
+            SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
             
             
-            Vicsek_SDEwrapper.loadGraph(graph.to(device))
-            _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
+            SP_SDEwrapper.loadGraph(graph.to(device))
+            _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             
-            score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
+            score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
             
             xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
             loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
@@ -361,17 +361,17 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 graph_batchsize = len(graph.batch_num_nodes())
                 
                 x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
-                Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                Vicsek_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-                _ = Vicsek_SDEwrapper.f(1, x_truth)
-                score_truth = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
-                Vicsek_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+                _ = SP_SDEwrapper.f(1, x_truth)
+                score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
+                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
 
-                Vicsek_SDEwrapper.loadGraph(graph.to(device))
-                _, x_pred = neuralDE(Vicsek_SDEwrapper.ndataInOutModule.output(Vicsek_SDEwrapper.graph).to(device), 
+                SP_SDEwrapper.loadGraph(graph.to(device))
+                _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
                 
-                score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
+                score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
                 
                 valid_xyloss, valid_vloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
@@ -387,26 +387,26 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             valid_loss_history[-1] = [valid_xyloss.item(), valid_vloss.item(), valid_scoreloss.item()]
             
             if valid_loss < best_valid_loss:
-                Vicsek_SDEwrapper.deleteGraph()
+                SP_SDEwrapper.deleteGraph()
                 with open(save_learned_model, mode='wb') as f:
-                    cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
+                    cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e} Best'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
+                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c.item(),
+                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c.item(),
+                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
+                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
             else:
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
+                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c.item(),
+                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c.item(),
+                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
+                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         
     torch.save(torch.tensor(loss_history), save_loss_history)
