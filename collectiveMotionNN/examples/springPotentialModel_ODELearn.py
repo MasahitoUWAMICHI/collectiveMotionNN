@@ -28,14 +28,18 @@ import cloudpickle
 
 def main_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--v0', type=float)
-    parser.add_argument('--w0', type=float)
+    parser.add_argument('--c', type=float)
+    parser.add_argument('--r_c', type=float)
+    parser.add_argument('--p', type=float)
     parser.add_argument('--sigma', type=float)
-    parser.add_argument('--d', type=float)
+    parser.add_argument('--gamma', type=float)
+    
+    parser.add_argument('--N_dim', type=int)
     
     parser.add_argument('--r0', type=float)
     
     parser.add_argument('--L', type=float)
+    parser.add_argument('--v0', type=float)
     
     parser.add_argument('--N_particles', type=int)
     parser.add_argument('--N_batch', type=int)
@@ -61,8 +65,9 @@ def main_parser():
 
     parser.add_argument('--skipSimulate', type=strtobool)
     
-    parser.add_argument('--v0_init', type=float)
-    parser.add_argument('--w0_init', type=float)
+    parser.add_argument('--c_init', type=float)
+    parser.add_argument('--r_c_init', type=float)
+    parser.add_argument('--gamma_init', type=float)
     parser.add_argument('--sigma_init', type=float)
 
     
@@ -79,7 +84,7 @@ def main_parser():
     
     parser.add_argument('--lr', type=float)
     parser.add_argument('--lr_hyperSGD', type=float)
-    parser.add_argument('--thetaLoss_weight', type=float)
+    parser.add_argument('--vLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
     
     parser.add_argument('--save_learned_model', type=str)
@@ -88,54 +93,57 @@ def main_parser():
     return parser
 
 def parser2main(args):
-    main(v0=args.v0, w0=args.w0, sigma=args.sigma, d=args.d, r0=args.r0, L=args.L,
-         N_particles=args.N_particles, N_batch=args.N_batch, 
+    main(c=args.c, r_c=args.r_c, p=args.p, gamma=args.gamma, sigma=args.sigma, r0=args.r0, L=args.L, v0=args.v0,
+         N_dim=args.N_dim, N_particles=args.N_particles, N_batch=args.N_batch, 
          t_max=args.t_max, dt_step=args.dt_step, dt_save=args.dt_save, 
          periodic=args.periodic, selfloop=args.selfloop, 
          device=args.device,
          save_x_SDE=args.save_x_SDE, save_t_SDE=args.save_t_SDE, save_model=args.save_model,
          method_SDE=args.method_SDE, noise_type=args.noise_type, sde_type=args.sde_type, bm_levy=args.bm_levy,
          skipSimulate=args.skipSimulate,
-         v0_init=args.v0_init, w0_init=args.w0_init, sigma_init=args.sigma_init, 
+         c_init=args.c_init, r_c_init=args.r_c_init, gamma_init=args.gamma_init, sigma_init=args.sigma_init,
          delayPredict=args.delayPredict, dt_train=args.dt_train, 
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, 
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
          split_seed=args.split_seed,
          lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
-         thetaLoss_weight=args.thetaLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
+         vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          save_learned_model=args.save_learned_model, 
          save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history)
     
-def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
-         N_particles=None, N_batch=None, 
+def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=None,
+         N_dim=None, N_particles=None, N_batch=None, 
          t_max=None, dt_step=None, dt_save=None, 
          periodic=None, selfloop=None, 
          device=None,
          save_x_SDE=None, save_t_SDE=None, save_model=None,
          method_SDE=None, noise_type=None, sde_type=None, bm_levy=None,
          skipSimulate=None,
-         v0_init=None, w0_init=None, sigma_init=None, 
+         c_init=None, r_c_init=None, gamma_init=None, sigma_init=None, 
          delayPredict=None, dt_train=None, 
          method_ODE=None, 
          N_epoch=None, N_train_batch=None, 
          ratio_valid=None, ratio_test=None,
          split_seed=None,
          lr=None, lr_hyperSGD=None, 
-         thetaLoss_weight=None, scoreLoss_weight=None, 
+         vLoss_weight=None, scoreLoss_weight=None, 
          save_learned_model=None, 
          save_loss_history=None, save_validloss_history=None):
 
-    v0 = ut.variableInitializer(v0, 0.03)
-    w0 = ut.variableInitializer(w0, 1.0)
+    c = ut.variableInitializer(c, 1.0)
+    r_c = ut.variableInitializer(r_c, 1.0)
+    p = ut.variableInitializer(p, 2.0)
     
-    sigma = ut.variableInitializer(sigma, 0.3)
-        
-    d = ut.variableInitializer(d, 1)
+    gamma = ut.variableInitializer(gamma, 0.0)
+    sigma = ut.variableInitializer(sigma, 0.1)
+    
     
     r0 = ut.variableInitializer(r0, 1.0)
     L = ut.variableInitializer(L, 5.0)
+    v0 = ut.variableInitializer(v0, 1.0)
     
+    N_dim = ut.variableInitializer(N_dim, int(2))
     N_particles = ut.variableInitializer(N_particles, int(100))
     N_batch = ut.variableInitializer(N_batch, int(5))
     
@@ -161,8 +169,9 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     skipSimulate = ut.variableInitializer(skipSimulate, False)
     
     
-    v0_init = ut.variableInitializer(v0_init, None)
-    w0_init = ut.variableInitializer(w0_init, None)
+    c_init = ut.variableInitializer(c_init, None)
+    r_c_init = ut.variableInitializer(r_c_init, None)
+    gamma_init = ut.variableInitializer(gamma_init, None)
     
     sigma_init = ut.variableInitializer(sigma_init, None)
 
@@ -184,7 +193,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     
     lr = ut.variableInitializer(lr, 1e-3)
     lr_hyperSGD = ut.variableInitializer(lr_hyperSGD, 1e-3)
-    thetaLoss_weight = ut.variableInitializer(thetaLoss_weight, 1.0)
+    vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     
     save_learned_model = ut.variableInitializer(save_learned_model, 'Vicsek_parametric_learned_model.pt')
@@ -193,7 +202,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     
   
     
-    Vicsek_Module = dvm.interactionModule(v0, w0, sigma, d).to(device)
+    Vicsek_Module = dvm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop).to(device)
     
     Vicsek_SDEmodule = wm.dynamicGNDEmodule(Vicsek_Module, edgeModule, returnScore=False, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()).to(device)
@@ -202,8 +211,8 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     x0 = []
     graph_init = []
     for i in range(N_batch):
-        x0.append(torch.cat((torch.rand([N_particles, 2]) * L, (torch.rand([N_particles, 1]) - 0.5) * (2*np.pi)), dim=-1))
-        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'theta'], [2, 1])))
+        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim])-0.5) * (2*v0)), dim=-1))
+        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim])))
     x0 = torch.concat(x0, dim=0)
     graph_init = dgl.batch(graph_init)
         
@@ -216,14 +225,14 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     
     
     Vicsek_SDEwrapper = wm.dynamicGSDEwrapper(Vicsek_SDEmodule, copy.deepcopy(graph_init).to(device), 
-                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'theta'], [2, 1]), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [2, 1]),
+                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim]), 
+                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [N_dim, N_dim]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
     if not skipSimulate:
     
         bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                          size=(x0.shape[0], 1), dt=dt_step, levy_area_approximation=bm_levy, device=device)
+                          size=(x0.shape[0], N_dim), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
         with torch.no_grad():
             y = sdeint(Vicsek_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
@@ -304,7 +313,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, theta, score), validLoss (xy, theta, score), v0, w0, sigma, alpha, 1-beta1, 1-beta2')
+    print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, alpha, 1-beta1, 1-beta2')
     
     loss_history = []
     valid_loss_history = []
@@ -329,9 +338,9 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
             
             score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
             
-            xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-            loss = xyloss + thetaLoss_weight * thetaloss + scoreLoss_weight * scoreloss
-            loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
+            xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+            loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
+            loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             mw.zero_grad()
             loss.backward()
@@ -344,7 +353,7 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
         with torch.no_grad():
             valid_loss = 0
             valid_xyloss_total = 0
-            valid_thetaloss_total = 0
+            valid_vloss_total = 0
             valid_scoreloss_total = 0
             data_count = 0
             
@@ -364,37 +373,39 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
                 
                 score_pred = torch.stack(Vicsek_SDEwrapper.score(), dim=1)
                 
-                valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                valid_xyloss, valid_vloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
+                valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
                 valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
-                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss + scoreLoss_weight * valid_scoreloss)
+                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss + scoreLoss_weight * valid_scoreloss)
                 data_count = data_count + graph_batchsize
                 
             valid_loss = valid_loss / data_count
             valid_xyloss_total = valid_xyloss_total / data_count
-            valid_thetaloss_total = valid_thetaloss_total / data_count
+            valid_vloss_total = valid_vloss_total / data_count
             valid_scoreloss_total = valid_scoreloss_total / data_count
-            valid_loss_history[-1] = [valid_xyloss.item(), valid_thetaloss.item(), valid_scoreloss.item()]
+            valid_loss_history[-1] = [valid_xyloss.item(), valid_vloss.item(), valid_scoreloss.item()]
             
             if valid_loss < best_valid_loss:
                 Vicsek_SDEwrapper.deleteGraph()
                 with open(save_learned_model, mode='wb') as f:
                     cloudpickle.dump(Vicsek_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e} Best'.format(
-                    epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
-                    valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.w0.item(),
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e} Best'.format(
+                    epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
+                    valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}'.format(
-                    epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
-                    valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.v0.item(),
-                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.w0.item(),
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}'.format(
+                    epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
+                    valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c.item(),
+                    Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         
