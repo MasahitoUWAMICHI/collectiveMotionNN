@@ -80,7 +80,7 @@ class interactionModule(nn.Module):
         self.prepare_sigma()
         
     def prepare_sigma(self):
-        self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim], device=self.sigma.device), self.sigma*torch.ones([self.N_dim,self.N_dim], device=self.sigma.device)), dim=0)
+        self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim], device=self.sigma.device), self.sigma*torch.eye(self.N_dim, device=self.sigma.device)), dim=0)
             
     def def_nonPeriodic(self):
         self.distanceCalc = ut.euclidDistance_nonPeriodic()
