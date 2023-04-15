@@ -108,7 +108,6 @@ class interactionModule(nn.Module):
         
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
-        print(g.ndata[self.accelerationName].shape, g.ndata[self.velocityName].shape, self.gamma.shape)
         g.ndata[self.accelerationName] = g.ndata[self.accelerationName] - self.gamma * g.ndata[self.velocityName]
         return g
       
