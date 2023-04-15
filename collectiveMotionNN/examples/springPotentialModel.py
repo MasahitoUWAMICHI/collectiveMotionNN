@@ -174,12 +174,11 @@ class myDataset(torch.utils.data.Dataset):
         self.extractDataLength = 1 + self.delayTruth
         
         xshape, _ = self.loadData()
-        N_t, N_batch, N_particles, N_dim = xshape
+        N_t, N_batch, N_particles, _ = xshape
         
         self.N_t = N_t
         self.N_batch = N_batch
         self.N_particles = N_particles
-        self.N_dim = N_dim
         
         self.t_max = self.N_t - self.extractDataLength + 1
         
