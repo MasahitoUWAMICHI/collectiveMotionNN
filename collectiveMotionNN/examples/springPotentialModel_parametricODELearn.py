@@ -210,7 +210,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     save_params = ut.variableInitializer(save_validloss_history, 'Spring_parametric_parameters.npy')
 
     
-    np.save(save_params, ut.getArgs())
+    args_of_main = ut.getArgs()
+    print(args_of_main)
+    np.save(save_params, args_of_main)
     
     
     SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
@@ -451,8 +453,6 @@ if __name__ == '__main__':
     parser = main_parser()
     
     args = parser.parse_args()
-    
-    print(args)
     
     parser2main(args)
     
