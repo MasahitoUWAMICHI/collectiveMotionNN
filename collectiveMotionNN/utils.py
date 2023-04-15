@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+import inspect
+
 def variableInitializer(val, defaultVal):
     if val is None:
         return defaultVal
@@ -39,3 +41,10 @@ def extractBrownian(bm, tW, device=None):
         B_t[i+1] = B_t[i] + bm(tW[i], tW[i+1]).to(device).detach()
 
     return B_t
+
+
+def getArgs():
+    parent_frame = inspect.currentframe().f_back
+    info = inspect.getargvalues(parent_frame)
+    return {key: info.locals[key] for key in info.args}
+
