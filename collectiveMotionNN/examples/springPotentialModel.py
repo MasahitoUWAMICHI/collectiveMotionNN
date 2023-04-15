@@ -13,16 +13,22 @@ class springPotential(nn.Module):
     def __init__(self, c, r_c, p=2):
         super().__init__()
         
-        self.c = nn.Parameter(torch.tensor(c, requires_grad=True))
-        self.r_c = nn.Parameter(torch.tensor(r_c, requires_grad=True))
+        self.logc = nn.Parameter(torch.tensor(np.log(c), requires_grad=True))
+        self.logr_c = nn.Parameter(torch.tensor(np.log(r_c), requires_grad=True))
 
         self.p = p
         
+    def c(self):
+        return torch.exp(self.logc)
+    
+    def r_c(self):
+        return torch.exp(self.logr_c)
+        
     def potential(self, r):
-        return self.c * (r - self.r_c)**self.p
+        return self.c() * (r - self.r_c())**self.p
 
     def force(self, r):
-        return -self.c * self.p * (r - self.r_c)**(self.p - 1)
+        return -self.c() * self.p * (r - self.r_c())**(self.p - 1)
 
     
 class interactionModule(nn.Module):
@@ -57,15 +63,15 @@ class interactionModule(nn.Module):
         
         
     def reset_parameter(self, c=None, r_c=None, gamma=None, sigma=None):
-        if c is None:
-            nn.init.uniform_(self.sp.c)
+        if logc is None:
+            nn.init.uniform_(self.sp.logc)
         else:
-            nn.init.constant_(self.sp.c, c)
+            nn.init.constant_(self.sp.logc, np.log(c))
             
-        if r_c is None:
-            nn.init.uniform_(self.sp.r_c)
+        if logr_c is None:
+            nn.init.uniform_(self.sp.logr_c)
         else:
-            nn.init.constant_(self.sp.r_c, r_c)
+            nn.init.constant_(self.sp.logr_c, np.log(r_c))
                         
         if gamma is None:
             nn.init.uniform_(self.gamma)
