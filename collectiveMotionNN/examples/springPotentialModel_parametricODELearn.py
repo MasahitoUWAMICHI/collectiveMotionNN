@@ -219,6 +219,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim])))
     x0 = torch.concat(x0, dim=0)
     graph_init = dgl.batch(graph_init)
+    
+    print(graph_init)
         
     
     t_span = torch.arange(0, t_max+dt_step, dt_step)
@@ -338,6 +340,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             
             
             SP_SDEwrapper.loadGraph(graph.to(device))
+            
+            print(SP_SDEwrapper.graph)
+            
             _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             
