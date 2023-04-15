@@ -348,9 +348,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
                 loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
             else:
-                xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
+                xyloss, vloss = lossFunc(x_pred[0], x_truth)
                 scoreloss = torch.full([1], torch.nan)
-                loss = xyloss + thetaLoss_weight * thetaloss
+                loss = xyloss + vLoss_weight * vloss
                 
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
@@ -388,18 +388,18 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 if useScore:                
                     score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
                 
-                    valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                    valid_xyloss, valid_vloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
                     valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
+                    valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
                     valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
-                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss + scoreLoss_weight * valid_scoreloss)
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss + scoreLoss_weight * valid_scoreloss)
                     
                 else:
-                    valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth)
+                    valid_xyloss, valid_vloss = lossFunc(x_pred[0], x_truth)
                     valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
+                    valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
                     valid_scoreloss_total = torch.full([1], torch.nan)
-                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss)
                     
                 data_count = data_count + graph_batchsize
                 
