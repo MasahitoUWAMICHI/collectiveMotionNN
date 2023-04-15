@@ -91,6 +91,8 @@ def main_parser():
     parser.add_argument('--save_learned_model', type=str)
     parser.add_argument('--save_loss_history', type=str)
     parser.add_argument('--save_validloss_history', type=str)
+    parser.add_argument('--save_params', type=str)
+    
     return parser
 
 def parser2main(args):
@@ -112,7 +114,8 @@ def parser2main(args):
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
          save_learned_model=args.save_learned_model, 
-         save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history)
+         save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history,
+         save_params=args.save_params)
     
 def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=None,
          N_dim=None, N_particles=None, N_batch=None, 
@@ -132,7 +135,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          vLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
          save_learned_model=None, 
-         save_loss_history=None, save_validloss_history=None):
+         save_loss_history=None, save_validloss_history=None,
+         save_params=None):
 
     c = ut.variableInitializer(c, 0.01)
     r_c = ut.variableInitializer(r_c, 1.0)
@@ -203,8 +207,11 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_parametric_learned_model.pt')
     save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_parametric_loss_history.pt')
     save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_parametric_validloss_history.pt')
+    save_params = ut.variableInitializer(save_validloss_history, 'Spring_parametric_parameters.npy')
+
     
-  
+    np.save(save_params, ut.getArgs())
+    
     
     SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop).to(device)
