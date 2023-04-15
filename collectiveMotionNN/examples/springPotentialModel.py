@@ -101,7 +101,7 @@ class interactionModule(nn.Module):
             self.def_periodic()
             
     def calc_message(self, edges):
-        dr = self.distanceCalc(edges.src[self.positionName], edges.dst[self.positionName])
+        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
 
         abs_dr = torch.norm(dr, dim=-1, keepdim=True)
         unit_dr = nn.functional.normalize(dr, dim=-1)
@@ -146,7 +146,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias)
             
     def calc_message(self, edges):
-        dr = self.distanceCalc(edges.src[self.positionName], edges.dst[self.positionName])
+        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
         abs_dr = torch.norm(dr, dim=-1, keepdim=True)
         unit_dr = nn.functional.normalize(dr, dim=-1)
         
