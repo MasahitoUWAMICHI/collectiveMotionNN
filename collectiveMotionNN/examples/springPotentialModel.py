@@ -63,12 +63,12 @@ class interactionModule(nn.Module):
         
         
     def reset_parameter(self, c=None, r_c=None, gamma=None, sigma=None):
-        if logc is None:
+        if c is None:
             nn.init.uniform_(self.sp.logc)
         else:
             nn.init.constant_(self.sp.logc, np.log(c))
             
-        if logr_c is None:
+        if r_c is None:
             nn.init.uniform_(self.sp.logr_c)
         else:
             nn.init.constant_(self.sp.logr_c, np.log(r_c))
