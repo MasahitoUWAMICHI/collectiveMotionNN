@@ -284,7 +284,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     
-    vicsek_dataset = spm.myDataset(save_x_SDE, delayTruth=delayPredict)
+    vicsek_dataset = spm.myDataset(save_x_SDE, N_dim=N_dim, delayTruth=delayPredict)
     vicsek_dataset.initialize()
     
     N_valid = int(vicsek_dataset.N_batch * ratio_valid)
@@ -304,9 +304,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     if periodic is None:
-        lossFunc = spm.myLoss(ut.euclidDistance_nonPeriodic())
+        lossFunc = spm.myLoss(ut.euclidDistance_nonPeriodic(), N_dim=N_dim, useScore=useScore)
     else:
-        lossFunc = spm.myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)))
+        lossFunc = spm.myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)), N_dim=N_dim, useScore=useScore)
         
     
     
