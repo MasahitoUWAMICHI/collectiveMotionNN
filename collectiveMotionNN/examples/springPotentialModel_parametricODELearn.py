@@ -326,6 +326,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
+            print(graph)
             mw.begin()
             graph_batchsize = len(graph.batch_num_nodes())
             
