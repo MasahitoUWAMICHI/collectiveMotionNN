@@ -407,7 +407,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             valid_xyloss_total = valid_xyloss_total / data_count
             valid_vloss_total = valid_vloss_total / data_count
             valid_scoreloss_total = valid_scoreloss_total / data_count
-            valid_loss_history[-1] = [valid_xyloss.item(), valid_vloss.item(), valid_scoreloss.item()]
+            valid_loss_history[-1] = [valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item()]
             
             if valid_loss < best_valid_loss:
                 SP_SDEwrapper.deleteGraph()
