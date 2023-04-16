@@ -86,6 +86,7 @@ def main_parser():
     parser.add_argument('--save_learned_model', type=str)
     parser.add_argument('--save_loss_history', type=str)
     parser.add_argument('--save_validloss_history', type=str)
+    parser.add_argument('--save_params', type=str)    
     return parser
 
 def parser2main(args):
@@ -107,7 +108,8 @@ def parser2main(args):
          thetaLoss_weight=args.thetaLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
          save_learned_model=args.save_learned_model, 
-         save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history)
+         save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history,
+         save_params=args.save_params)
     
 def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
          N_particles=None, N_batch=None, 
@@ -127,7 +129,8 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
          thetaLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
          save_learned_model=None, 
-         save_loss_history=None, save_validloss_history=None):
+         save_loss_history=None, save_validloss_history=None,
+         save_params=None):
 
     v0 = ut.variableInitializer(v0, 0.03)
     w0 = ut.variableInitializer(w0, 1.0)
@@ -195,7 +198,12 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
     save_learned_model = ut.variableInitializer(save_learned_model, 'Vicsek_nonParametricTorque_learned_model.pt')
     save_loss_history = ut.variableInitializer(save_loss_history, 'Vicsek_nonParametricTorque_loss_history.pt')
     save_validloss_history = ut.variableInitializer(save_validloss_history, 'Vicsek_nonParametricTorque_validloss_history.pt')
+    save_params = ut.variableInitializer(save_validloss_history, 'Vicsek_nonParametricTorque_parameters.npy')
+
     
+    args_of_main = ut.getArgs()
+    print(args_of_main)
+    np.save(save_params, args_of_main)    
   
     
     Vicsek_Module = dvm.interactionModule(v0, w0, sigma, d).to(device)
@@ -430,9 +438,9 @@ def main(v0=None, w0=None, sigma=None, d=None, r0=None, L=None,
                     Vicsek_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         
-    torch.save(torch.tensor(loss_history), save_loss_history)
+            torch.save(torch.tensor(loss_history), save_loss_history)
 
-    torch.save(torch.tensor(valid_loss_history), save_validloss_history)
+            torch.save(torch.tensor(valid_loss_history), save_validloss_history)
     
     
     
