@@ -80,7 +80,7 @@ def main_parser():
     
     parser.add_argument('--ratio_valid', type=float)
     parser.add_argument('--ratio_test', type=float)
-    parser.add_argument('--split_seed', type=int)
+    parser.add_argument('--split_seed_val', type=int)
     
     parser.add_argument('--lr', type=float)
     parser.add_argument('--lr_hyperSGD', type=float)
@@ -109,7 +109,7 @@ def parser2main(args):
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, 
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
-         split_seed=args.split_seed,
+         split_seed_val=args.split_seed,
          lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
@@ -130,7 +130,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          method_ODE=None, 
          N_epoch=None, N_train_batch=None, 
          ratio_valid=None, ratio_test=None,
-         split_seed=None,
+         split_seed_val=None,
          lr=None, lr_hyperSGD=None, 
          vLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
@@ -193,10 +193,10 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     ratio_valid = ut.variableInitializer(ratio_valid, 1.0 / N_batch)
     ratio_test = ut.variableInitializer(ratio_test, 0.0)
 
-    if split_seed is None:
+    if split_seed_val is None:
         split_seed = torch.Generator()
     else:
-        split_seed = torch.Generator().manual_seed(split_seed)
+        split_seed = torch.Generator().manual_seed(split_seed_val)
     
     lr = ut.variableInitializer(lr, 1e-3)
     lr_hyperSGD = ut.variableInitializer(lr_hyperSGD, 1e-3)
