@@ -109,7 +109,7 @@ def parser2main(args):
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, 
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
-         split_seed_val=args.split_seed,
+         split_seed_val=args.split_seed_val,
          lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
