@@ -441,9 +441,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
         
-        torch.save(torch.tensor(loss_history), save_loss_history)
+            torch.save(torch.tensor(loss_history), save_loss_history)
 
-        torch.save(torch.tensor(valid_loss_history), save_validloss_history)
+            torch.save(torch.tensor(valid_loss_history), save_validloss_history)
     
     
     
