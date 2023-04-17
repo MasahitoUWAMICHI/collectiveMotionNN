@@ -61,18 +61,18 @@ class distance2edge_batched(nn.Module):
     
         
 class distanceSigmoid(nn.Module):
-    def __init__(self, r_scale, selfloop, batched):
+    def __init__(self, r_scale, selfloop, multiBatch):
         super().__init__()
         
         self.r_scale = r_scale
         
         self.def_selfloop_batch(selfloop)
         
-    def def_selfloop_batch(self, selfloop=None, batched=None):
+    def def_selfloop_batch(self, selfloop=None, multiBatch=None):
         if not(selfloop is None):
             self.selfloop = selfloop
-        if not(batched is None):
-            self.batched = batched
+        if not(multiBatch is None):
+            self.multiBatch = multiBatch
         self.def_triu()
         
     def def_triu(self):
@@ -80,7 +80,7 @@ class distanceSigmoid(nn.Module):
             self.triu = lambda x: torch.triu(x)
         else:
             self.triu = lambda x: torch.triu(x, diagonal=1)
-        if self.batched:
+        if self.multiBatch:
             self.forward = self.forward_batched
         else:
             self.forward = self.forward_nonBatched
@@ -97,28 +97,28 @@ class distanceSigmoid(nn.Module):
     
         
 class radiusgraphEdge(wm.edgeScoreCalculationModule):
-    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, r1=None, scoreCalcModule=None, eps=None, batchedCalc=False):
-        super().__init__(returnScore)
+    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, r1=None, scoreCalcModule=None, eps=None, multiBatch=False):
+        super().__init__(returnScore, multiBatch)
            
         self.r0 = r0
 
         self.periodicLength = periodicLength
         
         self.selfLoop = selfLoop
-        
-        self.batchedCalc = batchedCalc
-        
+
         self.edgeVariable = ut.variableInitializer(variableName, 'x')
 
         r1 = ut.variableInitializer(r1, r0/10.0)
         
-        self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(r1, self.selfLoop, self.batchedCalc))
+        self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(r1, self.selfLoop, self.multiBatch))
         
         self.eps = ut.variableInitializer(eps, 1e-5)
         
         self.def_dr()
         
         self.def_distance2edge()
+        
+        self.reset_multiBatch()
         
         
     def def_nonPeriodic(self):
@@ -135,6 +135,24 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
             self.def_periodic()
         
 
+    def norm_dr(self, dr):
+        flg_nz = torch.logical_or(dr > self.eps, dr < -self.eps)
+        #for i in range(dr.shape[-1]):
+        #    dr[:,:,i].fill_diagonal_(self.eps)
+        dr = torch.norm(torch.where(flg_nz, dr, self.eps), dim=-1, keepdim=False)
+        #dr.fill_diagonal_(0.0)
+        return dr        
+    
+    def calc_abs_distance_nonBatch(self, g, args=None):
+        dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
+        return self.norm_dr(dr)
+
+    def calc_abs_distance_batch(self, bg, args=None):
+        edgeCands, _ = self.edgeCands(bg)
+        dr = self.distanceCalc(g.ndata[self.edgeVariable][edgeCands[:,0]], g.ndata[self.edgeVariable][edgeCands[:,1]])
+        return self.norm_dr(dr)
+    
+    
     def def_noSelfLoop(self):
         self.distance2edge = distance2edge_noSelfLoop(self.r0)
         self.edgeCands = lambda bg: gu.sameBatchEdgeCandidateNodePairs_selfloop(bg)
@@ -154,26 +172,14 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
             self.def_selfLoop()
         else:
             self.def_noSelfLoop()
-        if self.batchedCalc:
+        if self.multiBatch:
             self.def_batched()
-            
     
-    def norm_dr(self, dr):
-        flg_nz = torch.logical_or(dr > self.eps, dr < -self.eps)
-        #for i in range(dr.shape[-1]):
-        #    dr[:,:,i].fill_diagonal_(self.eps)
-        dr = torch.norm(torch.where(flg_nz, dr, self.eps), dim=-1, keepdim=False)
-        #dr.fill_diagonal_(0.0)
-        return dr        
     
-    def calc_abs_distance_nonBatch(self, g, args=None):
-        dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
-        return self.norm_dr(dr)
-
-    def calc_abs_distance_batch(self, bg, args=None):
-        edgeCands, _ = self.edgeCands(bg)
-        dr = self.distanceCalc(g.ndata[self.edgeVariable][edgeCands[:,0]], g.ndata[self.edgeVariable][edgeCands[:,1]])
-        return self.norm_dr(dr)
+    def reset_multiBatch(self):
+        if 'selfLoop' in vars(self).keys():
+            self.def_distance2edge()
+        
     
     def forward_noScore(self, g, args=None):
         dr = self.calc_abs_distance(g, args)
