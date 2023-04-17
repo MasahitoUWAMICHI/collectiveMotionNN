@@ -128,7 +128,6 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         self.distanceCalc = ut.euclidDistance_periodic(self.periodicLength)
         
     def def_dr(self):
-        if 
         if self.periodicLength is None:
             self.def_nonPeriodic()
         else:
