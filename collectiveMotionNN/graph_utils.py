@@ -47,8 +47,8 @@ def update_adjacency(g, edgeConditionModule, args=None):
     update_edges(g, edges)
     return g
 
-def update_adjacency_batch(bg, edgeConditionModule, args=None):
-    gs = list(map(lambda g: update_adjacency(g, edgeConditionModule, args), dgl.unbatch(bg)))
+def update_adjacency_batch(bg, edgeConditionModule, unbatchFunc, args=None):
+    gs = list(map(lambda g: update_adjacency(g, edgeConditionModule, args), unbatchFunc(bg)))
     bg = dgl.batch(gs)
     return bg, None
 
@@ -58,12 +58,16 @@ def update_adjacency_returnScore(g, edgeConditionModule, args=None):
     update_edges(g, edges)
     return g, score
 
-def update_adjacency_returnScore_batch(bg, edgeConditionModule, args=None):
-    gscore = list(map(lambda g: list(update_adjacency_returnScore(g, edgeConditionModule, args)), dgl.unbatch(bg))) # list of lists [graph, score]
+def update_adjacency_returnScore_batch(bg, edgeConditionModule, unbatchFunc, args=None):
+    gscore = list(map(lambda g: list(update_adjacency_returnScore(g, edgeConditionModule, args)), unbatchFunc(bg))) # list of lists [graph, score]
     gs, scores = list(zip(*gscore))
     bg = dgl.batch(gs)
     return bg, scores
 
+def make_multiBatches(bg, N_multiBatch)
+    gs = dgl.unbatch(bg)
+    multiBatch_cuts = np.append(np.arange(0, len(gs), N_multiBatch), len(gs))
+    return list(map(lambda x: dgl.batch(gs[x[0]:x[1]]), zip(multiBatch_cuts[:-1], multiBatch_cuts[1:])))
 
 def judge_skipUpdate(g, dynamicVariable, ndataInOutModule, rtol=1e-05, atol=1e-08, equal_nan=True):
     return torch.allclose(ndataInOutModule.output(g), dynamicVariable, rtol, atol, equal_nan)
@@ -74,7 +78,7 @@ def edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, updateFunc, args=
 
     
 class edgeRefresh(nn.Module):
-    def __init__(self, edgeConditionModule, returnScore=None, scorePostProcessModule=None, scoreIntegrationModule=None, forceUpdate=None, rtol=None, atol=None, equal_nan=None):
+    def __init__(self, edgeConditionModule, returnScore=None, scorePostProcessModule=None, scoreIntegrationModule=None, forceUpdate=None, N_multiBatch=None, rtol=None, atol=None, equal_nan=None):
         super().__init__()
 
         self.edgeConditionModule = edgeConditionModule
@@ -83,6 +87,7 @@ class edgeRefresh(nn.Module):
         self.atol = ut.variableInitializer(atol, 1e-08)
         self.equal_nan = ut.variableInitializer(equal_nan, True)
         
+        self.N_multiBatch = ut.variableInitializer(N_multiBatch, 1)
         self.returnScore = ut.variableInitializer(returnScore, False)
         self.forceUpdate = ut.variableInitializer(forceUpdate, False)
         self.scorePostProcessModule = scorePostProcessModule
@@ -93,14 +98,37 @@ class edgeRefresh(nn.Module):
         self.def_forward()
         
         self.resetScores()
-        
 
+        
+    def unbatch_single(self, bg):
+        return dgl.unbatch(bg)
+    
+    def unbatch_multi(self, bg):
+        return make_multiBatches(bg, self.N_multiBatch)
+    
+    def def_unbatch(self):
+        if self.N_multiBatch > 1:
+            self.unbatch = self.unbatch_multi
+        else:
+            self.unbatch = self.unbatch_single
+            
+    def reset_N_multiBatch(self, N_multiBatch):
+        self.N_multiBatch = N_multiBatch
+        self.def_unbatch()
+        self.edgeConditionModule.set_N_multiBatch(N_multiBatch > 1)
+        
+    def update_adjacency_batch(self, gr, args=None):
+        return update_adjacency_batch(gr, self.edgeConditionModule, self.unbatch, args)
+
+    def update_adjacency_returnScore_batch(self, gr, args=None):
+        return update_adjacency_returnScore_batch(gr, self.edgeConditionModule, self.unbatch, args)
+    
     def def_noScore(self):
-        self.update_adjacency = lambda gr, args=None: update_adjacency_batch(gr, self.edgeConditionModule, args)
+        self.update_adjacency = self.update_adjacency_batch
         self.postProcess = lambda x, flg=None: x[0]
         
     def def_score(self):
-        self.update_adjacency = lambda gr, args=None: update_adjacency_returnScore_batch(gr, self.edgeConditionModule, args)
+        self.update_adjacency = self.update_adjacency_returnScore_batch
         self.postProcess = self.postProcess_score
         
     def def_graph_updates(self):
@@ -113,6 +141,7 @@ class edgeRefresh(nn.Module):
         self.returnScore = returnScore
         self.def_graph_updates()
         self.edgeConditionModule.set_returnScore(returnScore)
+        
     
     def def_forward(self):
         if self.forceUpdate:
