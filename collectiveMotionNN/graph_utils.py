@@ -5,6 +5,19 @@ import dgl
 
 import collectiveMotionNN.utils as ut
 
+def nodeIDrange_eachBatch(bg):
+    eachBatchNodeID_end = torch.cumsum(bg.batch_num_nodes(), 0)
+    return torch.stack((eachBatchNodeID_end - bg.batch_num_nodes(), eachBatchNodeID_end), dim=1)
+
+def IDrange2Matrix(IDrange):
+    x = torch.arange(IDrange[0], IDrange[1])
+    return torch.cartesian_prod(x, x)
+
+def sameBatchEdgeCandidateNodePairs(bg):
+    return torch.cat(list(map(IDrange2Matrix, nodeIDrange_eachBatch(bg))), 0)
+
+
+
 def update_edges(g, edges):
     g.remove_edges(g.edge_ids(g.edges()[0], g.edges()[1]))
     g.add_edges(edges[0], edges[1])
