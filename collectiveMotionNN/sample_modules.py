@@ -54,7 +54,8 @@ class distance2edge_batched(nn.Module):
         super().__init__()
         self.r0 = r0
         
-    def forward(self, distanceVector, edgeCands):
+    def forward(self, input):
+        distanceVector, edgeCands = input
         boolVector = radiusGraphEdge_batched(distanceVector, self.r0)
         return bool2edge_batched(boolVector, edgeCands)
 
@@ -145,29 +146,37 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
     
     def calc_abs_distance_nonBatch(self, g, args=None):
         dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
-        return self.norm_dr(dr)
+        return self.norm_dr(dr), None
 
     def calc_abs_distance_batch(self, bg, args=None):
-        edgeCands, _ = self.edgeCands(bg)
+        edgeCands, _ = self.edgeCandsCalc(bg)
         dr = self.distanceCalc(bg.ndata[self.edgeVariable][edgeCands[:,0]], bg.ndata[self.edgeVariable][edgeCands[:,1]])
-        return self.norm_dr(dr)
+        return self.norm_dr(dr), edgeCands
     
+    def pass_dr_nonBatch(self, dr):
+        return dr[0]
+    
+    def pass_dr_batch(self, dr):
+        return dr
     
     def def_noSelfLoop(self):
-        self.edgeCands = lambda bg: gu.sameBatchEdgeCandidateNodePairs_selfloop(bg)
+        self.edgeCandsCalc = lambda bg: gu.sameBatchEdgeCandidateNodePairs_selfloop(bg)
         if not self.multiBatch:
             self.distance2edge = distance2edge_noSelfLoop(self.r0)
             self.calc_abs_distance = self.calc_abs_distance_nonBatch
+            self.pass_dr = self.pass_dr_nonBatch
         
     def def_selfLoop(self):
-        self.edgeCands = lambda bg: gu.sameBatchEdgeCandidateNodePairs_noSelfloop(bg)
+        self.edgeCandsCalc = lambda bg: gu.sameBatchEdgeCandidateNodePairs_noSelfloop(bg)
         if not self.multiBatch:
             self.distance2edge = distance2edge_selfLoop(self.r0)
             self.calc_abs_distance = self.calc_abs_distance_nonBatch
+            self.pass_dr = self.pass_dr_nonBatch
         
     def def_batched(self):
         self.distance2edge = distance2edge_batched(self.r0)
         self.calc_abs_distance = self.calc_abs_distance_batch
+        self.pass_dr = self.pass_dr_batch
         
     def def_distance2edge(self):
         if self.selfLoop:
@@ -184,12 +193,12 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         
     
     def forward_noScore(self, g, args=None):
-        dr = self.calc_abs_distance(g, args)
-        return self.distance2edge(dr)
+        out = self.calc_abs_distance(g, args)
+        return self.distance2edge(self.pass_dr(out))
 
     def forward_score(self, g, args=None):
-        dr = self.calc_abs_distance(g, args)
-        return self.distance2edge(dr), self.scoreCalcModule(self.r0 - dr)
+        out = self.calc_abs_distance(g, args)
+        return self.distance2edge(self.pass_dr(out)), self.scoreCalcModule(self.r0 - out[0])
     
     
     
