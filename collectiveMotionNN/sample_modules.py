@@ -198,7 +198,6 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
 
     def forward_score(self, g, args=None):
         out = self.calc_abs_distance(g, args)
-        print(out)
         return self.distance2edge(self.pass_dr(out)), self.scoreCalcModule(self.r0 - out[0])
     
     
