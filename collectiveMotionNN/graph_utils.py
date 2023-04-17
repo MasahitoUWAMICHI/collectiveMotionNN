@@ -20,12 +20,12 @@ def isSelfloop(matrixID):
 def removeSelfloop(matrixID, flgSelfloop):
     return matrixID[torch.logical_not(flgSelfloop)]
 
-def matrixID_figSelfloop(IDrange):
+def matrixID_flgSelfloop(IDrange):
     xx = IDrange2MatrixID(IDrange)
     return xx, isSelfloop(xx)
 
 def sameBatchEdgeCandidateNodePairs_selfloop(bg):
-    edgeCandidatesAndSelfloops = list(map(matrixID_noSelfloop, nodeIDrange_eachBatch(bg)))
+    edgeCandidatesAndSelfloops = list(map(matrixID_flgSelfloop, nodeIDrange_eachBatch(bg)))
     edgeCandidates, selfloops = list(zip(*edgeCandidatesAndSelfloops))
     return torch.cat(edgeCandidates, dim=0), torch.cat(selfloops, dim=0)
 
