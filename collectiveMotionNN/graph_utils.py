@@ -7,20 +7,32 @@ import collectiveMotionNN.utils as ut
 
 def nodeIDrange_eachBatch(bg):
     eachBatchNodeID_end = torch.cumsum(bg.batch_num_nodes(), 0)
-    return torch.stack((eachBatchNodeID_end - bg.batch_num_nodes(), eachBatchNodeID_end), dim=1)
+    edgeCandsID_first = torch.cumsum(bg.batch_num_nodes()**2, 0) - bg.batch_num_nodes()**2
+    return torch.stack((eachBatchNodeID_end - bg.batch_num_nodes(), eachBatchNodeID_end, edgeCandsID_first), dim=1)
 
 def IDrange2MatrixID(IDrange):
     x = torch.arange(IDrange[0], IDrange[1])
     return torch.cartesian_prod(x, x)
 
-def sameBatchEdgeCandidateNodePairs(bg):
-    return torch.cat(list(map(IDrange2MatrixID, nodeIDrange_eachBatch(bg))), 0)
+def isSelfloop(matrixID):
+    return matrixID[:,0]==matrixID[:,1]
 
-def removeSelfLoop(matrixID):
-    return matrixID[torch.logical_not(matrixID[:,0]==matrixID[:,1])]
+def removeSelfloop(matrixID, flgSelfloop):
+    return matrixID[torch.logical_not(flgSelfloop)]
+
+def matrixID_figSelfloop(IDrange):
+    xx = IDrange2MatrixID(IDrange)
+    return xx, isSelfloop(xx)
+
+def sameBatchEdgeCandidateNodePairs_selfloop(bg):
+    edgeCandidatesAndSelfloops = list(map(matrixID_noSelfloop, nodeIDrange_eachBatch(bg)))
+    edgeCandidates, selfloops = list(zip(*edgeCandidatesAndSelfloops))
+    return torch.cat(edgeCandidates, dim=0), torch.cat(selfloops, dim=0)
 
 def sameBatchEdgeCandidateNodePairs_noSelfloop(bg):
-    return torch.cat(list(map(lambda x: removeSelfLoop(IDrange2MatrixID(x)), eachBatchNodeID)), 0)
+    edge, selfloops = sameBatchEdgeCandidateNodePairs_selfloop(bg)
+    return removeSelfloop(edge, selfloops), torch.tensor([])
+
 
 
 def update_edges(g, edges):
