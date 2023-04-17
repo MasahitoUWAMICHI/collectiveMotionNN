@@ -38,7 +38,7 @@ def sameBatchEdgeCandidateNodePairs_noSelfloop(bg):
 
 def update_edges(g, edges):
     g.remove_edges(g.edge_ids(g.edges()[0], g.edges()[1]))
-    g.add_edges(edges[0], edges[1])
+    g.add_edges(edges[0].to(g.device), edges[1].to(g.device))
     return g
 
 
