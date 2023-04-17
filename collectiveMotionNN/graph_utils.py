@@ -64,7 +64,7 @@ def update_adjacency_returnScore_batch(bg, edgeConditionModule, unbatchFunc, arg
     bg = dgl.batch(gs)
     return bg, scores
 
-def make_multiBatches(bg, N_multiBatch)
+def make_multiBatches(bg, N_multiBatch):
     gs = dgl.unbatch(bg)
     multiBatch_cuts = np.append(np.arange(0, len(gs), N_multiBatch), len(gs))
     return list(map(lambda x: dgl.batch(gs[x[0]:x[1]]), zip(multiBatch_cuts[:-1], multiBatch_cuts[1:])))
