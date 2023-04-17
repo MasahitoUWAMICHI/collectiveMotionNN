@@ -4,6 +4,7 @@ from torch import nn
 
 import collectiveMotionNN.utils as ut
 import collectiveMotionNN.wrapper_modules as wm
+import collectiveMotionNN.graph_utils as gu
 
 
 
@@ -41,6 +42,23 @@ class distance2edge_noSelfLoop(nn.Module):
         return bool2edge(boolMatrix)
 
     
+    
+def bool2edge_batched(boolVector, edgeCands):
+    return edgeCands[boolVector]
+
+def radiusGraphEdge_batched(distanceVector, r0):
+    return distanceVector < r0
+
+class distance2edge_batched(nn.Module):
+    def __init__(self, r0):
+        super().__init__()
+        self.r0 = r0
+        
+    def forward(self, distanceVector, edgeCands):
+        boolVector = radiusGraphEdge_batched(distanceVector, self.r0)
+        return bool2edge_batched(boolVector, edgeCands)
+
+    
         
 class distanceSigmoid(nn.Module):
     def __init__(self, r_scale, selfloop):
@@ -65,7 +83,7 @@ class distanceSigmoid(nn.Module):
         return torch.stack((self.triu(torch.sigmoid(dr0)).reshape(-1), dr0.reshape(-1)), dim=1) # probability score and logit 
         
 class radiusgraphEdge(wm.edgeScoreCalculationModule):
-    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, r1=None, scoreCalcModule=None, eps=None):
+    def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, r1=None, scoreCalcModule=None, eps=None, batchedCalc=False):
         super().__init__(returnScore)
            
         self.r0 = r0
@@ -73,6 +91,8 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         self.periodicLength = periodicLength
         
         self.selfLoop = selfLoop
+        
+        self.batchedCalc = batchedCalc
         
         self.edgeVariable = ut.variableInitializer(variableName, 'x')
 
@@ -94,6 +114,7 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         self.distanceCalc = ut.euclidDistance_periodic(self.periodicLength)
         
     def def_dr(self):
+        if 
         if self.periodicLength is None:
             self.def_nonPeriodic()
         else:
@@ -102,25 +123,44 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
 
     def def_noSelfLoop(self):
         self.distance2edge = distance2edge_noSelfLoop(self.r0)
+        self.edgeCands = lambda bg: gu.sameBatchEdgeCandidateNodePairs_selfloop(bg)
+        self.calc_abs_distance = self.calc_abs_distance_noBatch
         
     def def_selfLoop(self):
         self.distance2edge = distance2edge_selfLoop(self.r0)
+        self.edgeCands = lambda bg: gu.sameBatchEdgeCandidateNodePairs_noSelfloop(bg)
+        self.calc_abs_distance = self.calc_abs_distance_noBatch
+        
+    def def_batched(self):
+        self.distance2edge = distance2edge_batched(self.r0)
+        self.calc_abs_distance = self.calc_abs_distance_batch
         
     def def_distance2edge(self):
         if self.selfLoop:
             self.def_selfLoop()
         else:
             self.def_noSelfLoop()
+        if self.batchedCalc:
+            self.def_batched()
+            
     
+    def norm_dr(self, dr):
+        flg_nz = torch.logical_or(dr > self.eps, dr < -self.eps)
+        #for i in range(dr.shape[-1]):
+        #    dr[:,:,i].fill_diagonal_(self.eps)
+        dr = torch.norm(torch.where(flg_nz, dr, self.eps), dim=-1, keepdim=False)
+        #dr.fill_diagonal_(0.0)
+        return dr        
     
-    def calc_abs_distance(self, g, args=None):
+    def calc_abs_distance_nonBatch(self, g, args=None):
         dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
-        for i in range(dr.shape[-1]):
-            dr[:,:,i].fill_diagonal_(self.eps)
-        dr = torch.norm(dr, dim=-1, keepdim=False)
-        dr.fill_diagonal_(0.0)
-        return dr
-        
+        return self.norm_dr(dr)
+
+    def calc_abs_distance_batch(self, bg, args=None):
+        edgeCands, _ = self.edgeCands(bg)
+        dr = self.distanceCalc(g.ndata[self.edgeVariable][edgeCands[:,0]], g.ndata[self.edgeVariable][edgeCands[:,1]])
+        return self.norm_dr(dr)
+    
     def forward_noScore(self, g, args=None):
         dr = self.calc_abs_distance(g, args)
         return self.distance2edge(dr)
