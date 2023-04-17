@@ -59,6 +59,7 @@ def update_adjacency_returnScore(g, edgeConditionModule, args=None):
     return g, score
 
 def update_adjacency_returnScore_batch(bg, edgeConditionModule, unbatchFunc, args=None):
+    print(unbatchFunc)
     gscore = list(map(lambda g: list(update_adjacency_returnScore(g, edgeConditionModule, args)), unbatchFunc(bg))) # list of lists [graph, score]
     gs, scores = list(zip(*gscore))
     bg = dgl.batch(gs)
