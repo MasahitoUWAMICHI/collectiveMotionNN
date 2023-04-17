@@ -115,7 +115,7 @@ class edgeRefresh(nn.Module):
     def reset_N_multiBatch(self, N_multiBatch):
         self.N_multiBatch = N_multiBatch
         self.def_unbatch()
-        self.edgeConditionModule.set_N_multiBatch(N_multiBatch > 1)
+        self.edgeConditionModule.set_multiBatch(N_multiBatch > 1)
         
     def update_adjacency_batch(self, gr, args=None):
         return update_adjacency_batch(gr, self.edgeConditionModule, self.unbatch, args)
