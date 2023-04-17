@@ -9,13 +9,18 @@ def nodeIDrange_eachBatch(bg):
     eachBatchNodeID_end = torch.cumsum(bg.batch_num_nodes(), 0)
     return torch.stack((eachBatchNodeID_end - bg.batch_num_nodes(), eachBatchNodeID_end), dim=1)
 
-def IDrange2Matrix(IDrange):
+def IDrange2MatrixID(IDrange):
     x = torch.arange(IDrange[0], IDrange[1])
     return torch.cartesian_prod(x, x)
 
 def sameBatchEdgeCandidateNodePairs(bg):
-    return torch.cat(list(map(IDrange2Matrix, nodeIDrange_eachBatch(bg))), 0)
+    return torch.cat(list(map(IDrange2MatrixID, nodeIDrange_eachBatch(bg))), 0)
 
+def removeSelfLoop(matrixID):
+    return matrixID[torch.logical_not(matrixID[:,0]==matrixID[:,1])]
+
+def sameBatchEdgeCandidateNodePairs_noSelfloop(bg):
+    return torch.cat(list(map(lambda x: removeSelfLoop(IDrange2MatrixID(x)), eachBatchNodeID)), 0)
 
 
 def update_edges(g, edges):
