@@ -120,7 +120,7 @@ class edgeScoreCalculationModule(nn.Module):
             self.forward = self.forward_noScore
             
     def reset_multiBatch(self):
-        return None
+        pass
             
     def set_multiBatch(self, multiBatch):
         self.multiBatch = multiBatch
