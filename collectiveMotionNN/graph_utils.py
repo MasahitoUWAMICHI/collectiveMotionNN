@@ -6,8 +6,6 @@ import dgl
 import collectiveMotionNN.utils as ut
 
 def nodeIDrange_eachBatch(bg):
-    print(bg.batch_num_nodes())
-    print(bg.batch_num_edges())
     eachBatchNodeID_end = torch.cumsum(bg.batch_num_nodes(), 0)
     edgeCandsID_first = torch.cumsum(bg.batch_num_nodes()**2, 0) - bg.batch_num_nodes()**2
     return torch.stack((eachBatchNodeID_end - bg.batch_num_nodes(), eachBatchNodeID_end, edgeCandsID_first), dim=1)
@@ -39,10 +37,14 @@ def sameBatchEdgeCandidateNodePairs_noSelfloop(bg):
 
 
 def update_edges(g, edges):
+    print(g.batch_num_nodes())
+    print(g.batch_num_edges())
     bnn = g.batch_num_nodes().clone()
     g.remove_edges(g.edge_ids(g.edges()[0], g.edges()[1]))
     g.add_edges(edges[0].to(g.device), edges[1].to(g.device))
     g.set_batch_num_nodes(bnn)
+    print(g.batch_num_nodes())
+    print(g.batch_num_edges())
     return g
 
 
