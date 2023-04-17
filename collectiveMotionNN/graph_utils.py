@@ -42,9 +42,11 @@ def update_edges(g, edges):
     bnn = g.batch_num_nodes().clone()
     g.remove_edges(g.edge_ids(g.edges()[0], g.edges()[1]))
     g.add_edges(edges[0].to(g.device), edges[1].to(g.device))
-    g.set_batch_num_nodes(bnn)
     print('node2', g.batch_num_nodes())
     print('edge2', g.batch_num_edges())
+    g.set_batch_num_nodes(bnn)
+    print('node3', g.batch_num_nodes())
+    print('edge3', g.batch_num_edges())
     return g
 
 
