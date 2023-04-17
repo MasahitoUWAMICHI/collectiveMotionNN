@@ -93,6 +93,8 @@ class edgeRefresh(nn.Module):
         self.scorePostProcessModule = scorePostProcessModule
         self.scoreIntegrationModule = scoreIntegrationModule
         
+        self.def_unbatch()
+        
         self.def_graph_updates()
         
         self.def_forward()
