@@ -37,14 +37,14 @@ def sameBatchEdgeCandidateNodePairs_noSelfloop(bg):
 
 
 def update_edges(g, edges):
-    print(g.batch_num_nodes())
-    print(g.batch_num_edges())
+    print('node1', g.batch_num_nodes())
+    print('edge1', g.batch_num_edges())
     bnn = g.batch_num_nodes().clone()
     g.remove_edges(g.edge_ids(g.edges()[0], g.edges()[1]))
     g.add_edges(edges[0].to(g.device), edges[1].to(g.device))
     g.set_batch_num_nodes(bnn)
-    print(g.batch_num_nodes())
-    print(g.batch_num_edges())
+    print('node2', g.batch_num_nodes())
+    print('edge2', g.batch_num_edges())
     return g
 
 
