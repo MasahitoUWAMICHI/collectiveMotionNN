@@ -31,7 +31,7 @@ def sameBatchEdgeCandidateNodePairs_selfloop(bg):
 
 def sameBatchEdgeCandidateNodePairs_noSelfloop(bg):
     edge, selfloops = sameBatchEdgeCandidateNodePairs_selfloop(bg)
-    return removeSelfloop(edge, selfloops), torch.tensor([])
+    return removeSelfloop(edge, selfloops), torch.full_like(selfloops, False)
 
 
 
