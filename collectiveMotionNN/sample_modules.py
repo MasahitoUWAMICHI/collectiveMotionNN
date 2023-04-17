@@ -65,6 +65,7 @@ class distanceSigmoid(nn.Module):
         super().__init__()
         
         self.r_scale = r_scale
+        self.multiBatch = multiBatch
         
         self.def_selfloop_batch(selfloop)
         
