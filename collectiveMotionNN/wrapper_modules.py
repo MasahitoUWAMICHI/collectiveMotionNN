@@ -101,10 +101,17 @@ class dynamicGNDEmodule(nn.Module):
     
     
 class edgeScoreCalculationModule(nn.Module):
-    def __init__(self, returnScore=False):
+    def __init__(self, returnScore=False, multiBatch=None):
         super().__init__()
         self.set_returnScore(returnScore)
+        self.set_multiBatch(multiBatch)
         
+    def forward_score(self, x):
+        return None
+        
+    def forward_noScore(self, x):
+        return None
+    
     def set_returnScore(self, returnScore):
         self.returnScore = returnScore
         if self.returnScore:
@@ -112,10 +119,12 @@ class edgeScoreCalculationModule(nn.Module):
         else:
             self.forward = self.forward_noScore
             
-    def forward_score(self, x):
+    def reset_multiBatch(self):
         return None
-        
-    def forward_noScore(self, x):
-        return None
+            
+    def set_multiBatch(self, multiBatch):
+        self.multiBatch = multiBatch
+        self.reset_multiBatch()            
+            
    
 
