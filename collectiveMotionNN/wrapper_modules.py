@@ -104,7 +104,7 @@ class edgeScoreCalculationModule(nn.Module):
     def __init__(self, returnScore=False, multiBatch=None):
         super().__init__()
         self.set_returnScore(returnScore)
-        self.set_multiBatch(multiBatch)
+        self.set_multiBatch(ut.variableInitializer(multiBatch, 1))
         
     def forward_score(self, x):
         return None
