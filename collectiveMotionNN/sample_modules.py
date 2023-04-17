@@ -149,7 +149,7 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
 
     def calc_abs_distance_batch(self, bg, args=None):
         edgeCands, _ = self.edgeCands(bg)
-        dr = self.distanceCalc(g.ndata[self.edgeVariable][edgeCands[:,0]], g.ndata[self.edgeVariable][edgeCands[:,1]])
+        dr = self.distanceCalc(bg.ndata[self.edgeVariable][edgeCands[:,0]], bg.ndata[self.edgeVariable][edgeCands[:,1]])
         return self.norm_dr(dr)
     
     
