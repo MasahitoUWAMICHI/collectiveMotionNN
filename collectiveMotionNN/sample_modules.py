@@ -61,15 +61,18 @@ class distance2edge_batched(nn.Module):
     
         
 class distanceSigmoid(nn.Module):
-    def __init__(self, r_scale, selfloop):
+    def __init__(self, r_scale, selfloop, batched):
         super().__init__()
         
         self.r_scale = r_scale
         
-        self.def_selfloop(selfloop)
+        self.def_selfloop_batch(selfloop)
         
-    def def_selfloop(self, selfloop):
-        self.selfloop = selfloop
+    def def_selfloop_batch(self, selfloop=None, batched=None):
+        if not(selfloop is None):
+            self.selfloop = selfloop
+        if not(batched is None):
+            self.batched = batched
         self.def_triu()
         
     def def_triu(self):
@@ -77,10 +80,21 @@ class distanceSigmoid(nn.Module):
             self.triu = lambda x: torch.triu(x)
         else:
             self.triu = lambda x: torch.triu(x, diagonal=1)
+        if self.batched:
+            self.forward = self.forward_batched
+        else:
+            self.forward = self.forward_nonBatched
+
         
-    def forward(self, dr):
+    def forward_nonBatched(self, dr):
         dr0 = self.triu(dr/self.r_scale)
         return torch.stack((self.triu(torch.sigmoid(dr0)).reshape(-1), dr0.reshape(-1)), dim=1) # probability score and logit 
+    
+    def forward_batched(self, dr):
+        dr0 = dr / self.r_scale
+        return torch.stack((torch.sigmoid(dr0).reshape(-1), dr0.reshape(-1)), dim=1) # probability score and logit 
+    
+    
         
 class radiusgraphEdge(wm.edgeScoreCalculationModule):
     def __init__(self, r0, periodicLength=None, selfLoop=False, variableName=None, returnScore=False, r1=None, scoreCalcModule=None, eps=None, batchedCalc=False):
@@ -98,7 +112,7 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
 
         r1 = ut.variableInitializer(r1, r0/10.0)
         
-        self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(r1, self.selfLoop))
+        self.scoreCalcModule = ut.variableInitializer(scoreCalcModule, distanceSigmoid(r1, self.selfLoop, self.batchedCalc))
         
         self.eps = ut.variableInitializer(eps, 1e-5)
         
