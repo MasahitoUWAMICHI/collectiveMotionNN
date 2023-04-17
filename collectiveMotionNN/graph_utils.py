@@ -67,7 +67,7 @@ def update_adjacency_returnScore_batch(bg, edgeConditionModule, unbatchFunc, arg
 def make_multiBatches(bg, N_multiBatch):
     gs = dgl.unbatch(bg)
     multiBatch_cuts = np.append(np.arange(0, len(gs), N_multiBatch), len(gs))
-    return list(map(lambda x: dgl.batch(gs[x[0]:x[1]]), zip(multiBatch_cuts[:-1], multiBatch_cuts[1:])))
+    return list(map(lambda x: dgl.batch(gs[x[0]:x[1]]).to(bg.device), zip(multiBatch_cuts[:-1], multiBatch_cuts[1:])))
 
 def judge_skipUpdate(g, dynamicVariable, ndataInOutModule, rtol=1e-05, atol=1e-08, equal_nan=True):
     return torch.allclose(ndataInOutModule.output(g), dynamicVariable, rtol, atol, equal_nan)
