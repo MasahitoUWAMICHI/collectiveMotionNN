@@ -73,7 +73,7 @@ class dynamicGSDEwrapper(dynamicGODEwrapper):
     
     
 class dynamicGNDEmodule(nn.Module):
-    def __init__(self, calc_module, edgeConditionModule, forceUpdate=None, rtol=None, atol=None, equal_nan=None, returnScore=None, scorePostProcessModule=None, scoreIntegrationModule=None):
+    def __init__(self, calc_module, edgeConditionModule, forceUpdate=None, rtol=None, atol=None, equal_nan=None, returnScore=None, scorePostProcessModule=None, scoreIntegrationModule=None, N_multiBatch=None):
         super().__init__()
         
         self.calc_module = calc_module
@@ -82,7 +82,7 @@ class dynamicGNDEmodule(nn.Module):
         
         self.forceUpdate = ut.variableInitializer(forceUpdate, False)
         
-        self.edgeRefresher = gu.edgeRefresh(edgeConditionModule, returnScore, scorePostProcessModule, scoreIntegrationModule, forceUpdate, rtol, atol, equal_nan)
+        self.edgeRefresher = gu.edgeRefresh(edgeConditionModule, returnScore, scorePostProcessModule, scoreIntegrationModule, forceUpdate, N_multiBatch, rtol, atol, equal_nan)
         
     def edgeInitialize(self, gr, args=None):
         return self.edgeRefresher.createEdge(gr, args)
