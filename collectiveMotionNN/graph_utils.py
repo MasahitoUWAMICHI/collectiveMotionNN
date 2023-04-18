@@ -34,16 +34,23 @@ def sameBatchEdgeCandidateNodePairs_noSelfloop(bg):
     return edge, torch.full([edge.shape[0]], False)
 
 
+def edge2batchNumEdges(edges, bnn):
+    nodeID_ends = torch.cumsum(bnn, 0)
+    edge_batchIDs = torch.count_nonzero(torch.unsqueeze(edges[0], 1) >= torch.unsqueeze(nodeID_ends, 0), dim=1)
+    return edge_batchIDs.bincount(minlength=len(bnn))
+
 
 def update_edges(g, edges):
     print('node1', g.batch_num_nodes())
     print('edge1', g.batch_num_edges())
     bnn = g.batch_num_nodes().clone()
+    bne = edge2batchNumEdges(edges, bnn)
     g.remove_edges(g.edge_ids(g.edges()[0], g.edges()[1]))
     g.add_edges(edges[0].to(g.device), edges[1].to(g.device))
     print('node2', g.batch_num_nodes())
     print('edge2', g.batch_num_edges())
     g.set_batch_num_nodes(bnn)
+    g.set_batch_num_edges(bne)
     print('node3', g.batch_num_nodes())
     print('edge3', g.batch_num_edges())
     return g
