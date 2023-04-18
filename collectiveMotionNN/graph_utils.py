@@ -207,6 +207,7 @@ class edgeRefresh(nn.Module):
 
     def forward_noForceUpdate(self, t, gr, dynamicVariable, ndataInOutModule, args=None):
         if judge_skipUpdate(self.graph, dynamicVariable, ndataInOutModule, self.rtol, self.atol, self.equal_nan):
+            print('skip', t)
             return gr
         else:
             gr = self.forward_forceUpdate(t, gr, dynamicVariable, ndataInOutModule, args)
