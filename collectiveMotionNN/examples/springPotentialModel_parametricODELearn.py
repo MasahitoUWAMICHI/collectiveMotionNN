@@ -447,8 +447,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()),
-                    run_time_history[-1])
+                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item(),
+                    run_time_history[-1]))
             else:
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f}'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
@@ -457,8 +457,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()),
-                    run_time_history[-1])
+                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item(),
+                    run_time_history[-1]))
         
             torch.save(torch.tensor(loss_history), save_loss_history)
 
