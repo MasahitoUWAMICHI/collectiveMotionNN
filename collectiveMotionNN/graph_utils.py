@@ -7,11 +7,10 @@ import collectiveMotionNN.utils as ut
 
 def nodeIDrange_eachBatch(bg):
     eachBatchNodeID_end = torch.cumsum(bg.batch_num_nodes(), 0)
-    edgeCandsID_first = torch.cumsum(bg.batch_num_nodes()**2, 0) - bg.batch_num_nodes()**2
-    return torch.stack((eachBatchNodeID_end - bg.batch_num_nodes(), eachBatchNodeID_end, edgeCandsID_first), dim=1)
+    return torch.stack((eachBatchNodeID_end - bg.batch_num_nodes(), eachBatchNodeID_end), dim=1)
 
 def IDrange2MatrixID(IDrange):
-    x = torch.arange(IDrange[0], IDrange[1])
+    x = torch.arange(IDrange[0], IDrange[1], device=IDrange.device)
     return torch.cartesian_prod(x, x)
 
 def isSelfloop(matrixID):
