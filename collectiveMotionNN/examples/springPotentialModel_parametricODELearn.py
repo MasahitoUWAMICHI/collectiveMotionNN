@@ -330,7 +330,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         
     
     
-    
+    print('Number of snapshots in training data : ', train_dataset.__len__())
     
     
     
