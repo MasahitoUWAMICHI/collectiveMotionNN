@@ -199,7 +199,6 @@ class edgeRefresh(nn.Module):
         self.resetScores()
     
     def forward_forceUpdate(self, t, gr, dynamicVariable, ndataInOutModule, args=None):
-        print(t)
         out = edgeRefresh_execute(gr, dynamicVariable, ndataInOutModule, self.update_adjacency, args)
         gr = self.postProcess(out, t)
         self.loadGraph(gr)
@@ -207,7 +206,6 @@ class edgeRefresh(nn.Module):
 
     def forward_noForceUpdate(self, t, gr, dynamicVariable, ndataInOutModule, args=None):
         if judge_skipUpdate(self.graph, dynamicVariable, ndataInOutModule, self.rtol, self.atol, self.equal_nan):
-            print('skip', t)
             return gr
         else:
             gr = self.forward_forceUpdate(t, gr, dynamicVariable, ndataInOutModule, args)
