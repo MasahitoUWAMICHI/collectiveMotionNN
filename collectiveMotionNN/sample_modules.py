@@ -44,7 +44,8 @@ class distance2edge_noSelfLoop(nn.Module):
     
     
 def bool2edge_batched(boolVector, edgeCands):
-    return edgeCands[boolVector]
+    eC = edgeCands[boolVector]
+    return (eC[:,0], eC[:,1])
 
 def radiusGraphEdge_batched(distanceVector, r0):
     return distanceVector < r0
