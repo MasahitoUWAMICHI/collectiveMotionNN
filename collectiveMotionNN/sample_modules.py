@@ -110,6 +110,9 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         self.selfLoop = selfLoop
 
         self.edgeVariable = ut.variableInitializer(variableName, 'x')
+        
+        self.savedSelfLoop = self.selfLoop
+        self.bnn = torch.tensor([-1])
 
         r1 = ut.variableInitializer(r1, r0/10.0)
         
@@ -145,14 +148,20 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         #dr.fill_diagonal_(0.0)
         return dr        
     
+    def judge_reCalc_edgeCands(self, bg):
+        return not(torch.allclose(self.bnn, bg.batch_num_nodes()) and self.savedSelfLoop == self.selfLoop)
+    
     def calc_abs_distance_nonBatch(self, g, args=None):
         dr = self.distanceCalc(torch.unsqueeze(g.ndata[self.edgeVariable], 0), torch.unsqueeze(g.ndata[self.edgeVariable], 1))
         return self.norm_dr(dr), None
 
     def calc_abs_distance_batch(self, bg, args=None):
-        edgeCands, _ = self.edgeCandsCalc(bg)
-        dr = self.distanceCalc(bg.ndata[self.edgeVariable][edgeCands[:,0]], bg.ndata[self.edgeVariable][edgeCands[:,1]])
-        return self.norm_dr(dr), edgeCands
+        if self.judge_reCalc_edgeCands(bg):
+            self.bnn = bg.batch_num_nodes()
+            self.savedSelfLoop = self.selfLoop
+            self.edgeCands, _ = self.edgeCandsCalc(bg)
+        dr = self.distanceCalc(bg.ndata[self.edgeVariable][edgeCands[:,0]], bg.ndata[self.edgeVariable][self.edgeCands[:,1]])
+        return self.norm_dr(dr), self.edgeCands
     
     def pass_dr_nonBatch(self, dr):
         return dr[0]
