@@ -369,7 +369,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             if useScore:
                 if len(SP_SDEwrapper.score())==0:
                     SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                    _ = SP_SDEwrapper.f(1, x_pred[0])
+                    _ = SP_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
                     
                 score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
             
@@ -416,7 +416,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 if useScore:                
                     if len(SP_SDEwrapper.score())==0:
                         SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                        _ = SP_SDEwrapper.f(1, x_pred[0])
+                        _ = SP_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
                     score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
                 
                     valid_xyloss, valid_vloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
