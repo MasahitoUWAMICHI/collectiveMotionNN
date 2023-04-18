@@ -160,7 +160,7 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
             self.bnn = bg.batch_num_nodes()
             self.savedSelfLoop = self.selfLoop
             self.edgeCands, _ = self.edgeCandsCalc(bg)
-        dr = self.distanceCalc(bg.ndata[self.edgeVariable][edgeCands[:,0]], bg.ndata[self.edgeVariable][self.edgeCands[:,1]])
+        dr = self.distanceCalc(bg.ndata[self.edgeVariable][self.edgeCands[:,0]], bg.ndata[self.edgeVariable][self.edgeCands[:,1]])
         return self.norm_dr(dr), self.edgeCands
     
     def pass_dr_nonBatch(self, dr):
