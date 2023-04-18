@@ -24,6 +24,8 @@ import argparse
 from distutils.util import strtobool
 
 import cloudpickle
+
+import time
  
 
 def main_parser():
@@ -92,6 +94,7 @@ def main_parser():
     parser.add_argument('--save_learned_model', type=str)
     parser.add_argument('--save_loss_history', type=str)
     parser.add_argument('--save_validloss_history', type=str)
+    parser.add_argument('--save_run_time_history', type=str)
     parser.add_argument('--save_params', type=str)
     
     return parser
@@ -116,6 +119,7 @@ def parser2main(args):
          useScore=args.useScore,
          save_learned_model=args.save_learned_model, 
          save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history,
+         save_run_time_history=args.save_run_time_history,
          save_params=args.save_params)
     
 def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=None,
@@ -137,6 +141,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          useScore=None,
          save_learned_model=None, 
          save_loss_history=None, save_validloss_history=None,
+         save_run_time_history=None,
          save_params=None):
 
     c = ut.variableInitializer(c, 0.01)
@@ -209,6 +214,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_parametric_learned_model.pt')
     save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_parametric_loss_history.pt')
     save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_parametric_validloss_history.pt')
+    
+    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_parametric_run_time_history.npy')
     save_params = ut.variableInitializer(save_validloss_history, 'Spring_parametric_parameters.npy')
 
     
@@ -329,11 +336,15 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, alpha, 1-beta1, 1-beta2')
+    print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, alpha, 1-beta1, 1-beta2, time[sec.]')
     
     loss_history = []
     valid_loss_history = []
+    
+    run_time_history = []
         
+    start = time.time()
+     
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
             mw.begin()
@@ -422,34 +433,39 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             valid_scoreloss_total = valid_scoreloss_total / data_count
             valid_loss_history[-1] = [valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item()]
             
+            run_time_history.append(time.time() - start)
+            
             if valid_loss < best_valid_loss:
                 SP_SDEwrapper.deleteGraph()
                 with open(save_learned_model, mode='wb') as f:
                     cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e} Best'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f} Best'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
+                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()),
+                    run_time_history[-1])
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f}'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()))
+                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item()),
+                    run_time_history[-1])
         
             torch.save(torch.tensor(loss_history), save_loss_history)
 
             torch.save(torch.tensor(valid_loss_history), save_validloss_history)
     
-    
+            np.save(save_run_time_history, run_time_history)
+
     
     
 if __name__ == '__main__':
