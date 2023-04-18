@@ -184,7 +184,6 @@ class edgeRefresh(nn.Module):
     
     def postProcess_score(self, out, t):
         if t > self.lastScoreCalculationTime:
-            print(t)
             self.resetScores(score = out[1],
                              ps = self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore),
                              t = t)
@@ -209,6 +208,7 @@ class edgeRefresh(nn.Module):
         if judge_skipUpdate(self.graph, dynamicVariable, ndataInOutModule, self.rtol, self.atol, self.equal_nan):
             return gr
         else:
+            print(t)
             gr = self.forward_forceUpdate(t, gr, dynamicVariable, ndataInOutModule, args)
             return gr
 
