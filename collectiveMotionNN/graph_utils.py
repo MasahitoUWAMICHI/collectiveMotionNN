@@ -184,6 +184,7 @@ class edgeRefresh(nn.Module):
     
     def postProcess_score(self, out, t):
         if t > self.lastScoreCalculationTime:
+            print(t)
             self.resetScores(score = out[1],
                              ps = self.scoreIntegrationModule(self.scorePostProcessModule(self.score, out[1]), self.processedScore),
                              t = t)
