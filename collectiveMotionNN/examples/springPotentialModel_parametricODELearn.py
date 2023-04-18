@@ -354,10 +354,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             
             if useScore:
                 SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                print(0)
                 SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
                 _ = SP_SDEwrapper.f(1, x_truth)
-                print(2)
                 score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
                 SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
             
