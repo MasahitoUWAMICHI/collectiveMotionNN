@@ -26,6 +26,7 @@ from distutils.util import strtobool
 import cloudpickle
 
 import time
+import os
  
 
 def main_parser():
@@ -54,6 +55,8 @@ def main_parser():
     parser.add_argument('--selfloop', type=strtobool)
     
     parser.add_argument('--device', type=str)
+    
+    parser.add_argument('--save_directory_simulation', type=str)
     parser.add_argument('--save_x_SDE', type=str)
     parser.add_argument('--save_t_SDE', type=str)
     parser.add_argument('--save_model', type=str)
@@ -91,6 +94,7 @@ def main_parser():
     parser.add_argument('--scoreLoss_weight', type=float)
     parser.add_argument('--useScore', type=strtobool)
     
+    parser.add_argument('--save_directory_learning', type=str)
     parser.add_argument('--save_learned_model', type=str)
     parser.add_argument('--save_loss_history', type=str)
     parser.add_argument('--save_validloss_history', type=str)
@@ -105,6 +109,7 @@ def parser2main(args):
          t_max=args.t_max, dt_step=args.dt_step, dt_save=args.dt_save, 
          periodic=args.periodic, selfloop=args.selfloop, 
          device=args.device,
+         save_directory_simulation=args.save_directory_simulation,
          save_x_SDE=args.save_x_SDE, save_t_SDE=args.save_t_SDE, save_model=args.save_model,
          method_SDE=args.method_SDE, noise_type=args.noise_type, sde_type=args.sde_type, bm_levy=args.bm_levy,
          skipSimulate=args.skipSimulate,
@@ -117,6 +122,7 @@ def parser2main(args):
          lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
+         save_directory_learning=args.save_directory_learning,
          save_learned_model=args.save_learned_model, 
          save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history,
          save_run_time_history=args.save_run_time_history,
@@ -127,6 +133,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          t_max=None, dt_step=None, dt_save=None, 
          periodic=None, selfloop=None, 
          device=None,
+         save_directory_simulation=None,
          save_x_SDE=None, save_t_SDE=None, save_model=None,
          method_SDE=None, noise_type=None, sde_type=None, bm_levy=None,
          skipSimulate=None,
@@ -139,6 +146,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          lr=None, lr_hyperSGD=None, 
          vLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
+         save_directory_learning=None,
          save_learned_model=None, 
          save_loss_history=None, save_validloss_history=None,
          save_run_time_history=None,
@@ -168,6 +176,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     selfloop = ut.variableInitializer(selfloop, False)
     
     device = ut.variableInitializer(device, 'cuda' if torch.cuda.is_available() else 'cpu')
+    
+    save_directory_simulation = ut.variableInitializer(save_directory_simulation, '.')
     save_x_SDE = ut.variableInitializer(save_x_SDE, 'Spring_SDE_traj.pt')
     save_t_SDE = ut.variableInitializer(save_t_SDE, 'Spring_SDE_t_eval.pt')
     save_model = ut.variableInitializer(save_model, 'Spring_SDE_model.pt')
@@ -211,17 +221,23 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     useScore = ut.variableInitializer(useScore, False)
     
+    save_directory_learning = ut.variableInitializer(save_directory_learning, '.')
+    
     save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_parametric_learned_model.pt')
     save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_parametric_loss_history.pt')
     save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_parametric_validloss_history.pt')
     
     save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_parametric_run_time_history.npy')
     save_params = ut.variableInitializer(save_validloss_history, 'Spring_parametric_parameters.npy')
+    
+    
+    os.makedirs(save_directory_simulation, exist_ok=True)
+    os.makedirs(save_directory_learning, exist_ok=True)
 
     
     args_of_main = ut.getArgs()
     print(args_of_main)
-    np.save(save_params, args_of_main)
+    np.save(os.path.join(save_directory_learning, save_params), args_of_main)
     
     
     SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
@@ -268,11 +284,11 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
 
         y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim))
 
-        torch.save(y, save_x_SDE)
+        torch.save(y, os.path.join(save_directory_simulation, save_x_SDE))
 
-        torch.save(t_save.to('cpu'), save_t_SDE)
+        torch.save(t_save.to('cpu'), os.path.join(save_directory_simulation, save_t_SDE))
 
-        with open(save_model, mode='wb') as f:
+        with open(os.path.join(save_directory_simulation, save_model), mode='wb') as f:
             cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
     
 
@@ -304,7 +320,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     
-    vicsek_dataset = spm.myDataset(save_x_SDE, N_dim=N_dim, delayTruth=delayPredict)
+    vicsek_dataset = spm.myDataset(os.path.join(save_directory_simulation, save_x_SDE), N_dim=N_dim, delayTruth=delayPredict)
     vicsek_dataset.initialize()
     
     N_valid = int(vicsek_dataset.N_batch * ratio_valid)
@@ -444,7 +460,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             
             if valid_loss < best_valid_loss:
                 SP_SDEwrapper.deleteGraph()
-                with open(save_learned_model, mode='wb') as f:
+                with open(os.path.join(save_directory_learning, save_learned_model), mode='wb') as f:
                     cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f} Best'.format(
@@ -467,11 +483,11 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item(),
                     run_time_history[-1]))
         
-            torch.save(torch.tensor(loss_history), save_loss_history)
+            torch.save(torch.tensor(loss_history), os.path.join(save_directory_learning, save_loss_history))
 
-            torch.save(torch.tensor(valid_loss_history), save_validloss_history)
+            torch.save(torch.tensor(valid_loss_history), os.path.join(save_directory_learning, save_validloss_history))
     
-            np.save(save_run_time_history, run_time_history)
+            np.save(os.path.join(save_directory_learning, save_run_time_history), run_time_history)
 
     
     
