@@ -230,8 +230,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_parametric_run_time_history.npy')
     save_params = ut.variableInitializer(save_validloss_history, 'Spring_parametric_parameters.npy')
     
-    
-    os.makedirs(save_directory_simulation, exist_ok=True)
+    if not skipSimulate:
+        os.makedirs(save_directory_simulation, exist_ok=True)
     os.makedirs(save_directory_learning, exist_ok=True)
 
     
