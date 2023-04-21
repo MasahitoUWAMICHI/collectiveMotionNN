@@ -427,7 +427,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 mw.optimizer.parameters[key].retain_grad()
             mw.step()
             
-            print('Module in training : device = ', SP_Module.fNN[0].weight.device)
+            print('Module in training : device = ', [SP_Module.fNN[key].weight.device for key in SP_Module.fNN.keys()])
             
         mw.begin() # remove graph for autograd
         
