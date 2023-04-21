@@ -311,7 +311,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         SP_Module.reset_fNN(NNreset_method, NNreset_args)
     
     
-    SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module, edgeModule, returnScore=False, 
+    SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module.to(device), edgeModule.to(device), returnScore=False, 
                                         scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule(),
                                         N_multiBatch=N_batch_edgeUpdate).to(device)
     
