@@ -427,8 +427,6 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 mw.optimizer.parameters[key].retain_grad()
             mw.step()
             
-            print('Module in training : device = ', [(key, SP_SDEwrapper.state_dict()[key].device) for key in SP_SDEwrapper.state_dict().keys()])
-            
         mw.begin() # remove graph for autograd
         
         with torch.no_grad():
@@ -487,6 +485,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 SP_SDEwrapper.deleteGraph()
                 with open(os.path.join(save_directory_learning, save_learned_model), mode='wb') as f:
                     cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
+                SP_SDEwrapper.to(device)
                 best_valid_loss = valid_loss
                 print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f} Best'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
