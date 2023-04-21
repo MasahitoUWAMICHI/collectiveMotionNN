@@ -146,12 +146,14 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias)
         
     def reset_fNN(self, method, args={}):
-        initFunc_str = 'nn.init.{}(self.fNN'.format(method)
+        initFunc_prefix = 'nn.init.{}(self.fNN.'.format(method)
+        initFunc_surfix = ''
         for key in args.keys():
-            initFunc_str = initFunc_str + ',{}={}'.format(key, args[key])
-        initFunc_str = initFunc_str + ')'
+            initFunc_surfix = initFunc_surfix + ',{}={}'.format(key, args[key])
+        initFunc_surfix = initFunc_surfix + ')'
         
-        eval(initFunc_str)
+        for key in self.fNN.state_dict().keys():
+            eval(initFunc_prefix + key + initFunc_surfix)
         
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
