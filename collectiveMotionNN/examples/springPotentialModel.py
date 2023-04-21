@@ -144,7 +144,15 @@ class interactionModule_nonParametric_acceleration(interactionModule):
     
     def init_f(self):
         self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias)
-            
+        
+    def reset_fNN(self, method, args={}):
+        initFunc_str = 'nn.init.{}(self.fNN'.format(method)
+        for key in args.keys():
+            initFunc_str = initFunc_str + ',{}={}'.format(key, args[key])
+        initFunc_str = initFunc_str + ')'
+        
+        eval(initFunc_str)
+        
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
         abs_dr = torch.norm(dr, dim=-1, keepdim=True)
