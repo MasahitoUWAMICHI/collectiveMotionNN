@@ -427,6 +427,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 mw.optimizer.parameters[key].retain_grad()
             mw.step()
             
+            print('Module in training : device = ', SP_Module.fNN.device)
+            
         mw.begin() # remove graph for autograd
         
         with torch.no_grad():
