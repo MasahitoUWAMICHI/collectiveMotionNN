@@ -153,7 +153,8 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         initFunc_surfix = initFunc_surfix + ')'
         
         for key in self.fNN.state_dict().keys():
-            eval(initFunc_prefix + key + initFunc_surfix)
+            #eval(initFunc_prefix + key + initFunc_surfix)
+            nn.init.zeros_(self.fNN.state_dict()[key])
             print(key, ' requires_grad = ', self.fNN.state_dict()[key].requires_grad)
             self.fNN.state_dict()[key].register_hook(lambda grad: print(key+' grad', grad))
         
