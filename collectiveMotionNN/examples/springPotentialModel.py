@@ -144,8 +144,6 @@ class interactionModule_nonParametric_acceleration(interactionModule):
     
     def init_f(self):
         self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias)
-        print(self.fNN.Linear0.weight)
-        print(self.fNN.state_dict())
         
     def reset_fNN(self, method, args={}):
         initFunc_prefix = 'nn.init.{}(self.fNN.'.format(method)
@@ -155,12 +153,8 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         initFunc_surfix = initFunc_surfix + ')'
         
         for key in self.fNN.state_dict().keys():
-            #eval(initFunc_prefix + key + initFunc_surfix)
-            print(key, ' requires_grad = ', self.fNN.Linear0.weight.requires_grad)
-            #eval('nn.init.zeros_(self.fNN.Linear0.weight)')
             eval(initFunc_prefix + key + initFunc_surfix)
-            print(key, ' requires_grad = ', self.fNN.Linear0.weight.requires_grad)
-            self.fNN.state_dict()[key].register_hook(lambda grad: print(key+' grad', grad))
+            eval('self.fNN.' + key + '.register_hook(lambda grad: print(key, grad))')
         
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
