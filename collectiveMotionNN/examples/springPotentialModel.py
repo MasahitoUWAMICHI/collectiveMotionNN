@@ -144,6 +144,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
     
     def init_f(self):
         self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias)
+        print(self.fNN.state_dict())
         
     def reset_fNN(self, method, args={}):
         initFunc_prefix = 'nn.init.{}(self.fNN.'.format(method)
