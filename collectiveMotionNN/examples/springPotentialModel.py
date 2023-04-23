@@ -154,6 +154,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
         for key in self.fNN.state_dict().keys():
             eval(initFunc_prefix + key + initFunc_surfix)
+            print(key, ' requires_grad = ', self.fNN.state_dict()[key].requires_grad)
             self.fNN.state_dict()[key].register_hook(lambda grad: print(key+' grad', grad))
         
     def calc_message(self, edges):
