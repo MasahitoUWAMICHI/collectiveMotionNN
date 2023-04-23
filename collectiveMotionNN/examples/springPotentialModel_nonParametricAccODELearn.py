@@ -387,6 +387,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
             mw.begin()
+            SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
             graph_batchsize = len(graph.batch_num_nodes())
             
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
