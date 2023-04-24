@@ -74,6 +74,8 @@ def main_parser():
     parser.add_argument('--sigma_init', type=float)
     parser.add_argument('--NNshape', type=list)
     parser.add_argument('--NNbias', type=strtobool)
+    parser.add_argument('--NNactivationName', type=str)
+    parser.add_argument('--NNactivationArgs', type=dict)
 
     parser.add_argument('--NNreset_method', type=str)
     parser.add_argument('--NNreset_args', type=dict)
@@ -118,6 +120,7 @@ def parser2main(args):
          method_SDE=args.method_SDE, noise_type=args.noise_type, sde_type=args.sde_type, bm_levy=args.bm_levy,
          skipSimulate=args.skipSimulate,
          gamma_init=args.gamma_init, sigma_init=args.sigma_init, NNshape=args.NNshape, NNbias=args.NNbias,
+         NNactivationName=args.NNactivationName, NNactivationArgs=args.NNactivationArgs,
          NNreset_method=args.NNreset_method, NNreset_args=args.NNreset_args,
          delayPredict=args.delayPredict, dt_train=args.dt_train, 
          method_ODE=args.method_ODE, 
@@ -143,6 +146,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          method_SDE=None, noise_type=None, sde_type=None, bm_levy=None,
          skipSimulate=None,
          gamma_init=None, sigma_init=None, NNshape=None, NNbias=None,
+         NNactivationName=None, NNactivationArgs=None,
          NNreset_method=None, NNreset_args=None,
          delayPredict=None, dt_train=None, 
          method_ODE=None, 
@@ -202,6 +206,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     sigma_init = ut.variableInitializer(sigma_init, None)
     NNshape = ut.variableInitializer(NNshape, None)
     NNbias = ut.variableInitializer(NNbias, None)
+    
+    NNactivationName = ut.variableInitializer(NNactivationName, None)
+    NNactivationArgs = ut.variableInitializer(NNactivationArgs, None)
     
     NNreset_method = ut.variableInitializer(NNreset_method, None)
     NNreset_args = ut.variableInitializer(NNreset_args, {})
@@ -305,7 +312,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     
-    SP_Module = spm.interactionModule_nonParametric_acceleration(gamma_init, sigma_init, N_dim, NNshape, NNbias, periodic).to(device)
+    SP_Module = spm.interactionModule_nonParametric_acceleration(gamma_init, sigma_init, N_dim, NNshape, NNbias, periodic, NNactivationName, NNactivationArgs).to(device)
     
     if not NNreset_method is None:
         SP_Module.reset_fNN(NNreset_method, NNreset_args)
@@ -387,7 +394,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
             mw.begin()
-            SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
+            #SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
             graph_batchsize = len(graph.batch_num_nodes())
             
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
