@@ -123,7 +123,7 @@ class interactionModule(nn.Module):
         return g
     
 class interactionModule_nonParametric_acceleration(interactionModule):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
         super().__init__(0.0, 0.0, 2, 0.0, 0.0, N_dim, periodic, positionName, velocityName, accelerationName, noiseName, messageName)
         self.reset_parameter(None, None, gamma, sigma)
         
@@ -131,19 +131,34 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
         self.fBias = ut.variableInitializer(fBias, True)
         
-        self.init_f()
+        self.init_f(activationName, activationArgs)
         
-    def createNNsequence(self, N_in, NNshape, N_out, bias):
+    def createActivation(self, act_name, args={}):
+        args_str = ''
+        key_exist = False
+        for key in args.keys():
+            key_exist = True
+            args_str = args_str + key + '=' + args[key] + ','
+
+        if key_exist:
+            args_str = args_str[:-1]
+
+        return eval('nn.' + act_name + '(' + args_str + ')')
+    
+    def createNNsequence(self, N_in, NNshape, N_out, bias, activationName=None, activationArgs=None):
+        activationName = ut.variableInitializer(activationName, 'ReLU')
+        activationArgs = ut.variableInitializer(activationArgs, {})
+        
         NNseq = collections.OrderedDict([])
         for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
             NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=bias)
-            NNseq['ReLU'+str(i)] = nn.ReLU()
-        NNseq.pop('ReLU'+str(i))
+            NNseq[activationName+str(i)] = self.createActivation(activationName, activationArgs)
+        NNseq.pop(activationName+str(i))
         
         return nn.Sequential(NNseq)
     
-    def init_f(self):
-        self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias)
+    def init_f(self, activationName=None, activationArgs=None):
+        self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs)
         
     def reset_fNN(self, method, args={}):
         initFunc_prefix = 'nn.init.{}(self.fNN.'.format(method)
