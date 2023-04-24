@@ -242,7 +242,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_nonParametric_validloss_history.pt')
     
     save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_nonParametric_run_time_history.npy')
-    save_params = ut.variableInitializer(save_validloss_history, 'Spring_nonParametric_parameters.npy')
+    save_params = ut.variableInitializer(save_params, 'Spring_nonParametric_parameters.npy')
     
     if not skipSimulate:
         os.makedirs(save_directory_simulation, exist_ok=True)
