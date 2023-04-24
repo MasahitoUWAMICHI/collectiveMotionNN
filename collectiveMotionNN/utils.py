@@ -3,6 +3,9 @@ from torch import nn
 
 import inspect
 
+import codecs
+
+
 def variableInitializer(val, defaultVal):
     if val is None:
         return defaultVal
@@ -47,4 +50,13 @@ def getArgs():
     parent_frame = inspect.currentframe().f_back
     info = inspect.getargvalues(parent_frame)
     return {key: info.locals[key] for key in info.args}
+
+
+def dict2txt(savePath, savedDict):
+
+    txtstring = []
+    for key in savedDict.keys():
+        txtstring.append("{}, {}".format(key, savedDict[key]))
+
+    print(*txtstring, sep="\n", file=codecs.open(savePath, 'w', 'utf-8'))
 
