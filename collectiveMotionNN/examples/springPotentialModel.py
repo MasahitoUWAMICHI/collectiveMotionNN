@@ -138,7 +138,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         key_exist = False
         for key in args.keys():
             key_exist = True
-            args_str = args_str + key + '=' + args[key] + ','
+            args_str = args_str + key + '=args["' + key + '"],'
 
         if key_exist:
             args_str = args_str[:-1]
