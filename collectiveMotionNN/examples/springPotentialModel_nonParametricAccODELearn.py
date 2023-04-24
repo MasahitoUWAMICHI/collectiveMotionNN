@@ -253,8 +253,11 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     print(args_of_main)
     np.save(os.path.join(save_directory_learning, save_params), args_of_main)
     
+    ut.dict2txt(os.path.join(save_directory_learning, os.path.splitext(save_params)[0]+'.txt'), args_of_main)
+    
     if not skipSimulate:
         np.save(os.path.join(save_directory_simulation, save_params), args_of_main)
+        ut.dict2txt(os.path.join(save_directory_simulation, os.path.splitext(save_params)[0]+'.txt'), args_of_main)
     
     
     SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
