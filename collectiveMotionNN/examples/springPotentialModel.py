@@ -164,7 +164,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         initFunc_prefix = 'nn.init.{}(self.fNN.'.format(method)
         initFunc_surfix = ''
         for key in args.keys():
-            initFunc_surfix = initFunc_surfix + ',{}={}'.format(key, args[key])
+            initFunc_surfix = initFunc_surfix + ','+key+'=args["'+key+'"]'
         initFunc_surfix = initFunc_surfix + ')'
         
         for key in self.fNN.state_dict().keys():
