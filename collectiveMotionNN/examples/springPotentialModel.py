@@ -160,15 +160,25 @@ class interactionModule_nonParametric_acceleration(interactionModule):
     def init_f(self, activationName=None, activationArgs=None):
         self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs)
         
-    def reset_fNN(self, method, args={}):
+    def make_reset_str(self, method, args):
         initFunc_prefix = 'nn.init.{}(self.fNN.'.format(method)
         initFunc_surfix = ''
         for key in args.keys():
             initFunc_surfix = initFunc_surfix + ','+key+'=args["'+key+'"]'
         initFunc_surfix = initFunc_surfix + ')'
+        return initFunc_prefix, initFunc_surfix        
         
+    def reset_fNN(self, method_w, method_b=None, method_o=None, args_w={}, args_b={}, args_o={}):
+        initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str(method_w, args_w)
+        initFunc_prefix_b, initFunc_surfix_b = self.make_reset_str(ut.variableInitializer(method_b, 'uniform_'), args_b)
+        initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(ut.variableInitializer(method_o, 'uniform_'), args_o)
         for key in self.fNN.state_dict().keys():
-            eval(initFunc_prefix + key + initFunc_surfix)
+            if key.endswith('weight'):
+                eval(initFunc_prefix_w + key + initFunc_surfix_w)
+            elif key.endswith('bias'):
+                eval(initFunc_prefix_b + key + initFunc_surfix_b)
+            else:
+                eval(initFunc_prefix_o + key + initFunc_surfix_o)
         
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
