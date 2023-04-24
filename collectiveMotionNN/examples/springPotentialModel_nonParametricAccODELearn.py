@@ -77,8 +77,12 @@ def main_parser():
     parser.add_argument('--NNactivationName', type=str)
     parser.add_argument('--NNactivationArgs', type=dict)
 
-    parser.add_argument('--NNreset_method', type=str)
-    parser.add_argument('--NNreset_args', type=dict)
+    parser.add_argument('--NNreset_weight_method', type=str)
+    parser.add_argument('--NNreset_weight_args', type=dict)
+    parser.add_argument('--NNreset_bias_method', type=str)
+    parser.add_argument('--NNreset_bias_args', type=dict)
+    parser.add_argument('--NNreset_others_method', type=str)
+    parser.add_argument('--NNreset_others_args', type=dict)
     
     parser.add_argument('--bm_levy', type=str)
     
@@ -121,7 +125,9 @@ def parser2main(args):
          skipSimulate=args.skipSimulate,
          gamma_init=args.gamma_init, sigma_init=args.sigma_init, NNshape=args.NNshape, NNbias=args.NNbias,
          NNactivationName=args.NNactivationName, NNactivationArgs=args.NNactivationArgs,
-         NNreset_method=args.NNreset_method, NNreset_args=args.NNreset_args,
+         NNreset_weight_method=args.NNreset_weight_method, NNreset_weight_args=args.NNreset_weight_args,
+         NNreset_bias_method=args.NNreset_bias_method, NNreset_bias_args=args.NNreset_bias_args,
+         NNreset_others_method=args.NNreset_others_method, NNreset_others_args=args.NNreset_others_args,
          delayPredict=args.delayPredict, dt_train=args.dt_train, 
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
@@ -147,7 +153,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          skipSimulate=None,
          gamma_init=None, sigma_init=None, NNshape=None, NNbias=None,
          NNactivationName=None, NNactivationArgs=None,
-         NNreset_method=None, NNreset_args=None,
+         NNreset_weight_method=None, NNreset_weight_args=None,
+         NNreset_bias_method=None, NNreset_bias_args=None,
+         NNreset_others_method=None, NNreset_others_args=None,
          delayPredict=None, dt_train=None, 
          method_ODE=None, 
          N_epoch=None, N_train_batch=None, N_batch_edgeUpdate=None,
@@ -210,8 +218,12 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     NNactivationName = ut.variableInitializer(NNactivationName, None)
     NNactivationArgs = ut.variableInitializer(NNactivationArgs, None)
     
-    NNreset_method = ut.variableInitializer(NNreset_method, None)
-    NNreset_args = ut.variableInitializer(NNreset_args, {})
+    NNreset_weight_method = ut.variableInitializer(NNreset_weight_method, None)
+    NNreset_weight_args = ut.variableInitializer(NNreset_weight_args, {})
+    NNreset_bias_method = ut.variableInitializer(NNreset_bias_method, None)
+    NNreset_bias_args = ut.variableInitializer(NNreset_bias_args, {})
+    NNreset_others_method = ut.variableInitializer(NNreset_others_method, None)
+    NNreset_others_args = ut.variableInitializer(NNreset_others_args, {})
     
     delayPredict = ut.variableInitializer(delayPredict, 1)
     dt_train = ut.variableInitializer(dt_train, dt_step)
@@ -317,8 +329,10 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     SP_Module = spm.interactionModule_nonParametric_acceleration(gamma_init, sigma_init, N_dim, NNshape, NNbias, periodic, NNactivationName, NNactivationArgs).to(device)
     
-    if not NNreset_method is None:
-        SP_Module.reset_fNN(NNreset_method, NNreset_args)
+    if (not (NNreset_weight_method is None)) or ((not (NNreset_bias_method is None)) or (not (NNreset_others_method is None))):
+        SP_Module.reset_fNN(NNreset_weight_method, NNreset_weight_args,
+                            NNreset_bias_method, NNreset_bias_args,
+                            NNreset_others_method, NNreset_others_args)
     
     
     SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module.to(device), edgeModule.to(device), returnScore=False, 
