@@ -160,21 +160,21 @@ class interactionModule_nonParametric_acceleration(interactionModule):
     def init_f(self, activationName=None, activationArgs=None):
         self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs)
         
-    def make_reset_str(self, method, args):
+    def make_reset_str(self, method, args, argsName):
         initFunc_prefix = 'nn.init.{}(self.fNN.'.format(method)
         initFunc_surfix = ''
         for key in args.keys():
-            initFunc_surfix = initFunc_surfix + ','+key+'=args["'+key+'"]'
+            initFunc_surfix = initFunc_surfix + ','+key+'='+argsName+'["'+key+'"]'
         initFunc_surfix = initFunc_surfix + ')'
         return initFunc_prefix, initFunc_surfix        
         
     def reset_fNN(self, method_w=None, method_b=None, method_o=None, args_w={}, args_b={}, args_o={}):
         if not method_w is None:
-            initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str(method_w, args_w)
+            initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str(method_w, args_w, 'args_w')
         if not method_b is None:
-            initFunc_prefix_b, initFunc_surfix_b = self.make_reset_str(method_b, args_b)
+            initFunc_prefix_b, initFunc_surfix_b = self.make_reset_str(method_b, args_b, 'args_b')
         if not method_o is None:
-            initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(method_o, args_o)
+            initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(method_o, args_o, 'args_o')
         for key in self.fNN.state_dict().keys():
             if key.endswith('weight'):
                 if not method_w is None:
