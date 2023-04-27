@@ -193,6 +193,24 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
         return {self.messageName: self.fNN(abs_dr) * unit_dr}
         
+        
+        
+        
+class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParametric_acceleration):
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName)
+        
+        self.init_f(activationName, activationArgs)
+    
+    def init_f(self, activationName=None, activationArgs=None):
+        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs)
+                
+    def calc_message(self, edges):
+        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+        
+        return {self.messageName: self.fNN(abs_dr)}
+    
+    
     
 class myDataset(torch.utils.data.Dataset):
     def __init__(self, dataPath, N_dim=2, len=None, delayTruth=1):
