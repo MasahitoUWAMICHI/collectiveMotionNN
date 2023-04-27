@@ -249,12 +249,12 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     save_directory_learning = ut.variableInitializer(save_directory_learning, '.')
     
-    save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_nonParametric_learned_model.pt')
-    save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_nonParametric_loss_history.pt')
-    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_nonParametric_validloss_history.pt')
+    save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_nonParametric2D_learned_model.pt')
+    save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_nonParametric2D_loss_history.pt')
+    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_nonParametric2D_validloss_history.pt')
     
-    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_nonParametric_run_time_history.npy')
-    save_params = ut.variableInitializer(save_params, 'Spring_nonParametric_parameters.npy')
+    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_nonParametric2D_run_time_history.npy')
+    save_params = ut.variableInitializer(save_params, 'Spring_nonParametric2D_parameters.npy')
     
     if not skipSimulate:
         os.makedirs(save_directory_simulation, exist_ok=True)
@@ -327,7 +327,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     
-    SP_Module = spm.interactionModule_nonParametric_acceleration(gamma_init, sigma_init, N_dim, NNshape, NNbias, periodic, NNactivationName, NNactivationArgs).to(device)
+    SP_Module = spm.interactionModule_nonParametric_2Dacceleration(gamma_init, sigma_init, N_dim, NNshape, NNbias, periodic, NNactivationName, NNactivationArgs).to(device)
     
     if (not (NNreset_weight_method is None)) or ((not (NNreset_bias_method is None)) or (not (NNreset_others_method is None))):
         SP_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
