@@ -208,7 +208,7 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParame
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
         
-        return {self.messageName: self.fNN(abs_dr)}
+        return {self.messageName: self.fNN(dr)}
     
     
     
