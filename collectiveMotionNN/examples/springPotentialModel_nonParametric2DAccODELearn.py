@@ -319,6 +319,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         torch.save(y, os.path.join(save_directory_simulation, save_x_SDE))
 
         torch.save(t_save.to('cpu'), os.path.join(save_directory_simulation, save_t_SDE))
+        
+        SP_SDEwrapper.deleteGraph()
 
         with open(os.path.join(save_directory_simulation, save_model), mode='wb') as f:
             cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
