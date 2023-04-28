@@ -36,6 +36,7 @@ def sameBatchEdgeCandidateNodePairs_noSelfloop(bg):
 
 def edge2batchNumEdges(edges, bnn):
     nodeID_ends = torch.cumsum(bnn, 0)
+    print(edges[0].device, nodeID_ends.device)
     edge_batchIDs = torch.count_nonzero(torch.unsqueeze(edges[0], 1) >= torch.unsqueeze(nodeID_ends, 0), dim=1)
     return edge_batchIDs.bincount(minlength=len(bnn))
 
