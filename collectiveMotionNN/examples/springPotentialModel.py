@@ -214,7 +214,7 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParame
     
     
     
-class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_acceleration):
+class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Dacceleration):
     def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
         super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName)
         
@@ -222,16 +222,10 @@ class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_acc
         
         self.f2Bias = ut.variableInitializer(f2Bias, True)
         
-        self.init_f(activationName, activationArgs)
+        self.init_f2(activationName, activationArgs)
     
-    def init_f(self, activationName=None, activationArgs=None):
-        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs)
+    def init_f2(self, activationName=None, activationArgs=None):
         self.f2NN = self.createNNsequence(self.N_dim, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs)
-                
-    def calc_message(self, edges):
-        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
-        
-        return {self.messageName: self.fNN(dr)}
     
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
