@@ -160,31 +160,32 @@ class interactionModule_nonParametric_acceleration(interactionModule):
     def init_f(self, activationName=None, activationArgs=None):
         self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs)
         
-    def make_reset_str(self, method, args, argsName):
-        initFunc_prefix = 'nn.init.{}(self.fNN.'.format(method)
+    def make_reset_str(self, method, args, argsName, NNname='fNN'):
+        initFunc_prefix = 'nn.init.{}(self.{}.'.format(method, NNname)
         initFunc_surfix = ''
         for key in args.keys():
             initFunc_surfix = initFunc_surfix + ','+key+'='+argsName+'["'+key+'"]'
         initFunc_surfix = initFunc_surfix + ')'
         return initFunc_prefix, initFunc_surfix        
         
-    def reset_fNN(self, method_w=None, method_b=None, method_o=None, args_w={}, args_b={}, args_o={}):
-        if not method_w is None:
-            initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str(method_w, args_w, 'args_w')
-        if not method_b is None:
-            initFunc_prefix_b, initFunc_surfix_b = self.make_reset_str(method_b, args_b, 'args_b')
-        if not method_o is None:
-            initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(method_o, args_o, 'args_o')
-        for key in self.fNN.state_dict().keys():
-            if key.endswith('weight'):
-                if not method_w is None:
-                    eval(initFunc_prefix_w + key + initFunc_surfix_w)
-            elif key.endswith('bias'):
-                if not method_b is None:
-                    eval(initFunc_prefix_b + key + initFunc_surfix_b)
-            else:
-                if not method_o is None:
-                    eval(initFunc_prefix_o + key + initFunc_surfix_o)
+    def reset_fNN(self, method_w=None, method_b=None, method_o=None, args_w={}, args_b={}, args_o={}, NNnames=['fNN']):
+        for NNname in NNnames:
+            if not method_w is None:
+                initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str(method_w, args_w, 'args_w', NNname)
+            if not method_b is None:
+                initFunc_prefix_b, initFunc_surfix_b = self.make_reset_str(method_b, args_b, 'args_b', NNname)
+            if not method_o is None:
+                initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(method_o, args_o, 'args_o', NNname)
+            for key in eval('self.{}.state_dict().keys()'.format(NNname)):
+                if key.endswith('weight'):
+                    if not method_w is None:
+                        eval(initFunc_prefix_w + key + initFunc_surfix_w)
+                elif key.endswith('bias'):
+                    if not method_b is None:
+                        eval(initFunc_prefix_b + key + initFunc_surfix_b)
+                else:
+                    if not method_o is None:
+                        eval(initFunc_prefix_o + key + initFunc_surfix_o)
         
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
@@ -209,6 +210,33 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParame
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
         
         return {self.messageName: self.fNN(dr)}
+    
+    
+    
+    
+class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_acceleration):
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName)
+        
+        self.f2NNshape = ut.variableInitializer(f2NNshape, [128, 128, 128])
+        
+        self.f2Bias = ut.variableInitializer(f2Bias, True)
+        
+        self.init_f(activationName, activationArgs)
+    
+    def init_f(self, activationName=None, activationArgs=None):
+        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs)
+        self.f2NN = self.createNNsequence(self.N_dim, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs)
+                
+    def calc_message(self, edges):
+        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+        
+        return {self.messageName: self.fNN(dr)}
+    
+    def f(self, t, g, args=None):
+        g.update_all(self.calc_message, self.aggregate_message)
+        g.ndata[self.accelerationName] = g.ndata[self.accelerationName] + self.f2NN(g.ndata[self.velocityName])
+        return g
     
     
     
