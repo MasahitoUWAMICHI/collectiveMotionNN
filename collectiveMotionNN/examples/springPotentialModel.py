@@ -168,7 +168,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         initFunc_surfix = initFunc_surfix + ')'
         return initFunc_prefix, initFunc_surfix        
         
-    def reset_fNN(self, method_w=None, method_b=None, method_o=None, args_w={}, args_b={}, args_o={}, NNnames=['fNN'], zeroFinalLayer=False):
+    def reset_fNN(self, method_w=None, method_b=None, method_o=None, args_w={}, args_b={}, args_o={}, NNnames=['fNN'], zeroFinalLayer=False, zeroFinalLayer_o=False):
         for NNname in NNnames:
             if not method_w is None:
                 initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str(method_w, args_w, 'args_w', NNname)
@@ -193,13 +193,11 @@ class interactionModule_nonParametric_acceleration(interactionModule):
                 initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str('zeros_', {}, 'args_o', NNname+'[-1]')
                 for key in eval('self.{}[-1].state_dict().keys()'.format(NNname)):
                     if key.endswith('weight'):
-                        if not method_w is None:
-                            eval(initFunc_prefix_w + key + initFunc_surfix_w)
+                        eval(initFunc_prefix_w + key + initFunc_surfix_w)
                     elif key.endswith('bias'):
-                        if not method_b is None:
-                            eval(initFunc_prefix_b + key + initFunc_surfix_b)
+                        eval(initFunc_prefix_b + key + initFunc_surfix_b)
                     else:
-                        if not method_o is None:
+                        if zeroFinalLayer_o:
                             eval(initFunc_prefix_o + key + initFunc_surfix_o)
             
         
