@@ -134,7 +134,7 @@ def parser2main(args):
          NNreset_weight_method=args.NNreset_weight_method, NNreset_weight_args=args.NNreset_weight_args,
          NNreset_bias_method=args.NNreset_bias_method, NNreset_bias_args=args.NNreset_bias_args,
          NNreset_others_method=args.NNreset_others_method, NNreset_others_args=args.NNreset_others_args,
-         NN_zeroFinalLayer=args.NN_zeroFinalLayer, NN2_zeroFinalLayer=args.NN2_zeroFinalLayer
+         NN_zeroFinalLayer=args.NN_zeroFinalLayer, NN2_zeroFinalLayer=args.NN2_zeroFinalLayer,
          delayPredict=args.delayPredict, dt_train=args.dt_train, 
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
