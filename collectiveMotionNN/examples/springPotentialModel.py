@@ -187,6 +187,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
                     if not method_o is None:
                         eval(initFunc_prefix_o + key + initFunc_surfix_o)
             if zeroFinalLayer:
+                print(NNname, 'zero initializing')
                 initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str('zeros_', {}, 'args_w', NNname+'[-1]')
                 initFunc_prefix_b, initFunc_surfix_b = self.make_reset_str('zeros_', {}, 'args_b', NNname+'[-1]')
                 initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str('zeros_', {}, 'args_o', NNname+'[-1]')
