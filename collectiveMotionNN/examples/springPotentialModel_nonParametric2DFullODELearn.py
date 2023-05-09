@@ -86,6 +86,9 @@ def main_parser():
     parser.add_argument('--NNreset_others_method', type=str)
     parser.add_argument('--NNreset_others_args', type=dict)
     
+    parser.add_argument('--NN_zeroFinalLayer', type=strtobool)
+    parser.add_argument('--NN2_zeroFinalLayer', type=strtobool)
+    
     parser.add_argument('--bm_levy', type=str)
     
     parser.add_argument('--delayPredict', type=int)
@@ -131,6 +134,7 @@ def parser2main(args):
          NNreset_weight_method=args.NNreset_weight_method, NNreset_weight_args=args.NNreset_weight_args,
          NNreset_bias_method=args.NNreset_bias_method, NNreset_bias_args=args.NNreset_bias_args,
          NNreset_others_method=args.NNreset_others_method, NNreset_others_args=args.NNreset_others_args,
+         NN_zeroFinalLayer=args.NN_zeroFinalLayer, NN2_zeroFinalLayer=args.NN2_zeroFinalLayer
          delayPredict=args.delayPredict, dt_train=args.dt_train, 
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
@@ -160,6 +164,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          NNreset_weight_method=None, NNreset_weight_args=None,
          NNreset_bias_method=None, NNreset_bias_args=None,
          NNreset_others_method=None, NNreset_others_args=None,
+         NN_zeroFinalLayer=None, NN2_zeroFinalLayer=None,
          delayPredict=None, dt_train=None, 
          method_ODE=None, 
          N_epoch=None, N_train_batch=None, N_batch_edgeUpdate=None,
@@ -230,6 +235,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     NNreset_bias_args = ut.variableInitializer(NNreset_bias_args, {})
     NNreset_others_method = ut.variableInitializer(NNreset_others_method, None)
     NNreset_others_args = ut.variableInitializer(NNreset_others_args, {})
+    
+    NN_zeroFinalLayer = ut.variableInitializer(NN_zeroFinalLayer, False)
+    NN2_zeroFinalLayer = ut.variableInitializer(NN2_zeroFinalLayer, False)
     
     delayPredict = ut.variableInitializer(delayPredict, 1)
     dt_train = ut.variableInitializer(dt_train, dt_step)
@@ -339,7 +347,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     if (not (NNreset_weight_method is None)) or ((not (NNreset_bias_method is None)) or (not (NNreset_others_method is None))):
         SP_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
-                            NNreset_weight_args, NNreset_bias_args, NNreset_others_args, ['fNN', 'f2NN'])
+                            NNreset_weight_args, NNreset_bias_args, NNreset_others_args, ['fNN'], NN_zeroFinalLayer)
+        SP_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
+                            NNreset_weight_args, NNreset_bias_args, NNreset_others_args, ['fNN2'], NN2_zeroFinalLayer)
     
     
     SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module.to(device), edgeModule.to(device), returnScore=False, 
