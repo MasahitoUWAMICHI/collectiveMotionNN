@@ -365,11 +365,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     print('Module before training : ', SP_SDEwrapper.state_dict())
     
-        
-    optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(lr_hyperSGD))
-
-    mw = gdtuo.ModuleWrapper(SP_SDEwrapper, optimizer=optim)
-    mw.initialize()
+    
+    optimizer = t_opt.DiffGrad(SP_SDEwrapper.parameters(), lr=0.001)
     
     
     
@@ -427,7 +424,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
      
     for epoch in range(N_epoch):
         for graph, x_truth in train_loader:
-            mw.begin()
+            optimizer.zero_grad()
             #SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
             graph_batchsize = len(graph.batch_num_nodes())
             
@@ -463,13 +460,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
-            mw.zero_grad()
             loss.backward()
-            for key in mw.optimizer.parameters.keys():
-                mw.optimizer.parameters[key].retain_grad()
-            mw.step()
+            optimizer.step()
             
-        mw.begin() # remove graph for autograd
         
         with torch.no_grad():
             valid_loss = 0
@@ -529,24 +522,22 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                     cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
                 SP_SDEwrapper.to(device)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f} Best'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f} Best'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item(),
                     run_time_history[-1]))
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f}'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item(),
                     run_time_history[-1]))
         
             torch.save(torch.tensor(loss_history), os.path.join(save_directory_learning, save_loss_history))
