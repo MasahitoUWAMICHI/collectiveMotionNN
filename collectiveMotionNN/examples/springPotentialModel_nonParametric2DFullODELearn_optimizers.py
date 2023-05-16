@@ -420,7 +420,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, alpha, 1-beta1, 1-beta2, time[sec.]')
+    print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, time[sec.]')
     
     loss_history = []
     valid_loss_history = []
