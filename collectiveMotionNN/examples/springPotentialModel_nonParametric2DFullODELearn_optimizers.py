@@ -104,7 +104,9 @@ def main_parser():
     parser.add_argument('--split_seed_val', type=int)
     
     parser.add_argument('--lr', type=float)
-    parser.add_argument('--lr_hyperSGD', type=float)
+    parser.add_argument('--optimName', type=str)
+    parser.add_argument('--optimArgs', type=dict)
+    
     parser.add_argument('--vLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
     parser.add_argument('--useScore', type=strtobool)
@@ -140,7 +142,7 @@ def parser2main(args):
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
          split_seed_val=args.split_seed_val,
-         lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
+         lr=args.lr, optimName=args.optimName, optimArgs=args.optimArgs,
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
          save_directory_learning=args.save_directory_learning,
@@ -170,7 +172,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          N_epoch=None, N_train_batch=None, N_batch_edgeUpdate=None,
          ratio_valid=None, ratio_test=None,
          split_seed_val=None,
-         lr=None, lr_hyperSGD=None, 
+         lr=None, optimName=None, optimArgs=None,
          vLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
          save_directory_learning=None,
@@ -256,7 +258,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         split_seed = torch.Generator().manual_seed(split_seed_val)
     
     lr = ut.variableInitializer(lr, 1e-3)
-    lr_hyperSGD = ut.variableInitializer(lr_hyperSGD, 1e-3)
+    optimName = ut.variableInitializer(optimName, 'Lamb')
+    optimArgs = ut.variableInitializer(optimArgs, {})
+    
     vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     useScore = ut.variableInitializer(useScore, False)
@@ -365,8 +369,11 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     print('Module before training : ', SP_SDEwrapper.state_dict())
     
-    
-    optimizer = t_opt.DiffGrad(SP_SDEwrapper.parameters(), lr=0.001)
+    optim_str = 't_opt.' + optimName + '(SP_SDEwrapper.parameters(),lr={},'.format(lr)
+    for key in optimArgs.keys():
+        optim_str = optim_str + key + '=optimArgs["' + key + '"],'
+    optim_str = optim_str[:-1] + ')'
+    optimizer = eval(optim_str)
     
     
     
