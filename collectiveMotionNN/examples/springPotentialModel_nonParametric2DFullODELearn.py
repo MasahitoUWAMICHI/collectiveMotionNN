@@ -104,7 +104,13 @@ def main_parser():
     parser.add_argument('--split_seed_val', type=int)
     
     parser.add_argument('--lr', type=float)
+    parser.add_argument('--optimName', type=str)
+    parser.add_argument('--optimArgs', type=str)
+    
     parser.add_argument('--lr_hyperSGD', type=float)
+    parser.add_argument('--hyperoptimName', type=str)
+    parser.add_argument('--hyperoptimArgs', type=str)
+    
     parser.add_argument('--vLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
     parser.add_argument('--useScore', type=strtobool)
@@ -141,6 +147,8 @@ def parser2main(args):
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
          split_seed_val=args.split_seed_val,
          lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
+         optimName=args.optimName, optimArgs=args.optimArgs,
+         hyperoptimName=args.hyperoptimName, hyperoptimArgs=args.hyperoptimArgs,
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
          save_directory_learning=args.save_directory_learning,
@@ -171,6 +179,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          ratio_valid=None, ratio_test=None,
          split_seed_val=None,
          lr=None, lr_hyperSGD=None, 
+         optimName=None, optimArgs=None, 
+         hyperoptimName=None, hyperoptimArgs=None, 
          vLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
          save_directory_learning=None,
@@ -256,7 +266,13 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         split_seed = torch.Generator().manual_seed(split_seed_val)
     
     lr = ut.variableInitializer(lr, 1e-3)
+    optimName = ut.variableInitializer(optimName, 'Adam')
+    optimArgs = ut.variableInitializer(optimArgs, {})
+    
     lr_hyperSGD = ut.variableInitializer(lr_hyperSGD, 1e-3)
+    hyperoptimName = ut.variableInitializer(hyperoptimName, 'SGD')
+    hyperoptimArgs = ut.variableInitializer(hyperoptimArgs, {})
+    
     vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     useScore = ut.variableInitializer(useScore, False)
@@ -365,8 +381,19 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     print('Module before training : ', SP_SDEwrapper.state_dict())
     
+    hyperoptim_str = 'gdtuo.' + hyperoptimName + '(alpha=lr_hyperSGD,'
+    for key in hyperoptimArgs.keys():
+        hyperoptim_str = hyperoptim_str + key + '=hyperoptimArgs["' + key + '"],'
+    hyperoptim_str = hyperoptim_str[:-1] + ')'
         
-    optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(lr_hyperSGD))
+    optim_str = 'gdtuo.' + optimName + '(alpha=lr,'
+    for key in optimArgs.keys():
+        optim_str = optim_str + key + '=optimArgs["' + key + '"],'
+    
+    optim_str = optim_str + 'optimizer=' + hyperoptim_str + ')'
+    optim = eval(optim_str)
+    
+    #optim = gdtuo.Adam(alpha=lr, beta1=0.9, beta2=0.999, log_eps=-8., optimizer=gdtuo.SGD(lr_hyperSGD))
 
     mw = gdtuo.ModuleWrapper(SP_SDEwrapper, optimizer=optim)
     mw.initialize()
