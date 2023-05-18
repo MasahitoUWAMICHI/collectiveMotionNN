@@ -556,24 +556,24 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                     cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
                 SP_SDEwrapper.to(device)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f} Best'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.3f} Best'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item(),
+                    mw.optimizer.parameters['alpha'].item(),
                     run_time_history[-1]))
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f}'.format(
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.3f}'.format(
                     epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
                     valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item(),
+                    mw.optimizer.parameters['alpha'].item(),
                     run_time_history[-1]))
         
             torch.save(torch.tensor(loss_history), os.path.join(save_directory_learning, save_loss_history))
