@@ -97,7 +97,7 @@ def main(sigma=None, L=None, v0=None,
          load_learned_model=None, 
          save_params=None):
 
-    sigma = ut.variableInitializer(sigma, 0.01)
+    sigma = ut.variableInitializer(sigma, None)
     
     L = ut.variableInitializer(L, 5.0)
     v0 = ut.variableInitializer(v0, 0.01)
@@ -157,8 +157,8 @@ def main(sigma=None, L=None, v0=None,
     with open(os.path.join(load_directory_learning, load_learned_model), mode='rb') as f:
         SP_SDEwrapper = cloudpickle.load(f)
     
-    
-    SP_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(sigma=sigma)
+    if not(sigma is None):
+        SP_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(sigma=sigma)
     
     SP_SDEwrapper.dynamicGNDEmodule.calc_module.periodic = periodic
     SP_SDEwrapper.dynamicGNDEmodule.calc_module.def_dr()
