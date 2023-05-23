@@ -140,9 +140,9 @@ def main(sigma=None, L=None, v0=None,
 
     load_directory_learning = ut.variableInitializer(load_directory_learning, '.')
     
-    load_learned_model = ut.variableInitializer(load_learned_model, 'Spring_nonParametric2Dfull_learned_model.pt')
+    load_learned_model = ut.variableInitializer(load_learned_model, None)
     
-    save_params = ut.variableInitializer(save_params, 'Spring_nonParametric2Dfull_reSimulate_parameters.npy')
+    save_params = ut.variableInitializer(save_params, 'Spring_reSimulate_parameters.npy')
     
     os.makedirs(save_directory_simulation, exist_ok=True)
 
