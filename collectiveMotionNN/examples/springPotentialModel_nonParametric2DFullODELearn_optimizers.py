@@ -106,6 +106,7 @@ def main_parser():
     parser.add_argument('--lr', type=float)
     parser.add_argument('--optimName', type=str)
     parser.add_argument('--optimArgs', type=dict)
+    parser.add_argument('--highOrderGrad', type=strtobool)
     
     parser.add_argument('--vLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
@@ -142,7 +143,7 @@ def parser2main(args):
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
          split_seed_val=args.split_seed_val,
-         lr=args.lr, optimName=args.optimName, optimArgs=args.optimArgs,
+         lr=args.lr, optimName=args.optimName, optimArgs=args.optimArgs, highOrderGrad=args.highOrderGrad,
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
          save_directory_learning=args.save_directory_learning,
@@ -172,7 +173,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          N_epoch=None, N_train_batch=None, N_batch_edgeUpdate=None,
          ratio_valid=None, ratio_test=None,
          split_seed_val=None,
-         lr=None, optimName=None, optimArgs=None,
+         lr=None, optimName=None, optimArgs=None, highOrderGrad=None,
          vLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
          save_directory_learning=None,
@@ -260,6 +261,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     lr = ut.variableInitializer(lr, 1e-3)
     optimName = ut.variableInitializer(optimName, 'Lamb')
     optimArgs = ut.variableInitializer(optimArgs, {})
+    highOrderGrad = ut.variableInitializer(highOrderGrad, False)
     
     vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
@@ -467,7 +469,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
-            loss.backward()
+            loss.backward(create_graph=highOrderGrad)
             optimizer.step()
             
         
