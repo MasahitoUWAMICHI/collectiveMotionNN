@@ -394,7 +394,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     if flg_scheduled:
         schedulerStr = 'torch.optim.lr_scheduler.' + lrSchedulerName + '(optimizer'
         for key in lrSchedulerArgs.keys():
-            schedulerStr = schedulerStr + ',' + key + 'lrSchedulerArgs["' + key + '"]'
+            schedulerStr = schedulerStr + ',' + key + '=lrSchedulerArgs["' + key + '"]'
         schedulerStr = schedulerStr + ')'
         scheduler = eval(schedulerStr)
     
