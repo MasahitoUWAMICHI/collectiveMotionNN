@@ -119,6 +119,7 @@ def main_parser():
     parser.add_argument('--save_learned_model', type=str)
     parser.add_argument('--save_loss_history', type=str)
     parser.add_argument('--save_validloss_history', type=str)
+    parser.add_argument('--save_lr_history', type=str)    
     parser.add_argument('--save_run_time_history', type=str)
     parser.add_argument('--save_params', type=str)
     
@@ -153,6 +154,7 @@ def parser2main(args):
          save_directory_learning=args.save_directory_learning,
          save_learned_model=args.save_learned_model, 
          save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history,
+         save_lr_history=args.save_lr_history,
          save_run_time_history=args.save_run_time_history,
          save_params=args.save_params)
     
@@ -184,6 +186,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          save_directory_learning=None,
          save_learned_model=None, 
          save_loss_history=None, save_validloss_history=None,
+         save_lr_history=None,
          save_run_time_history=None,
          save_params=None):
 
@@ -280,6 +283,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_nonParametric2Dfull_learned_model.pt')
     save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_nonParametric2Dfull_loss_history.pt')
     save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_nonParametric2Dfull_validloss_history.pt')
+    save_lr_history = ut.variableInitializer(save_lr_history, 'Spring_nonParametric2Dfull_lr_history.pt')
     
     save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_nonParametric2Dfull_run_time_history.npy')
     save_params = ut.variableInitializer(save_params, 'Spring_nonParametric2Dfull_parameters.npy')
@@ -385,6 +389,14 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     optim_str = optim_str[:-1] + ')'
     optimizer = eval(optim_str)
     
+    flg_scheduled = not(lrSchedulerName is None)
+    
+    if flg_scheduled:
+        schedulerStr = 'torch.optim.lr_scheduler.' + lrSchedulerName + '(optimizer'
+        for key in lrSchedulerArgs.keys():
+            schedulerStr = schedulerStr + ',' + key + 'lrSchedulerArgs["' + key + '"]'
+        schedulerStr = schedulerStr + ')'
+        scheduler = eval(schedulerStr)
     
     
     neuralDE = NeuralODE(SP_SDEwrapper, solver=method_ODE).to(device)
@@ -436,10 +448,13 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     valid_loss_history = []
     
     run_time_history = []
+    lr_history = []
         
     start = time.time()
      
     for epoch in range(N_epoch):
+        lrs = [pg["lr"] for pg in optimizer.param_groups]
+        lr_history.append(lrs)
         for graph, x_truth in train_loader:
             optimizer.zero_grad()
             #SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
@@ -479,7 +494,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             valid_loss_history.append([np.nan, np.nan, np.nan])
             loss.backward(create_graph=highOrderGrad)
             optimizer.step()
-            
+            if flg_scheduled:
+                scheduler.step()
         
         with torch.no_grad():
             valid_loss = 0
@@ -563,6 +579,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
             np.save(os.path.join(save_directory_learning, save_run_time_history), run_time_history)
 
+            np.save(os.path.join(save_directory_learning, save_lr_history), lr_history)
     
     
 if __name__ == '__main__':
