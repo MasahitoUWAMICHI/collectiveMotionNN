@@ -494,8 +494,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             valid_loss_history.append([np.nan, np.nan, np.nan])
             loss.backward(create_graph=highOrderGrad)
             optimizer.step()
-            if flg_scheduled:
-                scheduler.step()
+        if flg_scheduled:
+            scheduler.step()
         
         with torch.no_grad():
             valid_loss = 0
