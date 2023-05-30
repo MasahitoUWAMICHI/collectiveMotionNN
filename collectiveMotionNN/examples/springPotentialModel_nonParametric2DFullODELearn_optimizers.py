@@ -78,6 +78,8 @@ def main_parser():
     parser.add_argument('--NN2bias', type=strtobool)
     parser.add_argument('--NNactivationName', type=str)
     parser.add_argument('--NNactivationArgs', type=dict)
+    parser.add_argument('--NNnormalizationName', type=str)
+    parser.add_argument('--NNnormalizationArgs', type=dict)
 
     parser.add_argument('--NNreset_weight_method', type=str)
     parser.add_argument('--NNreset_weight_args', type=dict)
@@ -138,6 +140,7 @@ def parser2main(args):
          gamma_init=args.gamma_init, sigma_init=args.sigma_init, 
          NNshape=args.NNshape, NNbias=args.NNbias, NN2shape=args.NN2shape, NN2bias=args.NN2bias,
          NNactivationName=args.NNactivationName, NNactivationArgs=args.NNactivationArgs,
+         NNnormalizationName=args.NNnormalizationName, NNnormalizationArgs=args.NNnormalizationArgs,
          NNreset_weight_method=args.NNreset_weight_method, NNreset_weight_args=args.NNreset_weight_args,
          NNreset_bias_method=args.NNreset_bias_method, NNreset_bias_args=args.NNreset_bias_args,
          NNreset_others_method=args.NNreset_others_method, NNreset_others_args=args.NNreset_others_args,
@@ -170,6 +173,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          gamma_init=None, sigma_init=None,
          NNshape=None, NNbias=None, NN2shape=None, NN2bias=None,
          NNactivationName=None, NNactivationArgs=None,
+         NNnormalizationName=None, NNnormalizationArgs=None,
          NNreset_weight_method=None, NNreset_weight_args=None,
          NNreset_bias_method=None, NNreset_bias_args=None,
          NNreset_others_method=None, NNreset_others_args=None,
@@ -239,6 +243,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     NNactivationName = ut.variableInitializer(NNactivationName, None)
     NNactivationArgs = ut.variableInitializer(NNactivationArgs, None)
+    
+    NNnormalizationName = ut.variableInitializer(NNnormalizationName, None)
+    NNnormalizationArgs = ut.variableInitializer(NNnormalizationArgs, None)
     
     NNreset_weight_method = ut.variableInitializer(NNreset_weight_method, None)
     NNreset_weight_args = ut.variableInitializer(NNreset_weight_args, {})
@@ -361,7 +368,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     
-    SP_Module = spm.interactionModule_nonParametric_2Dfull(gamma_init, sigma_init, N_dim, NNshape, NNbias, NN2shape, NN2bias, periodic, NNactivationName, NNactivationArgs).to(device)
+    SP_Module = spm.interactionModule_nonParametric_2Dfull(gamma_init, sigma_init, N_dim, NNshape, NNbias, NN2shape, NN2bias, periodic, NNactivationName, NNactivationArgs, normalizationName=NNnormalizationName, normalizationArgs=NNnormalizationArgs).to(device)
     
     if (NN_zeroFinalLayer or NN2_zeroFinalLayer) or (not (NNreset_weight_method is None)) or ((not (NNreset_bias_method is None)) or (not (NNreset_others_method is None))):
         SP_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
