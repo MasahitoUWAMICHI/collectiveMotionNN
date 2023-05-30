@@ -388,6 +388,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(useScore)
     
+    
+    
     print('Module before training : ', SP_SDEwrapper.state_dict())
     
     optim_str = 't_opt.' + optimName + '(SP_SDEwrapper.parameters(),lr={},'.format(lr)
@@ -460,6 +462,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     start = time.time()
      
     for epoch in range(N_epoch):
+        SP_SDEwrapper.train()
         lrs = [pg["lr"] for pg in optimizer.param_groups]
         lr_history.append(lrs)
         for graph, x_truth in train_loader:
@@ -503,6 +506,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             optimizer.step()
         if flg_scheduled:
             scheduler.step()
+        
+        SP_SDEwrapper.eval()
         
         with torch.no_grad():
             valid_loss = 0
