@@ -180,6 +180,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         return initFunc_prefix, initFunc_surfix        
         
     def reset_fNN(self, method_w=None, method_b=None, method_o=None, args_w={}, args_b={}, args_o={}, NNnames=['fNN'], zeroFinalLayer=False, zeroFinalLayer_o=False):
+        existNormalization = not self.normalizationName is None
         for NNname in NNnames:
             if not method_w is None:
                 initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str(method_w, args_w, 'args_w', NNname)
@@ -188,7 +189,12 @@ class interactionModule_nonParametric_acceleration(interactionModule):
             if not method_o is None:
                 initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(method_o, args_o, 'args_o', NNname)
             for key in eval('self.{}.state_dict().keys()'.format(NNname)):
-                if self.normalizationName in key:
+                if existNormalization:
+                    skip_key = self.normalizationName in key
+                else:
+                    skip_key = False
+                    
+                if skip_key:
                     pass
                 elif key.endswith('weight'):
                     if not method_w is None:
