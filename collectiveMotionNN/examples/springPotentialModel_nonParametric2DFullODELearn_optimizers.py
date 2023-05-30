@@ -367,7 +367,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
 
     
     if NNscalingBias:
-        N_scalingBias = Ndim
+        N_scalingBias = N_dim
     else:
         N_scalingBias = None
     
