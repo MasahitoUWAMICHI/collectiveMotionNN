@@ -152,7 +152,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         normalizationArgs = ut.variableInitializer(normalizationArgs, {})
         
         NNseq = collections.OrderedDict([])
-        if not normalizationName is None:
+        if normalizationName is None:
             for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
                 NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=bias)
                 NNseq[activationName+str(i)] = self.createLayer(activationName, activationArgs)
