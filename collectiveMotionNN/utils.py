@@ -33,6 +33,30 @@ class euclidDistance_periodic(nn.Module):
         dr = torch.remainder(r_target - r_zero, self.periodicLength)
         return dr - (dr > self.periodicLength/2) * self.periodicLength
     
+class scalingLayer(nn.Module):
+    def __init__(self, bias_dim=None):
+        super().__init__()
+        
+        self.alpha = nn.parameter.Parameter(torch.rand(1, requires_grad=True))
+        
+        self.bias_dim = bias_dim
+        self.useBias = not self.bias_dim is None
+        
+        if self.useBias:
+            self.bias = nn.parameter.Parameter(torch.rand(bias_dim, requires_grad=True))
+            self.forward = self.forward_useBias
+        else:
+            self.bias = None
+            self.forward = self.forward_noBias
+            
+    def forward_noBias(self, x):
+        return self.alpha * x
+    
+    def forward_useBias(self, x):
+        return self.alpha * x + self.bias
+        
+    
+    
     
 def extractBrownian(bm, tW, device=None):
     bm_size = list(bm.size())
