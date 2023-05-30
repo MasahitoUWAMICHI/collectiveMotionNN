@@ -123,7 +123,7 @@ class interactionModule(nn.Module):
         return g
     
 class interactionModule_nonParametric_acceleration(interactionModule):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, normalizationName=None, normalizationArgs=None):
         super().__init__(0.0, 0.0, 2, 0.0, 0.0, N_dim, periodic, positionName, velocityName, accelerationName, noiseName, messageName)
         self.reset_parameter(None, None, gamma, sigma)
         
@@ -131,7 +131,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
         self.fBias = ut.variableInitializer(fBias, True)
         
-        self.init_f(activationName, activationArgs)
+        self.init_f(activationName, activationArgs, normalizationName, normalizationArgs)
         
     def createLayer(self, layer_name, args={}):
         args_str = ''
@@ -165,8 +165,8 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
         return nn.Sequential(NNseq)
     
-    def init_f(self, activationName=None, activationArgs=None):
-        self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs)
+    def init_f(self, activationName=None, activationArgs=None, normalizationName=None, normalizationArgs=None):
+        self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs, normalizationName, normalizationArgs)
         
     def make_reset_str(self, method, args, argsName, NNname='fNN'):
         initFunc_prefix = 'nn.init.{}(self.{}.'.format(method, NNname)
@@ -220,8 +220,8 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
         
 class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParametric_acceleration):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
-        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName)
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, normalizationName=None, normalizationArgs=None):
+        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, normalizationName, normalizationArgs)
         
         self.init_f(activationName, activationArgs)
     
@@ -237,8 +237,8 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParame
     
     
 class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Dacceleration):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
-        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName)
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, normalizationName=None, normalizationArgs=None):
+        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, normalizationName, normalizationArgs)
         
         self.f2NNshape = ut.variableInitializer(f2NNshape, [128, 128, 128])
         
