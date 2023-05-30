@@ -196,14 +196,18 @@ class interactionModule_nonParametric_acceleration(interactionModule):
                     skip_key = False
                     
                 if skip_key:
+                    print(1)
                     pass
                 elif key.endswith('weight'):
+                    print(2)
                     if not method_w is None:
                         eval(initFunc_prefix_w + key + initFunc_surfix_w)
                 elif key.endswith('bias'):
+                    print(3)
                     if not method_b is None:
                         eval(initFunc_prefix_b + key + initFunc_surfix_b)
                 else:
+                    print(4)
                     if not method_o is None:
                         eval(initFunc_prefix_o + key + initFunc_surfix_o)
             if zeroFinalLayer:
