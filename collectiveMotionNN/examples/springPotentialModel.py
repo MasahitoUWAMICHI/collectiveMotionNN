@@ -133,7 +133,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
         self.init_f(activationName, activationArgs)
         
-    def createActivation(self, act_name, args={}):
+    def createLayer(self, layer_name, args={}):
         args_str = ''
         key_exist = False
         for key in args.keys():
@@ -143,16 +143,24 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         if key_exist:
             args_str = args_str[:-1]
 
-        return eval('nn.' + act_name + '(' + args_str + ')')
-    
-    def createNNsequence(self, N_in, NNshape, N_out, bias, activationName=None, activationArgs=None):
+        return eval('nn.' + layer_name + '(' + args_str + ')')
+        
+    def createNNsequence(self, N_in, NNshape, N_out, bias, activationName=None, activationArgs=None, normalizationName=None, normalizationArgs=None):
         activationName = ut.variableInitializer(activationName, 'ReLU')
         activationArgs = ut.variableInitializer(activationArgs, {})
+        normalizationName = ut.variableInitializer(normalizationName, None)
+        normalizationArgs = ut.variableInitializer(normalizationArgs, {})
         
         NNseq = collections.OrderedDict([])
-        for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
-            NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=bias)
-            NNseq[activationName+str(i)] = self.createActivation(activationName, activationArgs)
+        if not normalizationName is None:
+            for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
+                NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=bias)
+                NNseq[activationName+str(i)] = self.createLayer(activationName, activationArgs)
+        else:
+            for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
+                NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=False)
+                NNseq[normalizationName+str(i)] = self.createLayer(normalizationName, normalizationArgs)
+                NNseq[activationName+str(i)] = self.createLayer(activationName, activationArgs)
         NNseq.pop(activationName+str(i))
         
         return nn.Sequential(NNseq)
