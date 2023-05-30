@@ -189,6 +189,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
             if not method_o is None:
                 initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(method_o, args_o, 'args_o', NNname)
             for key in eval('self.{}.state_dict().keys()'.format(NNname)):
+                print(key)
                 if existNormalization:
                     skip_key = self.normalizationName in key
                 else:
