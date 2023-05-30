@@ -223,10 +223,10 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParame
     def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, normalizationName=None, normalizationArgs=None):
         super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, normalizationName, normalizationArgs)
         
-        self.init_f(activationName, activationArgs)
+        self.init_f(activationName, activationArgs, normalizationName, normalizationArgs)
     
-    def init_f(self, activationName=None, activationArgs=None):
-        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs)
+    def init_f(self, activationName=None, activationArgs=None, normalizationName=None, normalizationArgs=None):
+        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs, normalizationName, normalizationArgs)
                 
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
