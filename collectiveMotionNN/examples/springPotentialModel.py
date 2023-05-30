@@ -123,7 +123,7 @@ class interactionModule(nn.Module):
         return g
     
 class interactionModule_nonParametric_acceleration(interactionModule):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, normalizationName=None, normalizationArgs=None):
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
         super().__init__(0.0, 0.0, 2, 0.0, 0.0, N_dim, periodic, positionName, velocityName, accelerationName, noiseName, messageName)
         self.reset_parameter(None, None, gamma, sigma)
         
@@ -131,7 +131,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
         self.fBias = ut.variableInitializer(fBias, True)
         
-        self.init_f(activationName, activationArgs, normalizationName, normalizationArgs)
+        self.init_f(activationName, activationArgs)
         
     def createLayer(self, layer_name, args={}):
         args_str = ''
@@ -145,31 +145,22 @@ class interactionModule_nonParametric_acceleration(interactionModule):
 
         return eval('nn.' + layer_name + '(' + args_str + ')')
         
-    def createNNsequence(self, N_in, NNshape, N_out, bias, activationName=None, activationArgs=None, normalizationName=None, normalizationArgs=None):
+    def createNNsequence(self, N_in, NNshape, N_out, bias, activationName=None, activationArgs=None):
         activationName = ut.variableInitializer(activationName, 'ReLU')
         activationArgs = ut.variableInitializer(activationArgs, {})
-        normalizationName = ut.variableInitializer(normalizationName, None)
-        normalizationArgs = ut.variableInitializer(normalizationArgs, {})
         
         self.activationName = activationName
-        self.normalizationName = normalizationName
         
         NNseq = collections.OrderedDict([])
-        if normalizationName is None:
-            for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
-                NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=bias)
-                NNseq[activationName+str(i)] = self.createLayer(activationName, activationArgs)
-        else:
-            for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
-                NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=False)
-                NNseq[normalizationName+str(i)] = self.createLayer(normalizationName, normalizationArgs)
-                NNseq[activationName+str(i)] = self.createLayer(activationName, activationArgs)
+        for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
+            NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=bias)
+            NNseq[activationName+str(i)] = self.createLayer(activationName, activationArgs)
         NNseq.pop(activationName+str(i))
         
         return nn.Sequential(NNseq)
     
-    def init_f(self, activationName=None, activationArgs=None, normalizationName=None, normalizationArgs=None):
-        self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs, normalizationName, normalizationArgs)
+    def init_f(self, activationName=None, activationArgs=None):
+        self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs)
         
     def make_reset_str(self, method, args, argsName, NNname='fNN'):
         initFunc_prefix = 'nn.init.{}(self.{}.'.format(method, NNname)
@@ -180,7 +171,6 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         return initFunc_prefix, initFunc_surfix        
         
     def reset_fNN(self, method_w=None, method_b=None, method_o=None, args_w={}, args_b={}, args_o={}, NNnames=['fNN'], zeroFinalLayer=False, zeroFinalLayer_o=False):
-        existNormalization = not self.normalizationName is None
         for NNname in NNnames:
             if not method_w is None:
                 initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str(method_w, args_w, 'args_w', NNname)
@@ -189,14 +179,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
             if not method_o is None:
                 initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(method_o, args_o, 'args_o', NNname)
             for key in eval('self.{}.state_dict().keys()'.format(NNname)):
-                if existNormalization:
-                    skip_key = self.normalizationName in key
-                else:
-                    skip_key = False
-                    
-                if skip_key:
-                    pass
-                elif key.endswith('weight'):
+                if key.endswith('weight'):
                     if not method_w is None:
                         eval(initFunc_prefix_w + key + initFunc_surfix_w)
                 elif key.endswith('bias'):
@@ -231,13 +214,13 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
         
 class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParametric_acceleration):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, normalizationName=None, normalizationArgs=None):
-        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, normalizationName, normalizationArgs)
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName)
         
-        self.init_f(activationName, activationArgs, normalizationName, normalizationArgs)
+        self.init_f(activationName, activationArgs)
     
-    def init_f(self, activationName=None, activationArgs=None, normalizationName=None, normalizationArgs=None):
-        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs, normalizationName, normalizationArgs)
+    def init_f(self, activationName=None, activationArgs=None):
+        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs)
                 
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
@@ -248,17 +231,17 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParame
     
     
 class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Dacceleration):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, normalizationName=None, normalizationArgs=None):
-        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, normalizationName, normalizationArgs)
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName)
         
         self.f2NNshape = ut.variableInitializer(f2NNshape, [128, 128, 128])
         
         self.f2Bias = ut.variableInitializer(f2Bias, True)
         
-        self.init_f2(activationName, activationArgs, normalizationName, normalizationArgs)
+        self.init_f2(activationName, activationArgs)
     
-    def init_f2(self, activationName=None, activationArgs=None, normalizationName=None, normalizationArgs=None):
-        self.f2NN = self.createNNsequence(self.N_dim, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs, normalizationName, normalizationArgs)
+    def init_f2(self, activationName=None, activationArgs=None):
+        self.f2NN = self.createNNsequence(self.N_dim, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs)
     
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
