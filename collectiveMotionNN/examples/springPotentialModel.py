@@ -151,6 +151,9 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         normalizationName = ut.variableInitializer(normalizationName, None)
         normalizationArgs = ut.variableInitializer(normalizationArgs, {})
         
+        self.activationName = activationName
+        self.normalizationName = normalizationName
+        
         NNseq = collections.OrderedDict([])
         if normalizationName is None:
             for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
@@ -185,7 +188,9 @@ class interactionModule_nonParametric_acceleration(interactionModule):
             if not method_o is None:
                 initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(method_o, args_o, 'args_o', NNname)
             for key in eval('self.{}.state_dict().keys()'.format(NNname)):
-                if key.endswith('weight'):
+                if self.normalizationName in key:
+                    pass
+                elif key.endswith('weight'):
                     if not method_w is None:
                         eval(initFunc_prefix_w + key + initFunc_surfix_w)
                 elif key.endswith('bias'):
