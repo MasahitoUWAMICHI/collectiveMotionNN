@@ -251,8 +251,8 @@ class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Da
         
         self.init_f2(activationName, activationArgs)
     
-    def init_f2(self, activationName=None, activationArgs=None):
-        self.f2NN = self.createNNsequence(self.N_dim, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs)
+    def init_f2(self, activationName=None, activationArgs=None, normalizationName=None, normalizationArgs=None):
+        self.f2NN = self.createNNsequence(self.N_dim, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs, normalizationName, normalizationArgs)
     
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
