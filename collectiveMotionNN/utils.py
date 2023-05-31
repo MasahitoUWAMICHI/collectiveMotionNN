@@ -37,7 +37,7 @@ class scalingLayer(nn.Module):
     def __init__(self, bias_dim=None):
         super().__init__()
         
-        self.alpha = nn.parameter.Parameter(torch.rand(1, requires_grad=True))
+        self.log_alpha = nn.parameter.Parameter(torch.rand(1, requires_grad=True))
         
         self.bias_dim = bias_dim
         self.useBias = not self.bias_dim is None
@@ -49,11 +49,14 @@ class scalingLayer(nn.Module):
             self.bias = None
             self.forward = self.forward_noBias
             
+    def alpha(self):
+        return torch.exp(self.log_alpha)
+            
     def forward_noBias(self, x):
-        return self.alpha * x
+        return self.alpha() * x
     
     def forward_useBias(self, x):
-        return self.alpha * x + self.bias
+        return self.alpha() * x + self.bias
         
     
     
