@@ -52,11 +52,11 @@ class interactionModule(nn.Module):
             
     def calc_message(self, edges):
         dtheta = (edges.src[self.polarityName] - edges.dst[self.polarityName]) * self.d
-        return {self.messageName: torch.cat((torch.cos(dtheta), torch.sin(dtheta)), -1)}
+        return {self.messageName: torch.sin(dtheta)}
     
     def aggregate_message(self, nodes):
         mean_cs = torch.mean(nodes.mailbox[self.messageName], 1)
-        return {self.torqueName : self.w0 * nn.functional.normalize(mean_cs, dim=-1)[..., 1:2]}
+        return {self.torqueName : self.w0 * mean_cs}
         
     def f(self, t, g, args=None):
         g.ndata[self.velocityName] = self.v0 * torch.cat((torch.cos(g.ndata[self.polarityName]), torch.sin(g.ndata[self.polarityName])), -1)
