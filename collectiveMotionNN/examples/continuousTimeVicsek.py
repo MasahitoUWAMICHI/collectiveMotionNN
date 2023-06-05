@@ -9,41 +9,33 @@ import collectiveMotionNN.utils as ut
 import collectiveMotionNN.graph_utils as gu
 
 
-class springPotential(nn.Module):
-    def __init__(self, c, r_c, p=2):
+class continuousTimeVicsek2D(nn.Module):
+    def __init__(self, c, d=1.0):
         super().__init__()
         
         self.logc = nn.Parameter(torch.tensor(np.log(c), requires_grad=True))
-        self.logr_c = nn.Parameter(torch.tensor(np.log(r_c), requires_grad=True))
 
-        self.p = p
+        self.d = d
         
     def c(self):
         return torch.exp(self.logc)
     
-    def r_c(self):
-        return torch.exp(self.logr_c)
-        
-    def potential(self, r):
-        return self.c() * (r - self.r_c())**self.p
-
-    def force(self, r):
-        return -self.c() * self.p * (r - self.r_c())**(self.p - 1)
+    def torque(self, dtheta):
+        return self.c() * torch.sin(dtheta * self.d)
 
     
 class interactionModule(nn.Module):
-    def __init__(self, c, r_c, p=2, gamma=0.0, sigma=0.1, N_dim=2, periodic=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+    def __init__(self, u0, c, d=1.0, sigma=0.1, N_dim=2, periodic=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
         super().__init__()
         
-        self.gamma = nn.Parameter(torch.tensor(gamma, requires_grad=True))
-        
+        self.u0 = nn.Parameter(torch.tensor(u0, requires_grad=True))
         self.sigma = nn.Parameter(torch.tensor(sigma, requires_grad=True))
         
         self.N_dim = N_dim
         
         self.prepare_sigma()
         
-        self.sp = springPotential(c, r_c, p)
+        self.ctv = continuousTimeVicsek2D(c, d)
         
         self.flg_periodic = not(periodic is None)
         
@@ -55,29 +47,20 @@ class interactionModule(nn.Module):
         self.def_dr()
             
         self.positionName = ut.variableInitializer(positionName, 'x')
-        self.velocityName = ut.variableInitializer(velocityName, 'v')        
-        self.accelerationName = ut.variableInitializer(accelerationName, 'a')
+        self.velocityName = ut.variableInitializer(velocityName, 'v')
+        self.polarityName = ut.variableInitializer(polarityName, 'theta')
+        self.torqueName = ut.variableInitializer(torqueName, 'w')
         self.noiseName = ut.variableInitializer(noiseName, 'sigma')
         
         self.messageName = ut.variableInitializer(messageName, 'm')
         
         
-    def reset_parameter(self, c=None, r_c=None, gamma=None, sigma=None):
+    def reset_parameter(self, c=None, sigma=None):
         if c is None:
             nn.init.uniform_(self.sp.logc)
         else:
             nn.init.constant_(self.sp.logc, np.log(c))
-            
-        if r_c is None:
-            nn.init.uniform_(self.sp.logr_c)
-        else:
-            nn.init.constant_(self.sp.logr_c, np.log(r_c))
-                        
-        if gamma is None:
-            nn.init.uniform_(self.gamma)
-        else:
-            nn.init.constant_(self.gamma, gamma)
-
+        
         if sigma is None:
             nn.init.uniform_(self.sigma)
         else:
@@ -86,7 +69,7 @@ class interactionModule(nn.Module):
         self.prepare_sigma()
         
     def prepare_sigma(self):
-        self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim], device=self.sigma.device), self.sigma*torch.eye(self.N_dim, device=self.sigma.device)), dim=0)
+        self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim], device=self.sigma.device), self.sigma*torch.eye(self.N_dim-1, device=self.sigma.device)), dim=0)
             
     def def_nonPeriodic(self):
         self.distanceCalc = ut.euclidDistance_nonPeriodic()
@@ -101,20 +84,20 @@ class interactionModule(nn.Module):
             self.def_periodic()
             
     def calc_message(self, edges):
-        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+        dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
 
-        abs_dr = torch.norm(dr, dim=-1, keepdim=True)
-        unit_dr = nn.functional.normalize(dr, dim=-1)
-        
-        return {self.messageName: self.sp.force(abs_dr) * unit_dr}
+        return {self.messageName: self.ctv.torque(dtheta)}
     
     def aggregate_message(self, nodes):
-        sum_force = torch.sum(nodes.mailbox[self.messageName], 1)
-        return {self.accelerationName : sum_force}
+        sum_torque = torch.mean(nodes.mailbox[self.messageName], 1)
+        return {self.torqueName : sum_torque}
+        
+    def polarity2velocity(self, theta):
+        return self.u0 * torch.cat((torch.cos(theta), torch.sin(theta)), dim=-1)
         
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
-        g.ndata[self.accelerationName] = g.ndata[self.accelerationName] - self.gamma * g.ndata[self.velocityName]
+        g.ndata[self.velocityName] = self.polarity2velocity(g.ndata[self.polarityName])
         return g
       
     def g(self, t, g, args=None):
