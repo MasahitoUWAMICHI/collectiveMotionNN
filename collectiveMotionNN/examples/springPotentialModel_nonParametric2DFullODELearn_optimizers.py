@@ -588,6 +588,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                     SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     run_time_history[-1]))
         
+            torch.cuda.empty_cache()
+        
             torch.save(torch.tensor(loss_history), os.path.join(save_directory_learning, save_loss_history))
 
             torch.save(torch.tensor(valid_loss_history), os.path.join(save_directory_learning, save_validloss_history))
