@@ -470,6 +470,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         lr_history.append(lrs)
         for graph, x_truth in train_loader:
             optimizer.zero_grad()
+            torch.cuda.empty_cache()
             #SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
             graph_batchsize = len(graph.batch_num_nodes())
             
@@ -511,6 +512,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             scheduler.step()
         
         SP_SDEwrapper.eval()
+        
+        torch.cuda.empty_cache()
         
         with torch.no_grad():
             valid_loss = 0
