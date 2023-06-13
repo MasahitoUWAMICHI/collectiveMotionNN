@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 import collectiveMotionNN.utils as ut
