@@ -284,8 +284,12 @@ class batchedSubset(torch.utils.data.Subset):
     def __len__(self):
         return len(self.indices) * self.dataset.t_max
     
-def thetaLoss(x, y):
-    return 1 - torch.mean(torch.cos(x - y))
+class thetaLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+    def forward(self, x, y):
+        return 1 - torch.mean(torch.cos(x - y))
     
 class myLoss(nn.Module):
     def __init__(self, distanceCalc, N_dim=2, useScore=True):
