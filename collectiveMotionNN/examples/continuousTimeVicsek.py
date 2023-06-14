@@ -256,7 +256,7 @@ class myDataset(torch.utils.data.Dataset):
     def from_t_batch(self, batch, t):
         _, x = self.loadData()
         
-        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'v', 'theta'], [self.N_dim, self.N_dim, self.N_dim-1]))
+        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'theta'], [self.N_dim, self.N_dim-1]))
         
         x_truth = x[t+self.delayTruth, batch]
         
@@ -284,7 +284,8 @@ class batchedSubset(torch.utils.data.Subset):
     def __len__(self):
         return len(self.indices) * self.dataset.t_max
     
-    
+def thetaLoss(x, y):
+    return 1 - torch.mean(torch.cos(x - y))
     
 class myLoss(nn.Module):
     def __init__(self, distanceCalc, N_dim=2, useScore=True):
@@ -294,7 +295,7 @@ class myLoss(nn.Module):
         self.useScore = useScore
                 
         self.xyLoss = nn.MSELoss()
-        self.vLoss = nn.MSELoss()
+        self.thetaLoss = thetaLoss()
         
         self.N_dim = N_dim
         
@@ -303,15 +304,15 @@ class myLoss(nn.Module):
     def forward_score(self, x, y, score_x, score_y):
         dxy = self.distanceCalc(x[...,:self.N_dim], y[...,:self.N_dim])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
-        vLoss = self.xyLoss(x[...,self.N_dim:(2*self.N_dim)], y[...,self.N_dim:(2*self.N_dim)])
+        thetaLoss = self.thetaLoss(x[...,self.N_dim:(2*self.N_dim-1)], y[...,self.N_dim:(2*self.N_dim-1)])
         scoreLoss = torch.mean(torch.square(torch.sum(score_x, dim=-1, keepdim=True) - score_y))
-        return xyLoss, vLoss, scoreLoss
+        return xyLoss, thetaLoss, scoreLoss
        
     def forward_noScore(self, x, y):
         dxy = self.distanceCalc(x[...,:self.N_dim], y[...,:self.N_dim])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
-        vLoss = self.xyLoss(x[...,self.N_dim:(2*self.N_dim)], y[...,self.N_dim:(2*self.N_dim)])
-        return xyLoss, vLoss
+        thetaLoss = self.thetaLoss(x[...,self.N_dim:(2*self.N_dim-1)], y[...,self.N_dim:(2*self.N_dim-1)])
+        return xyLoss, thetaLoss
        
     def def_forward(self):
         if self.useScore:
