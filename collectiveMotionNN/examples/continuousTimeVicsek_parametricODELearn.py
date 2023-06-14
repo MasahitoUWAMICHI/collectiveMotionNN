@@ -260,7 +260,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
 
     
     
-    
+    print(t_save)
     
     CTV_SDEwrapper = wm.dynamicGSDEwrapper(CTV_SDEmodule, copy.deepcopy(graph_init).to(device), 
                                           ndataInOutModule=gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1]), 
