@@ -173,9 +173,9 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     device = ut.variableInitializer(device, 'cuda' if torch.cuda.is_available() else 'cpu')
     
     save_directory_simulation = ut.variableInitializer(save_directory_simulation, '.')
-    save_x_SDE = ut.variableInitializer(save_x_SDE, 'Spring_SDE_traj.pt')
-    save_t_SDE = ut.variableInitializer(save_t_SDE, 'Spring_SDE_t_eval.pt')
-    save_model = ut.variableInitializer(save_model, 'Spring_SDE_model.pt')
+    save_x_SDE = ut.variableInitializer(save_x_SDE, 'CTVicsek_SDE_traj.pt')
+    save_t_SDE = ut.variableInitializer(save_t_SDE, 'CTVicsek_SDE_t_eval.pt')
+    save_model = ut.variableInitializer(save_model, 'CTVicsek_SDE_model.pt')
     
     method_SDE = ut.variableInitializer(method_SDE, 'euler')
     noise_type = ut.variableInitializer(noise_type, 'general')
@@ -217,12 +217,12 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     
     save_directory_learning = ut.variableInitializer(save_directory_learning, '.')
     
-    save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_parametric_learned_model.pt')
-    save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_parametric_loss_history.pt')
-    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_parametric_validloss_history.pt')
+    save_learned_model = ut.variableInitializer(save_learned_model, 'CTVicsek_parametric_learned_model.pt')
+    save_loss_history = ut.variableInitializer(save_loss_history, 'CTVicsek_parametric_loss_history.pt')
+    save_validloss_history = ut.variableInitializer(save_validloss_history, 'CTVicsek_parametric_validloss_history.pt')
     
-    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_parametric_run_time_history.npy')
-    save_params = ut.variableInitializer(save_params, 'Spring_parametric_parameters.npy')
+    save_run_time_history = ut.variableInitializer(save_run_time_history, 'CTVicsek_parametric_run_time_history.npy')
+    save_params = ut.variableInitializer(save_params, 'CTVicsek_parametric_parameters.npy')
     
     if not skipSimulate:
         os.makedirs(save_directory_simulation, exist_ok=True)
