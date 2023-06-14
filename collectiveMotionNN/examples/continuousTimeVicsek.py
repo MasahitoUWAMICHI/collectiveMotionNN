@@ -256,7 +256,7 @@ class myDataset(torch.utils.data.Dataset):
     def from_t_batch(self, batch, t):
         _, x = self.loadData()
         
-        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'v'], [self.N_dim, self.N_dim]))
+        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'v', 'theta'], [self.N_dim, self.N_dim, self.N_dim-1]))
         
         x_truth = x[t+self.delayTruth, batch]
         
