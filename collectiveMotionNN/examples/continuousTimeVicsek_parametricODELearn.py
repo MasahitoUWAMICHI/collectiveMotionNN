@@ -149,11 +149,11 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
          save_run_time_history=None,
          save_params=None):
 
-    c = ut.variableInitializer(c, 0.01)
+    c = ut.variableInitializer(c, 1.0)
     d = ut.variableInitializer(d, 1.0)
-    u0 = ut.variableInitializer(u0, 2.0)
+    u0 = ut.variableInitializer(u0, 0.03)
     
-    sigma = ut.variableInitializer(sigma, 0.01)
+    sigma = ut.variableInitializer(sigma, 0.3)
     
     
     r0 = ut.variableInitializer(r0, 5.0)
