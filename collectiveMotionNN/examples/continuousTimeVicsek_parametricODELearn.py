@@ -87,7 +87,7 @@ def main_parser():
     
     parser.add_argument('--lr', type=float)
     parser.add_argument('--lr_hyperSGD', type=float)
-    parser.add_argument('--vLoss_weight', type=float)
+    parser.add_argument('--thetaloss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
     parser.add_argument('--useScore', type=strtobool)
     
@@ -117,7 +117,7 @@ def parser2main(args):
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
          split_seed_val=args.split_seed_val,
          lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
-         vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
+         thetaLoss_weight=args.thetaLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
          save_directory_learning=args.save_directory_learning,
          save_learned_model=args.save_learned_model, 
@@ -141,7 +141,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
          ratio_valid=None, ratio_test=None,
          split_seed_val=None,
          lr=None, lr_hyperSGD=None, 
-         vLoss_weight=None, scoreLoss_weight=None, 
+         thetaLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
          save_directory_learning=None,
          save_learned_model=None, 
@@ -211,7 +211,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     
     lr = ut.variableInitializer(lr, 1e-3)
     lr_hyperSGD = ut.variableInitializer(lr_hyperSGD, 1e-3)
-    vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
+    thetaLoss_weight = ut.variableInitializer(thetaLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     useScore = ut.variableInitializer(useScore, False)
     
@@ -266,18 +266,6 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [N_dim, N_dim-1]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
-    print(CTV_SDEwrapper.graph)
-    
-    print(x0.shape)
-    
-    test_f = CTV_SDEwrapper.f(0, x0.to(device))
-    print(test_f)
-    print(test_f.shape)
-    
-    
-    test_g = CTV_SDEwrapper.g(0, x0.to(device))
-    print(test_g)
-    print(test_g.shape)
     
     if not skipSimulate:
     
@@ -364,7 +352,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, alpha, 1-beta1, 1-beta2, time[sec.]')
+    print('epoch: trainLoss (xy, theta, score), validLoss (xy, theta, score), u0, c, sigma, alpha, 1-beta1, 1-beta2, time[sec.]')
     
     loss_history = []
     valid_loss_history = []
@@ -401,14 +389,14 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
                     
                 score_pred = torch.stack(CTV_SDEwrapper.score(), dim=1)
             
-                xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-                loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
+                xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                loss = xyloss + thetaLoss_weight * thetaloss + scoreLoss_weight * scoreloss
             else:
-                xyloss, vloss = lossFunc(x_pred[0], x_truth)
+                xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
                 scoreloss = torch.full([1], torch.nan)
-                loss = xyloss + vLoss_weight * vloss
+                loss = xyloss + thetaLoss_weight * thetaloss
                 
-            loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
+            loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             mw.zero_grad()
             loss.backward()
@@ -421,7 +409,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
         with torch.no_grad():
             valid_loss = 0
             valid_xyloss_total = 0
-            valid_vloss_total = 0
+            valid_thetaloss_total = 0
             valid_scoreloss_total = 0
             data_count = 0
             
@@ -447,26 +435,26 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
                         _ = CTV_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
                     score_pred = torch.stack(CTV_SDEwrapper.score(), dim=1)
                 
-                    valid_xyloss, valid_vloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                    valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
                     valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                    valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
+                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
                     valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
-                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss + scoreLoss_weight * valid_scoreloss)
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss + scoreLoss_weight * valid_scoreloss)
                     
                 else:
-                    valid_xyloss, valid_vloss = lossFunc(x_pred[0], x_truth)
+                    valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth)
                     valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                    valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
+                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
                     valid_scoreloss_total = torch.full([1], torch.nan)
-                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss)
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
                     
                 data_count = data_count + graph_batchsize
                 
             valid_loss = valid_loss / data_count
             valid_xyloss_total = valid_xyloss_total / data_count
-            valid_vloss_total = valid_vloss_total / data_count
+            valid_thetaloss_total = valid_thetaloss_total / data_count
             valid_scoreloss_total = valid_scoreloss_total / data_count
-            valid_loss_history[-1] = [valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item()]
+            valid_loss_history[-1] = [valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item()]
             
             run_time_history.append(time.time() - start)
             
@@ -475,22 +463,20 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
                 with open(os.path.join(save_directory_learning, save_learned_model), mode='wb') as f:
                     cloudpickle.dump(CTV_SDEwrapper.to('cpu'), f)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f} Best'.format(
-                    epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
-                    valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f} Best'.format(
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
+                    valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
+                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.u0.item(),
                     CTV_SDEwrapper.dynamicGNDEmodule.calc_module.ctv.c().item(),
-                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.ctv.r_c().item(),
-                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     CTV_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item(),
                     run_time_history[-1]))
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f}'.format(
-                    epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
-                    valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.2e}, {:.2e}, {:.2e}, {:.3f}'.format(
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
+                    valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
+                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.u0.item(),
                     CTV_SDEwrapper.dynamicGNDEmodule.calc_module.ctv.c().item(),
-                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.ctv.r_c().item(),
-                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
                     CTV_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     mw.optimizer.parameters['alpha'].item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta1']).item(), 1-gdtuo.Adam.clamp(mw.optimizer.parameters['beta2']).item(),
                     run_time_history[-1]))
