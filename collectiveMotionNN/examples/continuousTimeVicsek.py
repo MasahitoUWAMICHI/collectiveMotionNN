@@ -175,7 +175,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
             
         
     def calc_message(self, edges):
-        dtheta = torch.remainder(edges.dst[self.polarityName] - edges.src[self.polarityName], torch.tensor(2 * np.pi)
+        dtheta = torch.remainder(edges.dst[self.polarityName] - edges.src[self.polarityName], torch.tensor(2 * np.pi))
         
         return {self.messageName: self.fNN(dtheta)}
         
