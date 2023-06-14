@@ -65,7 +65,7 @@ class interactionModule(nn.Module):
         self.prepare_sigma()
         
     def prepare_sigma(self):
-        self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim], device=self.sigma.device), self.sigma*torch.eye(self.N_dim-1, device=self.sigma.device)), dim=0)
+        self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim-1], device=self.sigma.device), self.sigma*torch.eye(self.N_dim-1, device=self.sigma.device)), dim=0)
             
     def calc_message(self, edges):
         dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
