@@ -260,14 +260,22 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
 
     
     
-    print(t_save)
     
     CTV_SDEwrapper = wm.dynamicGSDEwrapper(CTV_SDEmodule, copy.deepcopy(graph_init).to(device), 
                                           ndataInOutModule=gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1]), 
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [N_dim, N_dim-1]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
-    print(CTV_SDEwrapper.f(0, x0.to(device)))
+    print(x0.shape)
+    
+    test_f = CTV_SDEwrapper.f(0, x0.to(device))
+    print(test_f)
+    print(test_f.shape)
+    
+    
+    test_g = CTV_SDEwrapper.g(0, x0.to(device))
+    print(test_g)
+    print(test_g.shape)
     
     if not skipSimulate:
     
