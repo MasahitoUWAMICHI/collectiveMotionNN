@@ -267,7 +267,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     if not skipSimulate:
     
         bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                          size=(x0.shape[0], N_dim), dt=dt_step, levy_area_approximation=bm_levy, device=device)
+                          size=(x0.shape[0], N_dim-1), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
         with torch.no_grad():
             y = sdeint(CTV_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
@@ -277,8 +277,9 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
         y = y.to('cpu')
         if not(periodic is None):
             y[..., :N_dim] = torch.remainder(y[..., :N_dim], periodic)
+        y[..., N_dim:] = torch.remainder(y[..., N_dim:], 2*np.pi)
 
-        y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim))
+        y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim-1))
 
         torch.save(y, os.path.join(save_directory_simulation, save_x_SDE))
 
