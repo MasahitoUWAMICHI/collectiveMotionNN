@@ -156,7 +156,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     sigma = ut.variableInitializer(sigma, 0.3)
     
     
-    r0 = ut.variableInitializer(r0, 5.0)
+    r0 = ut.variableInitializer(r0, 1.0)
     L = ut.variableInitializer(L, 5.0)
     
     N_dim = ut.variableInitializer(N_dim, int(2))
@@ -233,8 +233,11 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     print(args_of_main)
     np.save(os.path.join(save_directory_learning, save_params), args_of_main)
     
+    ut.dict2txt(os.path.join(save_directory_learning, os.path.splitext(save_params)[0]+'.txt'), args_of_main)
+    
     if not skipSimulate:
-        np.save(os.path.join(save_directory_simulation, save_params), args_of_main)    
+        np.save(os.path.join(save_directory_simulation, save_params), args_of_main)
+        ut.dict2txt(os.path.join(save_directory_simulation, os.path.splitext(save_params)[0]+'.txt'), args_of_main) 
     
     CTV_Module = ctv.interactionModule(u0, c, d, sigma, N_dim).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
@@ -263,6 +266,8 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
                                           ndataInOutModule=gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1]), 
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [N_dim, N_dim-1]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
+    
+    print(CTV_SDEwrapper.f(0, x0[0].to(device)))
     
     if not skipSimulate:
     
