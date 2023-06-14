@@ -25,7 +25,7 @@ class continuousTimeVicsek2D(nn.Module):
 
     
 class interactionModule(nn.Module):
-    def __init__(self, u0, c, d=1.0, sigma=0.1, N_dim=2, periodic=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None):
+    def __init__(self, u0, c, d=1.0, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
         super().__init__()
         
         self.u0 = nn.Parameter(torch.tensor(u0, requires_grad=True))
@@ -37,15 +37,6 @@ class interactionModule(nn.Module):
         
         self.ctv = continuousTimeVicsek2D(c, d)
         
-        self.flg_periodic = not(periodic is None)
-        
-        if self.flg_periodic:
-            self.periodic = torch.tensor(periodic)
-        else:
-            self.periodic = periodic
-            
-        self.def_dr()
-            
         self.positionName = ut.variableInitializer(positionName, 'x')
         self.velocityName = ut.variableInitializer(velocityName, 'v')
         self.polarityName = ut.variableInitializer(polarityName, 'theta')
@@ -55,11 +46,16 @@ class interactionModule(nn.Module):
         self.messageName = ut.variableInitializer(messageName, 'm')
         
         
-    def reset_parameter(self, c=None, sigma=None):
+    def reset_parameter(self, u0=None, c=None, sigma=None):
         if c is None:
             nn.init.uniform_(self.sp.logc)
         else:
             nn.init.constant_(self.sp.logc, np.log(c))
+            
+        if u0 is None:
+            nn.init.uniform_(self.u0)
+        else:
+            nn.init.constant_(self.u0, u0)
         
         if sigma is None:
             nn.init.uniform_(self.sigma)
@@ -70,18 +66,6 @@ class interactionModule(nn.Module):
         
     def prepare_sigma(self):
         self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim], device=self.sigma.device), self.sigma*torch.eye(self.N_dim-1, device=self.sigma.device)), dim=0)
-            
-    def def_nonPeriodic(self):
-        self.distanceCalc = ut.euclidDistance_nonPeriodic()
-        
-    def def_periodic(self):
-        self.distanceCalc = ut.euclidDistance_periodic(self.periodic)
-        
-    def def_dr(self):
-        if self.periodic is None:
-            self.def_nonPeriodic()
-        else:
-            self.def_periodic()
             
     def calc_message(self, edges):
         dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
@@ -106,9 +90,9 @@ class interactionModule(nn.Module):
         return g
     
 class interactionModule_nonParametric_acceleration(interactionModule):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
-        super().__init__(0.0, 0.0, 2, 0.0, 0.0, N_dim, periodic, positionName, velocityName, accelerationName, noiseName, messageName)
-        self.reset_parameter(None, None, gamma, sigma)
+    def __init__(self, u0=None, d=1.0, sigma=None, N_dim=2, fNNshape=None, fBias=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
+        super().__init__(0.0, 0.0, d, 0.0, N_dim, positionName, velocityName, polarityName, torqueName, noiseName, messageName)
+        self.reset_parameter(u0, None, sigma)
         
         self.fNNshape = ut.variableInitializer(fNNshape, [128, 128, 128])
         
@@ -191,35 +175,27 @@ class interactionModule_nonParametric_acceleration(interactionModule):
             
         
     def calc_message(self, edges):
-        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
-        abs_dr = torch.norm(dr, dim=-1, keepdim=True)
-        unit_dr = nn.functional.normalize(dr, dim=-1)
+        dtheta = torch.remainder(edges.dst[self.polarityName] - edges.src[self.polarityName], torch.tensor(2 * np.pi)
         
-        return {self.messageName: self.fNN(abs_dr) * unit_dr}
+        return {self.messageName: self.fNN(dtheta)}
         
         
         
         
 class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParametric_acceleration):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
-        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, useScaling, scalingBias)
+    def __init__(self, u0=None, d=1.0, sigma=None, N_dim=2, fNNshape=None, fBias=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
+        super().__init__(u0, d, sigma, N_dim, fNNshape, fBias, activationName, activationArgs, positionName, velocityName, polarityName, torqueName, noiseName, messageName, useScaling, scalingBias)
         
         self.init_f(activationName, activationArgs, useScaling, scalingBias)
     
     def init_f(self, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
-        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs, useScaling, scalingBias)
-                
-    def calc_message(self, edges):
-        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+        self.fNN = self.createNNsequence(self.N_dim-1, self.fNNshape, self.N_dim-1, self.fBias, activationName, activationArgs, useScaling, scalingBias)
         
-        return {self.messageName: self.fNN(dr)}
-    
-    
     
     
 class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Dacceleration):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
-        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, useScaling, scalingBias)
+    def __init__(self, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
+        super().__init__(None, d, sigma, N_dim, fNNshape, fBias, activationName, activationArgs, positionName, velocityName, polarityName, torqueName, noiseName, messageName, useScaling, scalingBias)
         
         self.f2NNshape = ut.variableInitializer(f2NNshape, [128, 128, 128])
         
@@ -228,13 +204,10 @@ class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Da
         self.init_f2(activationName, activationArgs, useScaling, scalingBias)
     
     def init_f2(self, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
-        self.f2NN = self.createNNsequence(self.N_dim, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs, useScaling, scalingBias)
+        self.f2NN = self.createNNsequence(self.N_dim-1, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs, useScaling, scalingBias)
     
-    def f(self, t, g, args=None):
-        g.update_all(self.calc_message, self.aggregate_message)
-        g.ndata[self.accelerationName] = g.ndata[self.accelerationName] + self.f2NN(g.ndata[self.velocityName])
-        return g
-    
+    def polarity2velocity(self, theta):
+        return self.f2NN(theta)    
     
     
 class myDataset(torch.utils.data.Dataset):
