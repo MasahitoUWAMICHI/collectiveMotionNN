@@ -266,6 +266,8 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
                                           derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [N_dim, N_dim-1]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
+    print(CTV_SDEwrapper.graph)
+    
     print(x0.shape)
     
     test_f = CTV_SDEwrapper.f(0, x0.to(device))
