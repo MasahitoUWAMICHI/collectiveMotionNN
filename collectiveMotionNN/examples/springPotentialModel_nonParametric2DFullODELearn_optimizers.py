@@ -470,12 +470,14 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
      
     for epoch in range(N_epoch):
         i_minibatch = 0
+        flg_zerograd = True
         SP_SDEwrapper.train()
         lrs = [pg["lr"] for pg in optimizer.param_groups]
         lr_history.append(lrs)
         for i_minibatch, gx in enumerate(train_loader, 1):
             graph, x_truth = gx
-            optimizer.zero_grad()
+            if flg_zerograd:
+                optimizer.zero_grad()
             torch.cuda.empty_cache()
             #SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
             graph_batchsize = len(graph.batch_num_nodes())
@@ -515,6 +517,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             loss.backward(create_graph=highOrderGrad)
             if i_minibatch % N_train_minibatch_integrated == 0:
                 optimizer.step()
+                flg_zerograd = True
+            else:
+                flg_zerograd = False
         if i_minibatch % N_train_minibatch_integrated > 0:
             optimizer.step()
         if flg_scheduled:
