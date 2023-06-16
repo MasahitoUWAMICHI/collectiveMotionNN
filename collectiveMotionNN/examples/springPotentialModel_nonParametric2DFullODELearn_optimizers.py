@@ -100,6 +100,7 @@ def main_parser():
     parser.add_argument('--N_epoch', type=int)
     parser.add_argument('--N_train_batch', type=int)
     parser.add_argument('--N_batch_edgeUpdate', type=int)
+    parser.add_argument('--N_train_minibatch_integrated', type=int)
     
     parser.add_argument('--ratio_valid', type=float)
     parser.add_argument('--ratio_test', type=float)
@@ -148,6 +149,7 @@ def parser2main(args):
          delayPredict=args.delayPredict, dt_train=args.dt_train, 
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
+         N_train_minibatch_integrated=args.N_train_minibatch_integrated, 
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
          split_seed_val=args.split_seed_val,
          lr=args.lr, optimName=args.optimName, optimArgs=args.optimArgs, highOrderGrad=args.highOrderGrad,
@@ -181,6 +183,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          delayPredict=None, dt_train=None, 
          method_ODE=None, 
          N_epoch=None, N_train_batch=None, N_batch_edgeUpdate=None,
+         N_train_minibatch_integrated=None,
          ratio_valid=None, ratio_test=None,
          split_seed_val=None,
          lr=None, optimName=None, optimArgs=None, highOrderGrad=None,
@@ -264,6 +267,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     N_epoch = ut.variableInitializer(N_epoch, 10)
     N_train_batch = ut.variableInitializer(N_train_batch, 8)
     N_batch_edgeUpdate = ut.variableInitializer(N_batch_edgeUpdate, 1)
+    N_train_minibatch_integrated = ut.variableInitializer(N_train_minibatch_integrated, 1)
 
     ratio_valid = ut.variableInitializer(ratio_valid, 1.0 / N_batch)
     ratio_test = ut.variableInitializer(ratio_test, 0.0)
@@ -465,10 +469,12 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     start = time.time()
      
     for epoch in range(N_epoch):
+        i_minibatch = 0
         SP_SDEwrapper.train()
         lrs = [pg["lr"] for pg in optimizer.param_groups]
         lr_history.append(lrs)
-        for graph, x_truth in train_loader:
+        for i_minibatch, gx in enumerate(train_loader, 1):
+            graph, x_truth = gx
             optimizer.zero_grad()
             torch.cuda.empty_cache()
             #SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
@@ -507,6 +513,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             loss.backward(create_graph=highOrderGrad)
+            if i_minibatch % N_train_minibatch_integrated == 0:
+                optimizer.step()
+        if i_minibatch % N_train_minibatch_integrated > 0:
             optimizer.step()
         if flg_scheduled:
             scheduler.step()
