@@ -410,9 +410,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             loss.backward()
+            for key in mw.optimizer.parameters.keys():
+                mw.optimizer.parameters[key].retain_grad()
             if i_minibatch % N_train_minibatch_integrated == 0:
-                for key in mw.optimizer.parameters.keys():
-                    mw.optimizer.parameters[key].retain_grad()
                 mw.step()
                 flg_zerograd = True
             else:
