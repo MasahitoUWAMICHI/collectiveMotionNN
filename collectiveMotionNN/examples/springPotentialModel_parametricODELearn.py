@@ -83,6 +83,7 @@ def main_parser():
     parser.add_argument('--N_epoch', type=int)
     parser.add_argument('--N_train_batch', type=int)
     parser.add_argument('--N_batch_edgeUpdate', type=int)
+    parser.add_argument('--N_train_minibatch_integrated', type=int)
     
     parser.add_argument('--ratio_valid', type=float)
     parser.add_argument('--ratio_test', type=float)
@@ -117,6 +118,7 @@ def parser2main(args):
          delayPredict=args.delayPredict, dt_train=args.dt_train, 
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
+         N_train_minibatch_integrated=args.N_train_minibatch_integrated,
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
          split_seed_val=args.split_seed_val,
          lr=args.lr, lr_hyperSGD=args.lr_hyperSGD, 
@@ -141,6 +143,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          delayPredict=None, dt_train=None, 
          method_ODE=None, 
          N_epoch=None, N_train_batch=None, N_batch_edgeUpdate=None,
+         N_train_minibatch_integrated=None,
          ratio_valid=None, ratio_test=None,
          split_seed_val=None,
          lr=None, lr_hyperSGD=None, 
@@ -206,6 +209,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     N_epoch = ut.variableInitializer(N_epoch, 10)
     N_train_batch = ut.variableInitializer(N_train_batch, 8)
     N_batch_edgeUpdate = ut.variableInitializer(N_batch_edgeUpdate, 1)
+    N_train_minibatch_integrated = ut.variableInitializer(N_train_minibatch_integrated, 1)
 
     ratio_valid = ut.variableInitializer(ratio_valid, 1.0 / N_batch)
     ratio_test = ut.variableInitializer(ratio_test, 0.0)
@@ -364,8 +368,13 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     start = time.time()
      
     for epoch in range(N_epoch):
-        for graph, x_truth in train_loader:
-            mw.begin()
+        i_minibatch = 0
+        flg_zerograd = True
+        for i_minibatch, gx in enumerate(train_loader, 1):
+            graph, x_truth = gx
+            if flg_zerograd:
+                mw.begin()
+                mw.zero_grad()
             graph_batchsize = len(graph.batch_num_nodes())
             
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
@@ -400,8 +409,15 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
-            mw.zero_grad()
             loss.backward()
+            if i_minibatch % N_train_minibatch_integrated == 0:
+                for key in mw.optimizer.parameters.keys():
+                    mw.optimizer.parameters[key].retain_grad()
+                mw.step()
+                flg_zerograd = True
+            else:
+                flg_zerograd = False
+        if i_minibatch % N_train_minibatch_integrated > 0:
             for key in mw.optimizer.parameters.keys():
                 mw.optimizer.parameters[key].retain_grad()
             mw.step()
