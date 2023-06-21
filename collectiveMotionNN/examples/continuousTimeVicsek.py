@@ -195,7 +195,7 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParame
     
 class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Dacceleration):
     def __init__(self, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
-        super().__init__(None, d, sigma, N_dim, fNNshape, fBias, activationName, activationArgs, positionName, velocityName, polarityName, torqueName, noiseName, messageName, useScaling, scalingBias)
+        super().__init__(None, None, sigma, N_dim, fNNshape, fBias, activationName, activationArgs, positionName, velocityName, polarityName, torqueName, noiseName, messageName, useScaling, scalingBias)
         
         self.f2NNshape = ut.variableInitializer(f2NNshape, [128, 128, 128])
         
