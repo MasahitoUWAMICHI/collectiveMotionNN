@@ -179,9 +179,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
     def calc_message(self, edges):
         dtheta = torch.remainder(edges.dst[self.polarityName] - edges.src[self.polarityName], torch.tensor(2 * np.pi))
-        y = self.fNN(dtheta)
-        print('fNN', y.shape)
-        return {self.messageName: y}
+        return {self.messageName: self.fNN(dtheta)}
         
         
         
@@ -211,9 +209,7 @@ class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Da
         self.f2NN = self.createNNsequence(self.N_dim-1, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs, useScaling, scalingBias)
     
     def polarity2velocity(self, theta):
-        y = self.f2NN(theta)
-        print('f2NN', y.shape)
-        return y
+        return self.f2NN(theta)
     
     
 class myDataset(torch.utils.data.Dataset):
