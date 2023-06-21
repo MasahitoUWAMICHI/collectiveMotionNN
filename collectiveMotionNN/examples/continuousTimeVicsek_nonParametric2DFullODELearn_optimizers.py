@@ -18,7 +18,7 @@ import collectiveMotionNN.graph_utils as gu
 import collectiveMotionNN.wrapper_modules as wm
 import collectiveMotionNN.sample_modules as sm
 
-import collectiveMotionNN.examples.springPotentialModel as spm
+import collectiveMotionNN.examples.continuousTimeVicsek as ctv
 
 import argparse
 from distutils.util import strtobool
@@ -32,17 +32,15 @@ import os
 def main_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--c', type=float)
-    parser.add_argument('--r_c', type=float)
-    parser.add_argument('--p', type=float)
+    parser.add_argument('--d', type=float)
+    parser.add_argument('--u0', type=float)
     parser.add_argument('--sigma', type=float)
-    parser.add_argument('--gamma', type=float)
     
     parser.add_argument('--N_dim', type=int)
     
     parser.add_argument('--r0', type=float)
     
     parser.add_argument('--L', type=float)
-    parser.add_argument('--v0', type=float)
     
     parser.add_argument('--N_particles', type=int)
     parser.add_argument('--N_batch', type=int)
@@ -70,7 +68,6 @@ def main_parser():
 
     parser.add_argument('--skipSimulate', type=strtobool)
     
-    parser.add_argument('--gamma_init', type=float)
     parser.add_argument('--sigma_init', type=float)
     parser.add_argument('--NNshape', type=list)
     parser.add_argument('--NNbias', type=strtobool)
@@ -114,7 +111,7 @@ def main_parser():
     parser.add_argument('--lrSchedulerName', type=str)
     parser.add_argument('--lrSchedulerArgs', type=dict)
     
-    parser.add_argument('--vLoss_weight', type=float)
+    parser.add_argument('--thetaLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
     parser.add_argument('--useScore', type=strtobool)
     
@@ -129,7 +126,7 @@ def main_parser():
     return parser
 
 def parser2main(args):
-    main(c=args.c, r_c=args.r_c, p=args.p, gamma=args.gamma, sigma=args.sigma, r0=args.r0, L=args.L, v0=args.v0,
+    main(c=args.c, d=args.d, u0=args.u0, sigma=args.sigma, r0=args.r0, L=args.L,
          N_dim=args.N_dim, N_particles=args.N_particles, N_batch=args.N_batch, 
          t_max=args.t_max, dt_step=args.dt_step, dt_save=args.dt_save, 
          periodic=args.periodic, selfloop=args.selfloop, 
@@ -138,7 +135,7 @@ def parser2main(args):
          save_x_SDE=args.save_x_SDE, save_t_SDE=args.save_t_SDE, save_model=args.save_model,
          method_SDE=args.method_SDE, noise_type=args.noise_type, sde_type=args.sde_type, bm_levy=args.bm_levy,
          skipSimulate=args.skipSimulate,
-         gamma_init=args.gamma_init, sigma_init=args.sigma_init, 
+         sigma_init=args.sigma_init, 
          NNshape=args.NNshape, NNbias=args.NNbias, NN2shape=args.NN2shape, NN2bias=args.NN2bias,
          NNactivationName=args.NNactivationName, NNactivationArgs=args.NNactivationArgs,
          NNscalingLayer=args.NNscalingLayer, NNscalingBias=args.NNscalingBias,
@@ -154,7 +151,7 @@ def parser2main(args):
          split_seed_val=args.split_seed_val,
          lr=args.lr, optimName=args.optimName, optimArgs=args.optimArgs, highOrderGrad=args.highOrderGrad,
          lrSchedulerName=args.lrSchedulerName, lrSchedulerArgs=args.lrSchedulerArgs,
-         vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
+         thetaLoss_weight=args.thetaLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
          save_directory_learning=args.save_directory_learning,
          save_learned_model=args.save_learned_model, 
@@ -163,7 +160,7 @@ def parser2main(args):
          save_run_time_history=args.save_run_time_history,
          save_params=args.save_params)
     
-def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=None,
+def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
          N_dim=None, N_particles=None, N_batch=None, 
          t_max=None, dt_step=None, dt_save=None, 
          periodic=None, selfloop=None, 
@@ -172,7 +169,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          save_x_SDE=None, save_t_SDE=None, save_model=None,
          method_SDE=None, noise_type=None, sde_type=None, bm_levy=None,
          skipSimulate=None,
-         gamma_init=None, sigma_init=None,
+         sigma_init=None,
          NNshape=None, NNbias=None, NN2shape=None, NN2bias=None,
          NNactivationName=None, NNactivationArgs=None,
          NNscalingLayer=None, NNscalingBias=None,
@@ -188,7 +185,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          split_seed_val=None,
          lr=None, optimName=None, optimArgs=None, highOrderGrad=None,
          lrSchedulerName=None, lrSchedulerArgs=None,
-         vLoss_weight=None, scoreLoss_weight=None, 
+         thetaLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
          save_directory_learning=None,
          save_learned_model=None, 
@@ -197,17 +194,15 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          save_run_time_history=None,
          save_params=None):
 
-    c = ut.variableInitializer(c, 0.01)
-    r_c = ut.variableInitializer(r_c, 1.0)
-    p = ut.variableInitializer(p, 2.0)
+    c = ut.variableInitializer(c, 1.0)
+    d = ut.variableInitializer(d, 1.0)
+    u0 = ut.variableInitializer(u0, 0.03)
     
-    gamma = ut.variableInitializer(gamma, 0.1)
-    sigma = ut.variableInitializer(sigma, 0.01)
+    sigma = ut.variableInitializer(sigma, 0.3)
     
     
-    r0 = ut.variableInitializer(r0, 5.0)
+    r0 = ut.variableInitializer(r0, 1.0)
     L = ut.variableInitializer(L, 5.0)
-    v0 = ut.variableInitializer(v0, 0.01)
     
     N_dim = ut.variableInitializer(N_dim, int(2))
     N_particles = ut.variableInitializer(N_particles, int(100))
@@ -223,9 +218,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     device = ut.variableInitializer(device, 'cuda' if torch.cuda.is_available() else 'cpu')
     
     save_directory_simulation = ut.variableInitializer(save_directory_simulation, '.')
-    save_x_SDE = ut.variableInitializer(save_x_SDE, 'Spring_SDE_traj.pt')
-    save_t_SDE = ut.variableInitializer(save_t_SDE, 'Spring_SDE_t_eval.pt')
-    save_model = ut.variableInitializer(save_model, 'Spring_SDE_model.pt')
+    save_x_SDE = ut.variableInitializer(save_x_SDE, 'CTVicsek_SDE_traj.pt')
+    save_t_SDE = ut.variableInitializer(save_t_SDE, 'CTVicsek_SDE_t_eval.pt')
+    save_model = ut.variableInitializer(save_model, 'CTVicsek_SDE_model.pt')
     
     method_SDE = ut.variableInitializer(method_SDE, 'euler')
     noise_type = ut.variableInitializer(noise_type, 'general')
@@ -237,7 +232,6 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     skipSimulate = ut.variableInitializer(skipSimulate, False)
     
     
-    gamma_init = ut.variableInitializer(gamma_init, None)    
     sigma_init = ut.variableInitializer(sigma_init, None)
     NNshape = ut.variableInitializer(NNshape, None)
     NNbias = ut.variableInitializer(NNbias, None)
@@ -285,19 +279,19 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     lrSchedulerName = ut.variableInitializer(lrSchedulerName, None)
     lrSchedulerArgs =  ut.variableInitializer(lrSchedulerArgs, {})
     
-    vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
+    thetaLoss_weight = ut.variableInitializer(thetaLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     useScore = ut.variableInitializer(useScore, False)
     
     save_directory_learning = ut.variableInitializer(save_directory_learning, '.')
     
-    save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_nonParametric2Dfull_learned_model.pt')
-    save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_nonParametric2Dfull_loss_history.pt')
-    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_nonParametric2Dfull_validloss_history.pt')
-    save_lr_history = ut.variableInitializer(save_lr_history, 'Spring_nonParametric2Dfull_lr_history.pt')
+    save_learned_model = ut.variableInitializer(save_learned_model, 'CTVicsek_nonParametric2Dfull_learned_model.pt')
+    save_loss_history = ut.variableInitializer(save_loss_history, 'CTVicsek_nonParametric2Dfull_loss_history.pt')
+    save_validloss_history = ut.variableInitializer(save_validloss_history, 'CTVicsek_nonParametric2Dfull_validloss_history.pt')
+    save_lr_history = ut.variableInitializer(save_lr_history, 'CTVicsek_nonParametric2Dfull_lr_history.pt')
     
-    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_nonParametric2Dfull_run_time_history.npy')
-    save_params = ut.variableInitializer(save_params, 'Spring_nonParametric2Dfull_parameters.npy')
+    save_run_time_history = ut.variableInitializer(save_run_time_history, 'CTVicsek_nonParametric2Dfull_run_time_history.npy')
+    save_params = ut.variableInitializer(save_params, 'CTVicsek_nonParametric2Dfull_parameters.npy')
     
     if not skipSimulate:
         os.makedirs(save_directory_simulation, exist_ok=True)
@@ -315,19 +309,19 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         ut.dict2txt(os.path.join(save_directory_simulation, os.path.splitext(save_params)[0]+'.txt'), args_of_main)
     
     
-    SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
+    CTV_Module = ctv.interactionModule(u0, c, d, sigma, N_dim).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
     
-    SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module, edgeModule, returnScore=False, 
+    CTV_SDEmodule = wm.dynamicGNDEmodule(CTV_Module, edgeModule, returnScore=False, 
                                         scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule(),
                                         N_multiBatch=N_batch_edgeUpdate).to(device)
-    
+
     
     x0 = []
     graph_init = []
     for i in range(N_batch):
-        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim])-0.5) * (2*v0)), dim=-1))
-        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim])))
+        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, torch.rand([N_particles, N_dim-1]) * (2*np.pi)), dim=-1))
+        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1])))
     x0 = torch.concat(x0, dim=0)
     graph_init = dgl.batch(graph_init)
         
@@ -337,38 +331,38 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     
-    
-    SP_SDEwrapper = wm.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
-                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim]), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [N_dim, N_dim]),
+    CTV_SDEwrapper = wm.dynamicGSDEwrapper(CTV_SDEmodule, copy.deepcopy(graph_init).to(device), 
+                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1]), 
+                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [N_dim, N_dim-1]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
+    
     
     if not skipSimulate:
     
         bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                          size=(x0.shape[0], N_dim), dt=dt_step, levy_area_approximation=bm_levy, device=device)
+                          size=(x0.shape[0], N_dim-1), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
         with torch.no_grad():
-            y = sdeint(SP_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
+            y = sdeint(CTV_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
 
-        print(SP_SDEwrapper.graph)
+        print(CTV_SDEwrapper.graph)
 
         y = y.to('cpu')
         if not(periodic is None):
             y[..., :N_dim] = torch.remainder(y[..., :N_dim], periodic)
+        y[..., N_dim:] = torch.remainder(y[..., N_dim:], 2*np.pi)
 
-        y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim))
+        y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim-1))
 
         torch.save(y, os.path.join(save_directory_simulation, save_x_SDE))
 
         torch.save(t_save.to('cpu'), os.path.join(save_directory_simulation, save_t_SDE))
-        
-        SP_SDEwrapper.deleteGraph()
 
         with open(os.path.join(save_directory_simulation, save_model), mode='wb') as f:
-            cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
+            cloudpickle.dump(CTV_SDEwrapper.to('cpu'), f)
     
 
+        
     
     if NNscalingBias:
         N_scalingBias = N_dim
