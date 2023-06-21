@@ -369,7 +369,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     else:
         N_scalingBias = None
     
-    CTV_Module = ctv.interactionModule_nonParametric_2Dfull(sigma_init, N_dim, NNshape, NNbias, NN2shape, NN2bias, periodic, NNactivationName, NNactivationArgs, useScaling=NNscalingLayer, scalingBias=N_scalingBias).to(device)
+    CTV_Module = ctv.interactionModule_nonParametric_2Dfull(sigma_init, N_dim, NNshape, NNbias, NN2shape, NN2bias, NNactivationName, NNactivationArgs, useScaling=NNscalingLayer, scalingBias=N_scalingBias).to(device)
     
     if (NN_zeroFinalLayer or NN2_zeroFinalLayer) or (not (NNreset_weight_method is None)) or ((not (NNreset_bias_method is None)) or (not (NNreset_others_method is None))):
         CTV_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
