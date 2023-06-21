@@ -369,31 +369,31 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     else:
         N_scalingBias = None
     
-    SP_Module = spm.interactionModule_nonParametric_2Dfull(gamma_init, sigma_init, N_dim, NNshape, NNbias, NN2shape, NN2bias, periodic, NNactivationName, NNactivationArgs, useScaling=NNscalingLayer, scalingBias=N_scalingBias).to(device)
+    CTV_Module = ctv.interactionModule_nonParametric_2Dfull(sigma_init, N_dim, NNshape, NNbias, NN2shape, NN2bias, periodic, NNactivationName, NNactivationArgs, useScaling=NNscalingLayer, scalingBias=N_scalingBias).to(device)
     
     if (NN_zeroFinalLayer or NN2_zeroFinalLayer) or (not (NNreset_weight_method is None)) or ((not (NNreset_bias_method is None)) or (not (NNreset_others_method is None))):
-        SP_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
+        CTV_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
                             NNreset_weight_args, NNreset_bias_args, NNreset_others_args, ['fNN'], NN_zeroFinalLayer)
-        SP_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
+        CTV_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
                             NNreset_weight_args, NNreset_bias_args, NNreset_others_args, ['f2NN'], NN2_zeroFinalLayer)
     
     
-    SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module.to(device), edgeModule.to(device), returnScore=False, 
+    CTV_SDEmodule = wm.dynamicGNDEmodule(CTV_Module.to(device), edgeModule.to(device), returnScore=False, 
                                         scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule(),
                                         N_multiBatch=N_batch_edgeUpdate).to(device)
     
-    SP_SDEwrapper = wm.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
-                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim]), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [N_dim, N_dim]),
+    CTV_SDEwrapper = wm.dynamicGSDEwrapper(CTV_SDEmodule, copy.deepcopy(graph_init).to(device), 
+                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1]), 
+                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'w'], [N_dim, N_dim-1]),
                                           noise_type=noise_type, sde_type=sde_type).to(device)
     
-    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(useScore)
+    CTV_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(useScore)
     
     
     
-    print('Module before training : ', SP_SDEwrapper.state_dict())
+    print('Module before training : ', CTV_SDEwrapper.state_dict())
     
-    optim_str = 't_opt.' + optimName + '(SP_SDEwrapper.parameters(),lr={},'.format(lr)
+    optim_str = 't_opt.' + optimName + '(CTV_SDEwrapper.parameters(),lr={},'.format(lr)
     for key in optimArgs.keys():
         optim_str = optim_str + key + '=optimArgs["' + key + '"],'
     optim_str = optim_str[:-1] + ')'
@@ -409,7 +409,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
         scheduler = eval(schedulerStr)
     
     
-    neuralDE = NeuralODE(SP_SDEwrapper, solver=method_ODE).to(device)
+    neuralDE = NeuralODE(CTV_SDEwrapper, solver=method_ODE).to(device)
     
     
     
@@ -420,7 +420,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     
     
     
-    vicsek_dataset = spm.myDataset(os.path.join(save_directory_simulation, save_x_SDE), N_dim=N_dim, delayTruth=delayPredict)
+    vicsek_dataset = ctv.myDataset(os.path.join(save_directory_simulation, save_x_SDE), N_dim=N_dim, delayTruth=delayPredict)
     vicsek_dataset.initialize()
     
     N_valid = int(vicsek_dataset.N_batch * ratio_valid)
@@ -429,9 +429,9 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     
     range_split = torch.utils.data.random_split(range(vicsek_dataset.N_batch), [N_train, N_valid, N_test], generator=split_seed)
     
-    train_dataset = spm.batchedSubset(vicsek_dataset, [i for i in range_split[0]])
-    valid_dataset = spm.batchedSubset(vicsek_dataset, [i for i in range_split[1]])
-    test_dataset = spm.batchedSubset(vicsek_dataset, [i for i in range_split[2]])
+    train_dataset = ctv.batchedSubset(vicsek_dataset, [i for i in range_split[0]])
+    valid_dataset = ctv.batchedSubset(vicsek_dataset, [i for i in range_split[1]])
+    test_dataset = ctv.batchedSubset(vicsek_dataset, [i for i in range_split[2]])
     
     train_loader = GraphDataLoader(train_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
     valid_loader = GraphDataLoader(valid_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
@@ -440,9 +440,9 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     
     
     if periodic is None:
-        lossFunc = spm.myLoss(ut.euclidDistance_nonPeriodic(), N_dim=N_dim, useScore=useScore)
+        lossFunc = ctv.myLoss(ut.euclidDistance_nonPeriodic(), N_dim=N_dim, useScore=useScore)
     else:
-        lossFunc = spm.myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)), N_dim=N_dim, useScore=useScore)
+        lossFunc = ctv.myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)), N_dim=N_dim, useScore=useScore)
         
     
     
@@ -452,7 +452,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, time[sec.]')
+    print('epoch: trainLoss (xy, theta, score), validLoss (xy, theta, score), u0, c, sigma, alpha, 1-beta1, 1-beta2, time[sec.]')
     
     loss_history = []
     valid_loss_history = []
@@ -465,7 +465,7 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
     for epoch in range(N_epoch):
         i_minibatch = 0
         flg_zerograd = True
-        SP_SDEwrapper.train()
+        CTV_SDEwrapper.train()
         lrs = [pg["lr"] for pg in optimizer.param_groups]
         lr_history.append(lrs)
         for i_minibatch, gx in enumerate(train_loader, 1):
@@ -473,40 +473,40 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
             if flg_zerograd:
                 optimizer.zero_grad()
             torch.cuda.empty_cache()
-            #SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
+            #CTV_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
             graph_batchsize = len(graph.batch_num_nodes())
             
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
             
             if useScore:
-                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-                _ = SP_SDEwrapper.f(1, x_truth)
-                score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
-                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+                CTV_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                CTV_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+                _ = CTV_SDEwrapper.f(1, x_truth)
+                score_truth = torch.stack(CTV_SDEwrapper.score(), dim=1)
+                CTV_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
             
             
-            SP_SDEwrapper.loadGraph(graph.to(device))
+            CTV_SDEwrapper.loadGraph(graph.to(device))
                         
-            _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
+            _, x_pred = neuralDE(CTV_SDEwrapper.ndataInOutModule.output(CTV_SDEwrapper.graph).to(device), 
                                  t_learn_span.to(device), save_at=t_learn_save.to(device))
             
 
             if useScore:
-                if len(SP_SDEwrapper.score())==0:
-                    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                    _ = SP_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
+                if len(CTV_SDEwrapper.score())==0:
+                    CTV_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                    _ = CTV_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
                     
-                score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
+                score_pred = torch.stack(CTV_SDEwrapper.score(), dim=1)
             
-                xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-                loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
+                xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                loss = xyloss + thetaLoss_weight *thetaloss + scoreLoss_weight * scoreloss
             else:
-                xyloss, vloss = lossFunc(x_pred[0], x_truth)
+                xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
                 scoreloss = torch.full([1], torch.nan)
-                loss = xyloss + vLoss_weight * vloss
+                loss = xyloss + thetaLoss_weight * thetaloss
                 
-            loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
+            loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             loss.backward(create_graph=highOrderGrad)
             if i_minibatch % N_train_minibatch_integrated == 0:
@@ -519,14 +519,14 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
         if flg_scheduled:
             scheduler.step()
         
-        SP_SDEwrapper.eval()
+        CTV_SDEwrapper.eval()
         
         torch.cuda.empty_cache()
         
         with torch.no_grad():
             valid_loss = 0
             valid_xyloss_total = 0
-            valid_vloss_total = 0
+            valid_thetaloss_total = 0
             valid_scoreloss_total = 0
             data_count = 0
             
@@ -536,67 +536,65 @@ def main(c=None, d=None, u0=None, sigma=None, r0=None, L=None,
                 x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
                 
                 if useScore:
-                    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                    SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-                    _ = SP_SDEwrapper.f(1, x_truth)
-                    score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
-                    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+                    CTV_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                    CTV_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+                    _ = CTV_SDEwrapper.f(1, x_truth)
+                    score_truth = torch.stack(CTV_SDEwrapper.score(), dim=1)
+                    CTV_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
 
-                SP_SDEwrapper.loadGraph(graph.to(device))
-                _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
+                CTV_SDEwrapper.loadGraph(graph.to(device))
+                _, x_pred = neuralDE(CTV_SDEwrapper.ndataInOutModule.output(CTV_SDEwrapper.graph).to(device), 
                                      t_learn_span.to(device), save_at=t_learn_save.to(device))
                 
                 if useScore:                
-                    if len(SP_SDEwrapper.score())==0:
-                        SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                        _ = SP_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
-                    score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
+                    if len(CTV_SDEwrapper.score())==0:
+                        CTV_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                        _ = CTV_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
+                    score_pred = torch.stack(CTV_SDEwrapper.score(), dim=1)
                 
-                    valid_xyloss, valid_vloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                    valid_xyloss, valid_thetaloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
                     valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                    valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
+                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
                     valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
-                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss + scoreLoss_weight * valid_scoreloss)
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss + scoreLoss_weight * valid_scoreloss)
                     
                 else:
-                    valid_xyloss, valid_vloss = lossFunc(x_pred[0], x_truth)
+                    valid_xyloss, valid_thetaloss = lossFunc(x_pred[0], x_truth)
                     valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                    valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
+                    valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
                     valid_scoreloss_total = torch.full([1], torch.nan)
-                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss)
+                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + thetaLoss_weight * valid_thetaloss)
                     
                 data_count = data_count + graph_batchsize
                 
             valid_loss = valid_loss / data_count
             valid_xyloss_total = valid_xyloss_total / data_count
-            valid_vloss_total = valid_vloss_total / data_count
+            valid_thetaloss_total = valid_thetaloss_total / data_count
             valid_scoreloss_total = valid_scoreloss_total / data_count
-            valid_loss_history[-1] = [valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item()]
+            valid_loss_history[-1] = [valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item()]
             
             run_time_history.append(time.time() - start)
             
             if valid_loss < best_valid_loss:
-                SP_SDEwrapper.deleteGraph()
+                CTV_SDEwrapper.deleteGraph()
                 with open(os.path.join(save_directory_learning, save_learned_model), mode='wb') as f:
-                    cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
-                SP_SDEwrapper.to(device)
+                    cloudpickle.dump(CTV_SDEwrapper.to('cpu'), f)
+                CTV_SDEwrapper.to(device)
                 best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f} Best'.format(
-                    epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
-                    valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f} Best'.format(
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
+                    valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
+                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.u0.item(),
+                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.ctv.c().item(),
+                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     run_time_history[-1]))
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
-                    epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
-                    valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
+                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
+                    epoch, loss.item(), xyloss.item(), thetaloss.item(), scoreloss.item(),
+                    valid_loss.item(), valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item(),
+                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.u0.item(),
+                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.ctv.c().item(),
+                    CTV_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                     run_time_history[-1]))
         
             torch.cuda.empty_cache()
