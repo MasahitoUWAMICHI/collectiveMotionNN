@@ -126,7 +126,10 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         NNseq.pop(activationName+str(i))
         
         if self.useScaling:
-            NNseq['Scaling'] = ut.scalingLayer(scalingBias)
+            if scalingBias is None:
+                NNseq['Scaling'] = ut.scalingLayer(None)
+            else:
+                NNseq['Scaling'] = ut.scalingLayer(N_out)
         
         return nn.Sequential(NNseq)
     
