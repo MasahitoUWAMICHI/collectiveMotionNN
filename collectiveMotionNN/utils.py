@@ -89,7 +89,7 @@ def dict2txt(savePath, savedDict):
 
 def flattenInList(x, sample):
     if x is None:
-        return torch.empty_like(sample)
+        return torch.empty([1], dtype=sample.dtype, device=sample.device)
     else:
         return x.flatten()
 
