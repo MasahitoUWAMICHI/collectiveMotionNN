@@ -519,7 +519,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             loss_grad = torch.autograd.grad(loss, SP_SDEwrapper.parameters(), create_graph=True, allow_unused=True)
-            loss_GR = torch.cat(tuple(map(lambda x: x.flatten(), loss_grad))).norm(p=p_GR)
+            loss_GR = torch.cat(tuple(map(ut.flattenInList, loss_grad))).norm(p=p_GR)
             loss_GR.backward(create_graph=highOrderGrad)
             if i_minibatch % N_train_minibatch_integrated == 0:
                 optimizer.step()
