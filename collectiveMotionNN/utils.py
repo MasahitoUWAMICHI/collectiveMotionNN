@@ -87,3 +87,9 @@ def dict2txt(savePath, savedDict):
 
     print(*txtstring, sep="\n", file=codecs.open(savePath, 'w', 'utf-8'))
 
+def flattenInList(x):
+    if x is None:
+        return torch.tensor([])
+    else:
+        return x.flatten()
+
