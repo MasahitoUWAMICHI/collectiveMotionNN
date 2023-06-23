@@ -110,6 +110,7 @@ def main_parser():
     parser.add_argument('--optimName', type=str)
     parser.add_argument('--optimArgs', type=dict)
     parser.add_argument('--highOrderGrad', type=strtobool)
+    parser.add_argument('--p_GR')
 
     parser.add_argument('--lrSchedulerName', type=str)
     parser.add_argument('--lrSchedulerArgs', type=dict)
@@ -153,6 +154,7 @@ def parser2main(args):
          ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
          split_seed_val=args.split_seed_val,
          lr=args.lr, optimName=args.optimName, optimArgs=args.optimArgs, highOrderGrad=args.highOrderGrad,
+         p_GR=args.p_GR,
          lrSchedulerName=args.lrSchedulerName, lrSchedulerArgs=args.lrSchedulerArgs,
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
@@ -187,6 +189,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          ratio_valid=None, ratio_test=None,
          split_seed_val=None,
          lr=None, optimName=None, optimArgs=None, highOrderGrad=None,
+         p_GR=None,
          lrSchedulerName=None, lrSchedulerArgs=None,
          vLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
@@ -281,6 +284,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     optimName = ut.variableInitializer(optimName, 'Lamb')
     optimArgs = ut.variableInitializer(optimArgs, {})
     highOrderGrad = ut.variableInitializer(highOrderGrad, False)
+    p_GR = ut.variableInitializer(p_GR, 2)
     
     lrSchedulerName = ut.variableInitializer(lrSchedulerName, None)
     lrSchedulerArgs =  ut.variableInitializer(lrSchedulerArgs, {})
