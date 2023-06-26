@@ -539,8 +539,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             scheduler.step()
         
         SP_SDEwrapper.eval()
-        
-        torch.cuda.empty_cache()
+     
+        optimizer.zero_grad()
         
 #        with torch.no_grad():
         valid_loss = 0
@@ -551,6 +551,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         data_count = 0
         
         for graph, x_truth in valid_loader:
+            torch.cuda.empty_cache()
             graph_batchsize = len(graph.batch_num_nodes())
             
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
