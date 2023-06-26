@@ -521,9 +521,11 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 scoreloss = torch.full([1], torch.nan)
                 loss = xyloss + vLoss_weight * vloss
                 
-            loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
-            valid_loss_history.append([np.nan, np.nan, np.nan])
             loss_GR = ut.loss_grad_norm(loss, SP_SDEwrapper.parameters(), p_GR)
+         
+            loss_history.append([xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item()])
+            valid_loss_history.append([np.nan, np.nan, np.nan, np.nan])
+         
             loss_total = loss + lossGR_weight * loss_GR
             loss_total.backward(create_graph=highOrderGrad)
             if i_minibatch % N_train_minibatch_integrated == 0:
@@ -574,22 +576,27 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
                 valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
                 valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
-                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss + scoreLoss_weight * valid_scoreloss)
+                valid_sum = valid_xyloss + vLoss_weight * valid_vloss + scoreLoss_weight * valid_scoreloss
                 
             else:
                 valid_xyloss, valid_vloss = lossFunc(x_pred[0], x_truth)
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
                 valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
                 valid_scoreloss_total = torch.full([1], torch.nan)
-                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss)
+                valid_sum = valid_xyloss + vLoss_weight * valid_vloss
                 
+            valid_loss = valid_loss + graph_batchsize * valid_sum
+            valid_loss_GR = ut.loss_grad_norm(valid_sum, SP_SDEwrapper.parameters(), p_GR)
+            valid_lossGR_total = valid_lossGR_total + graph_batchsize * valid_loss_GR
+             
             data_count = data_count + graph_batchsize
             
         valid_loss = valid_loss / data_count
         valid_xyloss_total = valid_xyloss_total / data_count
         valid_vloss_total = valid_vloss_total / data_count
         valid_scoreloss_total = valid_scoreloss_total / data_count
-        valid_loss_history[-1] = [valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item()]
+        valid_lossGR_total = valid_lossGR_total / data_count
+        valid_loss_history[-1] = [valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_lossGR_total.item()]
         
         run_time_history.append(time.time() - start)
         
@@ -601,7 +608,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             best_valid_loss = valid_loss
             print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f} Best'.format(
                 epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item()
-                valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_loss_GR_total.item(),
+                valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_lossGR_total.item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
@@ -610,7 +617,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         else:
             print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
                 epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item()
-                valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_loss_GR_total.item(),
+                valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_lossGR_total.item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
