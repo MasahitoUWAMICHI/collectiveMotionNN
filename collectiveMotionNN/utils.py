@@ -93,3 +93,7 @@ def flattenInList(x, sample):
     else:
         return x.flatten()
 
+def loss_grad_norm(loss, params, p_GR):
+    loss_grad = torch.autograd.grad(loss, params, create_graph=True, allow_unused=True)
+    return torch.cat(tuple(map(lambda x: ut.flattenInList(x, loss), loss_grad))).norm(p=p_GR)
+    
