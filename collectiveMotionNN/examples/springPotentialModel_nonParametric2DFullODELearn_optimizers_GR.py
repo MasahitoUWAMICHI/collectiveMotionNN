@@ -607,7 +607,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             SP_SDEwrapper.to(device)
             best_valid_loss = valid_loss
             print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f} Best'.format(
-                epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item()
+                epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item(),
                 valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_lossGR_total.item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
@@ -616,7 +616,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 run_time_history[-1]))
         else:
             print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
-                epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item()
+                epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item(),
                 valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_lossGR_total.item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
