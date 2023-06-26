@@ -322,6 +322,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     if not skipSimulate:
         np.save(os.path.join(save_directory_simulation, save_params), args_of_main)
         ut.dict2txt(os.path.join(save_directory_simulation, os.path.splitext(save_params)[0]+'.txt'), args_of_main)
+
+
+    save_history = os.path.join(save_directory_learning, os.path.splitext(save_loss_history)[0]+'.txt')
     
     
     SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
@@ -466,8 +469,11 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
     best_valid_loss = np.inf
-    
-    print('epoch: trainLoss (xy, v, score), trainLoss_GradNorm, validLoss (xy, v, score), validLoss_GradNorm, c, r_c, gamma, sigma, time[sec.]')
+
+    text_for_print = 'epoch: trainLoss (xy, v, score), trainLoss_GradNorm, validLoss (xy, v, score), validLoss_GradNorm, c, r_c, gamma, sigma, time[sec.]'
+    with open(save_history, 'w') as f:
+        f.write(text_for_print)
+    print(text_for_print)
     
     loss_history = []
     valid_loss_history = []
@@ -607,7 +613,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
             SP_SDEwrapper.to(device)
             best_valid_loss = valid_loss
-            print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f} Best'.format(
+            text_for_print = '{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f} Best'.format(
                 epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item(),
                 valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_lossGR_total.item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
@@ -616,7 +622,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                 run_time_history[-1]))
         else:
-            print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
+            text_for_print = '{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
                 epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item(),
                 valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_lossGR_total.item(),
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
@@ -625,6 +631,10 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
                 run_time_history[-1]))
     
+        with open(save_history, 'w') as f:
+            f.write(text_for_print)
+        print(text_for_print)
+     
         torch.cuda.empty_cache()
     
         torch.save(torch.tensor(loss_history), os.path.join(save_directory_learning, save_loss_history))
