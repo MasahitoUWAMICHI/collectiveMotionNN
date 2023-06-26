@@ -118,6 +118,7 @@ def main_parser():
     parser.add_argument('--vLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
     parser.add_argument('--useScore', type=strtobool)
+    parser.add_argument('--lossGR_weight', type=float)
     
     parser.add_argument('--save_directory_learning', type=str)
     parser.add_argument('--save_learned_model', type=str)
@@ -158,6 +159,7 @@ def parser2main(args):
          lrSchedulerName=args.lrSchedulerName, lrSchedulerArgs=args.lrSchedulerArgs,
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
+         lossGR_weight=args.lossGR_weight,
          save_directory_learning=args.save_directory_learning,
          save_learned_model=args.save_learned_model, 
          save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history,
@@ -193,6 +195,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          lrSchedulerName=None, lrSchedulerArgs=None,
          vLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
+         lossGR_weight=None,
          save_directory_learning=None,
          save_learned_model=None, 
          save_loss_history=None, save_validloss_history=None,
@@ -292,6 +295,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     useScore = ut.variableInitializer(useScore, False)
+
+    lossGR_weight = ut.variableInitializer(lossGR_weight, 1.0)
     
     save_directory_learning = ut.variableInitializer(save_directory_learning, '.')
     
@@ -462,7 +467,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, time[sec.]')
+    print('epoch: trainLoss (xy, v, score), trainLoss_GradNorm, validLoss (xy, v, score), validLoss_GradNorm, c, r_c, gamma, sigma, time[sec.]')
     
     loss_history = []
     valid_loss_history = []
@@ -518,9 +523,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
-            loss_grad = torch.autograd.grad(loss, SP_SDEwrapper.parameters(), create_graph=True, allow_unused=True)
-            loss_GR = torch.cat(tuple(map(lambda x: ut.flattenInList(x, loss), loss_grad))).norm(p=p_GR)
-            loss_GR.backward(create_graph=highOrderGrad)
+            loss_GR = ut.loss_grad_norm(loss, SP_SDEwrapper.parameters(), p_GR)
+            loss_total = loss + lossGR_weight * loss_GR
+            loss_total.backward(create_graph=highOrderGrad)
             if i_minibatch % N_train_minibatch_integrated == 0:
                 optimizer.step()
                 flg_zerograd = True
@@ -535,91 +540,92 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         
         torch.cuda.empty_cache()
         
-        with torch.no_grad():
-            valid_loss = 0
-            valid_xyloss_total = 0
-            valid_vloss_total = 0
-            valid_scoreloss_total = 0
-            data_count = 0
+#        with torch.no_grad():
+        valid_loss = 0
+        valid_xyloss_total = 0
+        valid_vloss_total = 0
+        valid_scoreloss_total = 0
+        valid_lossGR_total = 0
+        data_count = 0
+        
+        for graph, x_truth in valid_loader:
+            graph_batchsize = len(graph.batch_num_nodes())
             
-            for graph, x_truth in valid_loader:
-                graph_batchsize = len(graph.batch_num_nodes())
-                
-                x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
-                
-                if useScore:
+            x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
+            
+            if useScore:
+                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+                SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+                _ = SP_SDEwrapper.f(1, x_truth)
+                score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
+                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+
+            SP_SDEwrapper.loadGraph(graph.to(device))
+            _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
+                                 t_learn_span.to(device), save_at=t_learn_save.to(device))
+            
+            if useScore:                
+                if len(SP_SDEwrapper.score())==0:
                     SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                    SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-                    _ = SP_SDEwrapper.f(1, x_truth)
-                    score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
-                    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
-
-                SP_SDEwrapper.loadGraph(graph.to(device))
-                _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
-                                     t_learn_span.to(device), save_at=t_learn_save.to(device))
-                
-                if useScore:                
-                    if len(SP_SDEwrapper.score())==0:
-                        SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                        _ = SP_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
-                    score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
-                
-                    valid_xyloss, valid_vloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-                    valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                    valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
-                    valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
-                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss + scoreLoss_weight * valid_scoreloss)
-                    
-                else:
-                    valid_xyloss, valid_vloss = lossFunc(x_pred[0], x_truth)
-                    valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                    valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
-                    valid_scoreloss_total = torch.full([1], torch.nan)
-                    valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss)
-                    
-                data_count = data_count + graph_batchsize
-                
-            valid_loss = valid_loss / data_count
-            valid_xyloss_total = valid_xyloss_total / data_count
-            valid_vloss_total = valid_vloss_total / data_count
-            valid_scoreloss_total = valid_scoreloss_total / data_count
-            valid_loss_history[-1] = [valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item()]
+                    _ = SP_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
+                score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
             
-            run_time_history.append(time.time() - start)
-            
-            if valid_loss < best_valid_loss:
-                SP_SDEwrapper.deleteGraph()
-                with open(os.path.join(save_directory_learning, save_learned_model), mode='wb') as f:
-                    cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
-                SP_SDEwrapper.to(device)
-                best_valid_loss = valid_loss
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f} Best'.format(
-                    epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
-                    valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    run_time_history[-1]))
+                valid_xyloss, valid_vloss, valid_scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+                valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
+                valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
+                valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
+                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss + scoreLoss_weight * valid_scoreloss)
+                
             else:
-                print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
-                    epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
-                    valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    run_time_history[-1]))
+                valid_xyloss, valid_vloss = lossFunc(x_pred[0], x_truth)
+                valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
+                valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
+                valid_scoreloss_total = torch.full([1], torch.nan)
+                valid_loss = valid_loss + graph_batchsize * (valid_xyloss + vLoss_weight * valid_vloss)
+                
+            data_count = data_count + graph_batchsize
+            
+        valid_loss = valid_loss / data_count
+        valid_xyloss_total = valid_xyloss_total / data_count
+        valid_vloss_total = valid_vloss_total / data_count
+        valid_scoreloss_total = valid_scoreloss_total / data_count
+        valid_loss_history[-1] = [valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item()]
         
-            torch.cuda.empty_cache()
+        run_time_history.append(time.time() - start)
         
-            torch.save(torch.tensor(loss_history), os.path.join(save_directory_learning, save_loss_history))
-
-            torch.save(torch.tensor(valid_loss_history), os.path.join(save_directory_learning, save_validloss_history))
+        if valid_loss < best_valid_loss:
+            SP_SDEwrapper.deleteGraph()
+            with open(os.path.join(save_directory_learning, save_learned_model), mode='wb') as f:
+                cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
+            SP_SDEwrapper.to(device)
+            best_valid_loss = valid_loss
+            print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.2e}, {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f} Best'.format(
+                epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item()
+                valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_loss_GR_total.item(),
+                SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
+                SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
+                SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
+                SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
+                run_time_history[-1]))
+        else:
+            print('{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
+                epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(), loss_GR.item()
+                valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(), valid_loss_GR_total.item(),
+                SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
+                SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
+                SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
+                SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
+                run_time_history[-1]))
     
-            np.save(os.path.join(save_directory_learning, save_run_time_history), run_time_history)
+        torch.cuda.empty_cache()
+    
+        torch.save(torch.tensor(loss_history), os.path.join(save_directory_learning, save_loss_history))
 
-            np.save(os.path.join(save_directory_learning, save_lr_history), lr_history)
+        torch.save(torch.tensor(valid_loss_history), os.path.join(save_directory_learning, save_validloss_history))
+
+        np.save(os.path.join(save_directory_learning, save_run_time_history), run_time_history)
+
+        np.save(os.path.join(save_directory_learning, save_lr_history), lr_history)
     
     
 if __name__ == '__main__':
