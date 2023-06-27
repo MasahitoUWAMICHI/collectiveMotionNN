@@ -117,6 +117,7 @@ def main_parser():
     parser.add_argument('--vLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
     parser.add_argument('--useScore', type=strtobool)
+    parser.add_argument('--nondimensionalLoss', type=strtobool)
     
     parser.add_argument('--save_directory_learning', type=str)
     parser.add_argument('--save_learned_model', type=str)
@@ -156,6 +157,7 @@ def parser2main(args):
          lrSchedulerName=args.lrSchedulerName, lrSchedulerArgs=args.lrSchedulerArgs,
          vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
+         nondimensionalLoss=args.nondimensionalLoss,
          save_directory_learning=args.save_directory_learning,
          save_learned_model=args.save_learned_model, 
          save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history,
@@ -190,6 +192,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          lrSchedulerName=None, lrSchedulerArgs=None,
          vLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
+         nondimensionalLoss=None,
          save_directory_learning=None,
          save_learned_model=None, 
          save_loss_history=None, save_validloss_history=None,
@@ -288,6 +291,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     useScore = ut.variableInitializer(useScore, False)
+
+    nondimensionalLoss = ut.variableInitializer(nondimensionalLoss, False)
     
     save_directory_learning = ut.variableInitializer(save_directory_learning, '.')
     
@@ -444,11 +449,15 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     if len(test_dataset) > 0:
         test_loader = GraphDataLoader(test_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
     
+    if nondimensionalLoss:
+        lossMakeFunc = spm.myLoss_normalized
+    else:
+        lossMakeFunc = spm.myLoss
     
     if periodic is None:
-        lossFunc = spm.myLoss(ut.euclidDistance_nonPeriodic(), N_dim=N_dim, useScore=useScore)
+        lossFunc = lossMakeFunc(ut.euclidDistance_nonPeriodic(), N_dim=N_dim, useScore=useScore)
     else:
-        lossFunc = spm.myLoss(ut.euclidDistance_periodic(torch.tensor(periodic)), N_dim=N_dim, useScore=useScore)
+        lossFunc = lossMakeFunc(ut.euclidDistance_periodic(torch.tensor(periodic)), N_dim=N_dim, useScore=useScore)
         
     
     
