@@ -405,7 +405,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     print('Number of snapshots in training data : ', train_dataset.__len__())
 
 
-    lossFunc = makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss)
+    lossFunc = spm_ut.makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss)
 
     best_valid_loss = np.inf
     
@@ -429,38 +429,10 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             graph, x_truth = gx
             if flg_zerograd:
                 optimizer.zero_grad()
-            torch.cuda.empty_cache()
-            graph_batchsize = len(graph.batch_num_nodes())
             
-            x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
-            
-            if useScore:
-                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                SP_SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-                _ = SP_SDEwrapper.f(1, x_truth)
-                score_truth = torch.stack(SP_SDEwrapper.score(), dim=1)
-                SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
-            
-            
-            SP_SDEwrapper.loadGraph(graph.to(device))
-                        
-            _, x_pred = neuralDE(SP_SDEwrapper.ndataInOutModule.output(SP_SDEwrapper.graph).to(device), 
-                                 t_learn_span.to(device), save_at=t_learn_save.to(device))
-            
+            x_pred, x_truth = spm_ut.run_ODEsimulate(SP_SDEwrapper, graph, x_truth, device, useScore)
 
-            if useScore:
-                if len(SP_SDEwrapper.score())==0:
-                    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
-                    _ = SP_SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
-                    
-                score_pred = torch.stack(SP_SDEwrapper.score(), dim=1)
-            
-                xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-                loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
-            else:
-                xyloss, vloss = lossFunc(x_pred[0], x_truth)
-                scoreloss = torch.full([1], torch.nan)
-                loss = xyloss + vLoss_weight * vloss
+            loss, xyloss, vloss, scoreloss = calcLoss(SP_SDEwrapper, x_pred, x_truth, vLoss_weight, scoreLoss_weight, t_learn_span, device)
                 
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
