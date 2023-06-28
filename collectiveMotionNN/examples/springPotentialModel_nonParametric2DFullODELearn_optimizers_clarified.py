@@ -313,7 +313,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     if not skipSimulate:
         np.save(os.path.join(save_directory_simulation, save_params), args_of_main)
         ut.dict2txt(os.path.join(save_directory_simulation, os.path.splitext(save_params)[0]+'.txt'), args_of_main)
-    
+
+    save_history = os.path.join(save_directory_learning, os.path.splitext(save_loss_history)[0]+'.txt')
     
     SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
@@ -407,7 +408,11 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
 
     best_valid_loss = np.inf
     
-    print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, time[sec.]')
+    text_for_print = 'epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, time[sec.]'
+    with open(save_history, 'w') as f:
+        f.write(text_for_print)
+    print(text_for_print)
+
     
     loss_history = []
     valid_loss_history = []
@@ -497,7 +502,10 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 info_txt = info_txt + ' Best'
 
             print(info_txt)
-        
+            with open(save_history, 'w') as f:
+                f.write(info_txt)
+            print(info_txt)
+     
             torch.cuda.empty_cache()
         
             torch.save(torch.tensor(loss_history), os.path.join(save_directory_learning, save_loss_history))
