@@ -477,14 +477,16 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             
             run_time_history.append(time.time() - start)
 
-            info_txt = '{}: {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f} ({:.3f}, {:.3f}, {:.2e}), {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}'.format(
-                    epoch, loss.item(), xyloss.item(), vloss.item(), scoreloss.item(),
-                    valid_loss.item(), valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
-                    SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item(),
-                    run_time_history[-1])
+            info_txt = '{}: '.format(epoch)
+            info_txt = info_txt + '{:.3f} ({:.3f}, {:.3f}, {:.2e}), '.format(loss.item(), xyloss.item(), 
+                                                                             vloss.item(), scoreloss.item())
+            info_txt = info_txt + '{:.3f} ({:.3f}, {:.3f}, {:.2e}), '.format(valid_loss.item(), valid_xyloss_total.item(), 
+                                                                             valid_vloss_total.item(), valid_scoreloss_total.item())
+            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
+                                                                            SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
+                                                                            SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
+                                                                            SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item())
+            info_txt = info_txt + '{:.3f}'.format(run_time_history[-1])
             
             if valid_loss < best_valid_loss:
                 SP_SDEwrapper.deleteGraph()
