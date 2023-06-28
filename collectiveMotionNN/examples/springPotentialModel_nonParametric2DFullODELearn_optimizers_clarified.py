@@ -408,23 +408,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     print('Number of snapshots in training data : ', train_dataset.__len__())
 
-          
-    
-    if nondimensionalLoss:
-        lossMakeFunc = spm.myLoss_normalized
-    else:
-        lossMakeFunc = spm.myLoss
-    
-    if periodic is None:
-        lossFunc = lossMakeFunc(ut.euclidDistance_nonPeriodic(), N_dim=N_dim, useScore=useScore)
-    else:
-        lossFunc = lossMakeFunc(ut.euclidDistance_periodic(torch.tensor(periodic)), N_dim=N_dim, useScore=useScore)
-        
-    
-    
-    
-    
-    
+
+    lossFunc = makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss)
+
     best_valid_loss = np.inf
     
     print('epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, time[sec.]')
@@ -448,7 +434,6 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             if flg_zerograd:
                 optimizer.zero_grad()
             torch.cuda.empty_cache()
-            #SP_SDEwrapper.dynamicGNDEmodule.calc_module.fNN.Linear0.weight.register_hook(lambda grad: print('Linear0.weight grad ', grad))
             graph_batchsize = len(graph.batch_num_nodes())
             
             x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
