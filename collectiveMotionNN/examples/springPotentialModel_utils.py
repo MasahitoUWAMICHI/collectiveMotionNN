@@ -84,3 +84,15 @@ def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test,
 
     return train_loader, valid_loader, test_loader
 
+
+def makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss):
+    if nondimensionalLoss:
+        lossMakeFunc = spm.myLoss_normalized
+    else:
+        lossMakeFunc = spm.myLoss
+    
+    if periodic is None:
+        lossFunc = lossMakeFunc(ut.euclidDistance_nonPeriodic(), N_dim=N_dim, useScore=useScore)
+    else:
+        lossFunc = lossMakeFunc(ut.euclidDistance_periodic(torch.tensor(periodic)), N_dim=N_dim, useScore=useScore)
+    return lossFunc
