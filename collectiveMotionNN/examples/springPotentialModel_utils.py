@@ -32,26 +32,26 @@ def init_graph(L, v0, N_particles, N_dim, N_batch):
     return x0, graph_init
 
 
-def init_SDEwrapper(SP_Module, r0, selfloop, device, noise_type, sde_type, N_batch_edgeUpdate=1):
-    edgeModule = sm.radiusgraphEdge(r0, SP_Module.periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
-    
-    SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module, edgeModule, returnScore=False, 
-                                        scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule(),
-                                        N_multiBatch=N_batch_edgeUpdate).to(device)
+def init_SDEwrappers(Module, edgeModule, device, noise_type, sde_type, N_batch_edgeUpdate=1, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()):
+    SDEmodule = wm.dynamicGNDEmodule(Module, edgeModule, returnScore=False, 
+                                     scorePostProcessModule=scorePostProcessModule, scoreIntegrationModule=scoreIntegrationModule,
+                                     N_multiBatch=N_batch_edgeUpdate).to(device)
 
-    SP_SDEwrapper = wm.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
-                                          ndataInOutModule=gu.multiVariableNdataInOut([SP_Module.positionName, SP_Module.velocityName], [SP_Module.N_dim]*2), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut([SP_Module.velocityName, SP_Module.accelerationName], [SP_Module.N_dim]*2),
-                                          noise_type=noise_type, sde_type=sde_type).to(device)
-    return edgeModule, SP_SDEwrapper
+    SDEwrapper = wm.dynamicGSDEwrapper(SDEmodule, copy.deepcopy(graph_init).to(device), 
+                                       ndataInOutModule=gu.multiVariableNdataInOut([Module.positionName, Module.velocityName], 
+                                                                                   [Module.N_dim, Module.N_dim]), 
+                                       derivativeInOutModule=gu.multiVariableNdataInOut([Module.velocityName, Module.accelerationName], 
+                                                                                        [Module.N_dim, Module.N_dim]),
+                                       noise_type=noise_type, sde_type=sde_type).to(device)
+    return SDEmodule, SDEwrapper
 
 
-def run_SDEsimulate(SP_SDEwrapper, x0, t_save, dt_step, device, bm_levy='none'):
+def run_SDEsimulate(SP_SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy='none'):
     Nd = SP_SDEwrapper.dynamicGNDEmodule.calc_module.N_dim
     peri = SP_SDEwrapper.dynamicGNDEmodule.calc_module.periodic
     
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                      size=(x0.shape[0], Nd), dt=dt_step, levy_area_approximation=bm_levy, device=device)
+                          size=(x0.shape[0], Nd), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
     with torch.no_grad():
         y = sdeint(SP_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
