@@ -63,5 +63,24 @@ def run_SDEsimulate(SP_SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_l
     return y
 
 
+def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test, split_seed=None, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True):
+    dataset = spm.myDataset(data_path, N_dim=N_dim, delayTruth=delayPredict)
+    dataset.initialize()
+    
+    N_valid = int(dataset.N_batch * ratio_valid)
+    N_test = int(dataset.N_batch * ratio_test)
+    N_train = dataset.N_batch - N_valid - N_test
+    
+    range_split = torch.utils.data.random_split(range(dataset.N_batch), [N_train, N_valid, N_test], generator=split_seed)
+    
+    train_dataset = spm.batchedSubset(dataset, [i for i in range_split[0]])
+    valid_dataset = spm.batchedSubset(dataset, [i for i in range_split[1]])
+    test_dataset = spm.batchedSubset(dataset, [i for i in range_split[2]])
+    
+    train_loader = GraphDataLoader(train_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
+    valid_loader = GraphDataLoader(valid_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
+    if len(test_dataset) > 0:
+        test_loader = GraphDataLoader(test_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
 
+    return train_loader, valid_loader, test_loader
 
