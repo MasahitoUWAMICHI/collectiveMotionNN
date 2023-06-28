@@ -46,15 +46,15 @@ def init_SDEwrappers(Module, edgeModule, device, noise_type, sde_type, N_batch_e
     return SDEmodule, SDEwrapper
 
 
-def run_SDEsimulate(SP_SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy='none'):
-    Nd = SP_SDEwrapper.dynamicGNDEmodule.calc_module.N_dim
-    peri = SP_SDEwrapper.dynamicGNDEmodule.calc_module.periodic
+def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy='none'):
+    Nd = SDEwrapper.dynamicGNDEmodule.calc_module.N_dim
+    peri = SDEwrapper.dynamicGNDEmodule.calc_module.periodic
     
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
                           size=(x0.shape[0], Nd), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
     with torch.no_grad():
-        y = sdeint(SP_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
+        y = sdeint(SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
 
     y = y.to('cpu')
     if not(peri is None):
