@@ -19,6 +19,7 @@ import collectiveMotionNN.wrapper_modules as wm
 import collectiveMotionNN.sample_modules as sm
 
 import collectiveMotionNN.examples.springPotentialModel as spm
+import collectiveMotionNN.examples.springPotentialModel_utils as spm_ut
 
 import argparse
 from distutils.util import strtobool
@@ -323,46 +324,20 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
     
-    SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module, edgeModule, returnScore=False, 
-                                        scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule(),
-                                        N_multiBatch=N_batch_edgeUpdate).to(device)
     
-    
-    x0 = []
-    graph_init = []
-    for i in range(N_batch):
-        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim])-0.5) * (2*v0)), dim=-1))
-        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim])))
-    x0 = torch.concat(x0, dim=0)
-    graph_init = dgl.batch(graph_init)
+    x0, graph_init = spm_ut.init_graph(L, v0, N_particles, N_dim, N_batch)
         
+
+    SP_SDEmodule, SP_SDEwrapper = spm_ut.init_SDEwrappers(SP_Module, edgeModule, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
+                                                          scorePostProcessModule=sm.pAndLogit2KLdiv(), 
+                                                          scoreIntegrationModule=sm.scoreListModule())
+    
     t_span = torch.arange(0, t_max+dt_step, dt_step)
     t_save = torch.arange(0, t_max+dt_step, dt_save)
-
-    
-    
-    
-    
-    SP_SDEwrapper = wm.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
-                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim]), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [N_dim, N_dim]),
-                                          noise_type=noise_type, sde_type=sde_type).to(device)
     
     if not skipSimulate:
     
-        bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                          size=(x0.shape[0], N_dim), dt=dt_step, levy_area_approximation=bm_levy, device=device)
-
-        with torch.no_grad():
-            y = sdeint(SP_SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
-
-        print(SP_SDEwrapper.graph)
-
-        y = y.to('cpu')
-        if not(periodic is None):
-            y[..., :N_dim] = torch.remainder(y[..., :N_dim], periodic)
-
-        y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim))
+        y = spm_ut.run_SDEsimulate(SP_SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy)
 
         torch.save(y, os.path.join(save_directory_simulation, save_x_SDE))
 
@@ -389,14 +364,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                             NNreset_weight_args, NNreset_bias_args, NNreset_others_args, ['f2NN'], NN2_zeroFinalLayer)
     
     
-    SP_SDEmodule = wm.dynamicGNDEmodule(SP_Module.to(device), edgeModule.to(device), returnScore=False, 
-                                        scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule(),
-                                        N_multiBatch=N_batch_edgeUpdate).to(device)
-    
-    SP_SDEwrapper = wm.dynamicGSDEwrapper(SP_SDEmodule, copy.deepcopy(graph_init).to(device), 
-                                          ndataInOutModule=gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim]), 
-                                          derivativeInOutModule=gu.multiVariableNdataInOut(['v', 'a'], [N_dim, N_dim]),
-                                          noise_type=noise_type, sde_type=sde_type).to(device)
+    SP_SDEmodule, SP_SDEwrapper = spm_ut.init_SDEwrappers(SP_Module, edgeModule, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
+                                                          scorePostProcessModule=sm.pAndLogit2KLdiv(), 
+                                                          scoreIntegrationModule=sm.scoreListModule())
     
     SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(useScore)
     
@@ -430,24 +400,15 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     t_learn_save = torch.tensor([t_pred_max])
     
     
+
+    train_loader, valid_loader, test_loader = spm_ut.makeGraphDataLoader(os.path.join(save_directory_simulation, save_x_SDE),
+                                                                         N_dim, delayPredict, ratio_valid, ratio_test, 
+                                                                         split_seed=None, batch_size=N_train_batch, 
+                                                                         drop_last=False, shuffle=True, pin_memory=True)
     
-    vicsek_dataset = spm.myDataset(os.path.join(save_directory_simulation, save_x_SDE), N_dim=N_dim, delayTruth=delayPredict)
-    vicsek_dataset.initialize()
-    
-    N_valid = int(vicsek_dataset.N_batch * ratio_valid)
-    N_test = int(vicsek_dataset.N_batch * ratio_test)
-    N_train = vicsek_dataset.N_batch - N_valid - N_test
-    
-    range_split = torch.utils.data.random_split(range(vicsek_dataset.N_batch), [N_train, N_valid, N_test], generator=split_seed)
-    
-    train_dataset = spm.batchedSubset(vicsek_dataset, [i for i in range_split[0]])
-    valid_dataset = spm.batchedSubset(vicsek_dataset, [i for i in range_split[1]])
-    test_dataset = spm.batchedSubset(vicsek_dataset, [i for i in range_split[2]])
-    
-    train_loader = GraphDataLoader(train_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
-    valid_loader = GraphDataLoader(valid_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
-    if len(test_dataset) > 0:
-        test_loader = GraphDataLoader(test_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
+    print('Number of snapshots in training data : ', train_dataset.__len__())
+
+          
     
     if nondimensionalLoss:
         lossMakeFunc = spm.myLoss_normalized
@@ -461,7 +422,6 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         
     
     
-    print('Number of snapshots in training data : ', train_dataset.__len__())
     
     
     
