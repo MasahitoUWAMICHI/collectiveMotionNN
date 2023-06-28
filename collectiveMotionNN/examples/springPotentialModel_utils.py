@@ -63,6 +63,26 @@ def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy
     return y
 
 
+def run_ODEsimulate(SDEwrapper, graph, x_truth, device, useScore=False):
+    torch.cuda.empty_cache()
+    
+    x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
+    
+    if useScore:
+        SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+        SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
+        _ = SP_SDEwrapper.f(1, x_truth)
+        score_truth = torch.stack(SDEwrapper.score(), dim=1)
+        SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
+    
+    
+    SDEwrapper.loadGraph(graph.to(device))
+                
+    _, x_pred = neuralDE(SDEwrapper.ndataInOutModule.output(SDEwrapper.graph).to(device), 
+                         t_learn_span.to(device), save_at=t_learn_save.to(device))
+    return x_pred, x_truth
+
+
 def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test, split_seed=None, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True):
     dataset = spm.myDataset(data_path, N_dim=N_dim, delayTruth=delayPredict)
     dataset.initialize()
@@ -96,3 +116,20 @@ def makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss):
     else:
         lossFunc = lossMakeFunc(ut.euclidDistance_periodic(torch.tensor(periodic)), N_dim=N_dim, useScore=useScore)
     return lossFunc
+
+
+def calcLoss(SDEwrapper, x_pred, x_truth, vLoss_weight, scoreLoss_weight, t_learn_span, device):
+    if useScore:
+        if len(SDEwrapper.score())==0:
+            SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
+            _ = SDEwrapper.f(t_learn_span.to(device)[-1], x_pred[0])
+            
+        score_pred = torch.stack(SDEwrapper.score(), dim=1)
+    
+        xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+        loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
+    else:
+        xyloss, vloss = lossFunc(x_pred[0], x_truth)
+        scoreloss = torch.full([1], torch.nan)
+        loss = xyloss + vLoss_weight * vloss
+    return loss, xyloss, vloss, scoreloss
