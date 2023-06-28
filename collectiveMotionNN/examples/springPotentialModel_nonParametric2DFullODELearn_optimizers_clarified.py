@@ -1,8 +1,6 @@
 import numpy as np
 import torch
 
-import copy
-
 from torchdyn.core import NeuralODE
 
 import dgl.function as fn
