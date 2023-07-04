@@ -65,26 +65,10 @@ def main_parser():
 
     parser.add_argument('--skipSimulate', type=strtobool)
     
+    parser.add_argument('--c_init', type=float)
+    parser.add_argument('--r_c_init', type=float)
     parser.add_argument('--gamma_init', type=float)
     parser.add_argument('--sigma_init', type=float)
-    parser.add_argument('--NNshape', type=list)
-    parser.add_argument('--NNbias', type=strtobool)
-    parser.add_argument('--NN2shape', type=list)
-    parser.add_argument('--NN2bias', type=strtobool)
-    parser.add_argument('--NNactivationName', type=str)
-    parser.add_argument('--NNactivationArgs', type=dict)
-    parser.add_argument('--NNscalingLayer', type=strtobool)
-    parser.add_argument('--NNscalingBias', type=strtobool)
-
-    parser.add_argument('--NNreset_weight_method', type=str)
-    parser.add_argument('--NNreset_weight_args', type=dict)
-    parser.add_argument('--NNreset_bias_method', type=str)
-    parser.add_argument('--NNreset_bias_args', type=dict)
-    parser.add_argument('--NNreset_others_method', type=str)
-    parser.add_argument('--NNreset_others_args', type=dict)
-    
-    parser.add_argument('--NN_zeroFinalLayer', type=strtobool)
-    parser.add_argument('--NN2_zeroFinalLayer', type=strtobool)
     
     parser.add_argument('--bm_levy', type=str)
     
@@ -134,14 +118,8 @@ def parser2main(args):
          save_x_SDE=args.save_x_SDE, save_t_SDE=args.save_t_SDE, save_model=args.save_model,
          method_SDE=args.method_SDE, noise_type=args.noise_type, sde_type=args.sde_type, bm_levy=args.bm_levy,
          skipSimulate=args.skipSimulate,
+         c_init=args.c_init, r_c_init=args.r_c_init, 
          gamma_init=args.gamma_init, sigma_init=args.sigma_init, 
-         NNshape=args.NNshape, NNbias=args.NNbias, NN2shape=args.NN2shape, NN2bias=args.NN2bias,
-         NNactivationName=args.NNactivationName, NNactivationArgs=args.NNactivationArgs,
-         NNscalingLayer=args.NNscalingLayer, NNscalingBias=args.NNscalingBias,
-         NNreset_weight_method=args.NNreset_weight_method, NNreset_weight_args=args.NNreset_weight_args,
-         NNreset_bias_method=args.NNreset_bias_method, NNreset_bias_args=args.NNreset_bias_args,
-         NNreset_others_method=args.NNreset_others_method, NNreset_others_args=args.NNreset_others_args,
-         NN_zeroFinalLayer=args.NN_zeroFinalLayer, NN2_zeroFinalLayer=args.NN2_zeroFinalLayer,
          delayPredict=args.delayPredict, dt_train=args.dt_train, 
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
@@ -169,14 +147,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          save_x_SDE=None, save_t_SDE=None, save_model=None,
          method_SDE=None, noise_type=None, sde_type=None, bm_levy=None,
          skipSimulate=None,
+         c_init=None, r_c_init=None,
          gamma_init=None, sigma_init=None,
-         NNshape=None, NNbias=None, NN2shape=None, NN2bias=None,
-         NNactivationName=None, NNactivationArgs=None,
-         NNscalingLayer=None, NNscalingBias=None,
-         NNreset_weight_method=None, NNreset_weight_args=None,
-         NNreset_bias_method=None, NNreset_bias_args=None,
-         NNreset_others_method=None, NNreset_others_args=None,
-         NN_zeroFinalLayer=None, NN2_zeroFinalLayer=None,
          delayPredict=None, dt_train=None, 
          method_ODE=None, 
          N_epoch=None, N_train_batch=None, N_batch_edgeUpdate=None,
@@ -235,28 +207,10 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     skipSimulate = ut.variableInitializer(skipSimulate, False)
     
     
+    c_init = ut.variableInitializer(c_init, None)    
+    r_c_init = ut.variableInitializer(r_c_init, None)
     gamma_init = ut.variableInitializer(gamma_init, None)    
     sigma_init = ut.variableInitializer(sigma_init, None)
-    NNshape = ut.variableInitializer(NNshape, None)
-    NNbias = ut.variableInitializer(NNbias, None)
-    NN2shape = ut.variableInitializer(NN2shape, None)
-    NN2bias = ut.variableInitializer(NN2bias, None)
-    
-    NNactivationName = ut.variableInitializer(NNactivationName, None)
-    NNactivationArgs = ut.variableInitializer(NNactivationArgs, None)
-    
-    NNscalingLayer = ut.variableInitializer(NNscalingLayer, False)
-    NNscalingBias = ut.variableInitializer(NNscalingBias, False)
-    
-    NNreset_weight_method = ut.variableInitializer(NNreset_weight_method, None)
-    NNreset_weight_args = ut.variableInitializer(NNreset_weight_args, {})
-    NNreset_bias_method = ut.variableInitializer(NNreset_bias_method, None)
-    NNreset_bias_args = ut.variableInitializer(NNreset_bias_args, {})
-    NNreset_others_method = ut.variableInitializer(NNreset_others_method, None)
-    NNreset_others_args = ut.variableInitializer(NNreset_others_args, {})
-    
-    NN_zeroFinalLayer = ut.variableInitializer(NN_zeroFinalLayer, False)
-    NN2_zeroFinalLayer = ut.variableInitializer(NN2_zeroFinalLayer, False)
     
     delayPredict = ut.variableInitializer(delayPredict, 1)
     dt_train = ut.variableInitializer(dt_train, dt_step)
@@ -345,23 +299,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
 
     
-    if NNscalingBias:
-        N_scalingBias = N_dim
-    else:
-        N_scalingBias = None
-    
-    SP_Module = spm.interactionModule_nonParametric_2Dfull(gamma_init, sigma_init, N_dim, NNshape, NNbias, NN2shape, NN2bias, periodic, NNactivationName, NNactivationArgs, useScaling=NNscalingLayer, scalingBias=N_scalingBias).to(device)
-    
-    if (NN_zeroFinalLayer or NN2_zeroFinalLayer) or (not (NNreset_weight_method is None)) or ((not (NNreset_bias_method is None)) or (not (NNreset_others_method is None))):
-        SP_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
-                            NNreset_weight_args, NNreset_bias_args, NNreset_others_args, ['fNN'], NN_zeroFinalLayer)
-        SP_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
-                            NNreset_weight_args, NNreset_bias_args, NNreset_others_args, ['f2NN'], NN2_zeroFinalLayer)
-    
-    
-    SP_SDEmodule, SP_SDEwrapper = spm_ut.init_SDEwrappers(SP_Module, edgeModule, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
-                                                          scorePostProcessModule=sm.pAndLogit2KLdiv(), 
-                                                          scoreIntegrationModule=sm.scoreListModule())
+    SP_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(c_init, r_c_init, gamma_init, sigma_init)
     
     SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(useScore)
     
