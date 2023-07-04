@@ -245,14 +245,14 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     save_directory_learning = ut.variableInitializer(save_directory_learning, '.')
     
-    save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_nonParametric2Dfull_learned_model.pt')
-    save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_nonParametric2Dfull_loss_history.pt')
-    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_nonParametric2Dfull_validloss_history.pt')
-    save_lr_history = ut.variableInitializer(save_lr_history, 'Spring_nonParametric2Dfull_lr_history.pt')
+    save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_parametric_learned_model.pt')
+    save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_parametric_loss_history.pt')
+    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_parametric_validloss_history.pt')
+    save_lr_history = ut.variableInitializer(save_lr_history, 'Spring_parametric_lr_history.pt')
     
-    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_nonParametric2Dfull_run_time_history.npy')
-    save_params = ut.variableInitializer(save_params, 'Spring_nonParametric2Dfull_parameters.npy')
-    
+    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_parametric_run_time_history.npy')
+    save_params = ut.variableInitializer(save_params, 'Spring_parametric_parameters.npy')
+        
     if not skipSimulate:
         os.makedirs(save_directory_simulation, exist_ok=True)
     os.makedirs(save_directory_learning, exist_ok=True)
