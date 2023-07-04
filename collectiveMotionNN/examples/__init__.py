@@ -3,4 +3,5 @@ __all__ = ["differentiableVicsekModel",
            "differentiableVicsekModel_parametricSDELearn",
            "differentiableVicsekModel_nonParametricTorqueODELearn",
            "springPotentialModel",
-           "springPotentialModel_parametricODELearn"]
+           "springPotentialModel_parametricODELearn",
+           "springPotentialModel_parametricODELearn_optimizers_clarified"]
