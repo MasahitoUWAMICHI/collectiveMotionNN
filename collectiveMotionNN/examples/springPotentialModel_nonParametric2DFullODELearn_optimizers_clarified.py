@@ -464,7 +464,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             for graph, x_truth in valid_loader:
                 graph_batchsize = len(graph.batch_num_nodes())
                 
-                x_pred, x_truth = spm_ut.run_ODEsimulate(SP_SDEwrapper, graph, x_truth, device, useScore)
+                x_pred, x_truth = spm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
 
                 valid_loss_batch, valid_xyloss, valid_vloss, valid_scoreloss = spm_ut.calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore, SP_SDEwrapper, scoreLoss_weight, t_learn_span)
                     
