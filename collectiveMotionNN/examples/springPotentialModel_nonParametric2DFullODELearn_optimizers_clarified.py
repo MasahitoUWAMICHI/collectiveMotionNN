@@ -435,7 +435,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             
             x_pred, x_truth = spm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
 
-            loss, xyloss, vloss, scoreloss = spm_ut.calcLoss(SP_SDEwrapper, x_pred, x_truth, vLoss_weight, scoreLoss_weight, t_learn_span, device, useScore)
+            loss, xyloss, vloss, scoreloss = spm_ut.calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore, SP_SDEwrapper, scoreLoss_weight, t_learn_span)
                 
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
@@ -466,7 +466,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                 
                 x_pred, x_truth = spm_ut.run_ODEsimulate(SP_SDEwrapper, graph, x_truth, device, useScore)
 
-                valid_loss_batch, valid_xyloss, valid_vloss, valid_scoreloss = spm_ut.calcLoss(SP_SDEwrapper, x_pred, x_truth, vLoss_weight, scoreLoss_weight, t_learn_span, device)
+                valid_loss_batch, valid_xyloss, valid_vloss, valid_scoreloss = spm_ut.calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore, SP_SDEwrapper, scoreLoss_weight, t_learn_span)
                     
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
                 valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
