@@ -83,7 +83,7 @@ def run_ODEsimulate(SDEwrapper, graph, x_truth, device, useScore=False):
     return x_pred, x_truth
 
 
-def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test, split_seed=None, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True):
+def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test, split_seed=None, batch_size=1, drop_last=False, shuffle=True, pin_memory=True):
     dataset = spm.myDataset(data_path, N_dim=N_dim, delayTruth=delayPredict)
     dataset.initialize()
     
