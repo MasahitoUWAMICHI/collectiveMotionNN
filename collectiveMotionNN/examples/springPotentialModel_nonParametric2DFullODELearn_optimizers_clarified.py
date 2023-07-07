@@ -323,7 +323,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     x0, graph_init = spm_ut.init_graph(L, v0, N_particles, N_dim, N_batch)
         
 
-    SP_SDEmodule, SP_SDEwrapper = spm_ut.init_SDEwrappers(SP_Module, edgeModule, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
+    SP_SDEmodule, SP_SDEwrapper = spm_ut.init_SDEwrappers(SP_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
                                                           scorePostProcessModule=sm.pAndLogit2KLdiv(), 
                                                           scoreIntegrationModule=sm.scoreListModule())
     
@@ -359,7 +359,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                             NNreset_weight_args, NNreset_bias_args, NNreset_others_args, ['f2NN'], NN2_zeroFinalLayer)
     
     
-    SP_SDEmodule, SP_SDEwrapper = spm_ut.init_SDEwrappers(SP_Module, edgeModule, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
+    SP_SDEmodule, SP_SDEwrapper = spm_ut.init_SDEwrappers(SP_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
                                                           scorePostProcessModule=sm.pAndLogit2KLdiv(), 
                                                           scoreIntegrationModule=sm.scoreListModule())
     
