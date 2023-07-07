@@ -32,7 +32,7 @@ def init_graph(L, v0, N_particles, N_dim, N_batch):
     return x0, graph_init
 
 
-def init_SDEwrappers(Module, edgeModule, device, noise_type, sde_type, N_batch_edgeUpdate=1, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()):
+def init_SDEwrappers(Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()):
     SDEmodule = wm.dynamicGNDEmodule(Module, edgeModule, returnScore=False, 
                                      scorePostProcessModule=scorePostProcessModule, scoreIntegrationModule=scoreIntegrationModule,
                                      N_multiBatch=N_batch_edgeUpdate).to(device)
