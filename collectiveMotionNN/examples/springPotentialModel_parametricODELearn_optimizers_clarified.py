@@ -336,7 +336,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
 
     train_loader, valid_loader, test_loader = spm_ut.makeGraphDataLoader(os.path.join(save_directory_simulation, save_x_SDE),
                                                                          N_dim, delayPredict, ratio_valid, ratio_test, 
-                                                                         split_seed=None, batch_size=N_train_batch, 
+                                                                         split_seed=split_seed, batch_size=N_train_batch, 
                                                                          drop_last=False, shuffle=True, pin_memory=True)
     
     print('dataloader dir : ', dir(train_loader))
