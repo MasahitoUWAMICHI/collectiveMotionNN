@@ -504,7 +504,6 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             print(info_txt)
             with open(save_history, 'w') as f:
                 f.write(info_txt)
-            print(info_txt)
      
             torch.cuda.empty_cache()
         
