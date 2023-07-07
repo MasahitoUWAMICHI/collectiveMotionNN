@@ -371,7 +371,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             if flg_zerograd:
                 optimizer.zero_grad()
             
-            x_pred, x_truth = spm_ut.run_ODEsimulate(SP_SDEwrapper, graph, x_truth, device, useScore)
+            x_pred, x_truth = spm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, useScore)
 
             loss, xyloss, vloss, scoreloss = spm_ut.calcLoss(SP_SDEwrapper, x_pred, x_truth, vLoss_weight, scoreLoss_weight, t_learn_span, device)
                 
