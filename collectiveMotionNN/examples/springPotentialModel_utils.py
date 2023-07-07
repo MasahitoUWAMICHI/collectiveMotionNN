@@ -120,7 +120,7 @@ def makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss):
     return lossFunc
 
 
-def calcLoss(SDEwrapper, x_pred, x_truth, vLoss_weight, scoreLoss_weight, t_learn_span, device, useScore=False):
+def calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore=False, SDEwrapper=None, scoreLoss_weight=None, t_learn_span=None):
     if useScore:
         if len(SDEwrapper.score())==0:
             SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
