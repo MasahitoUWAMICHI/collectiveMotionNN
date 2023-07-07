@@ -63,7 +63,7 @@ def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy
     return y
 
 
-def run_ODEsimulate(SDEwrapper, graph, x_truth, device, useScore=False):
+def run_ODEsimulate(neuralDE, SDEwrapper, graph, x_truth, device, useScore=False):
     torch.cuda.empty_cache()
     
     x_truth = x_truth.reshape([-1, x_truth.shape[-1]]).to(device)
