@@ -339,8 +339,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                                                                          split_seed=split_seed, batch_size=N_train_batch, 
                                                                          drop_last=False, shuffle=True, pin_memory=True)
     
-    print('dataloader dir : ', dir(train_loader))
-    print('Number of snapshots in training data : ', train_loader.__len__())
+    print('Number of snapshots in training data : ', train_loader.dataset.__len__())
 
 
     lossFunc = spm_ut.makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss)
