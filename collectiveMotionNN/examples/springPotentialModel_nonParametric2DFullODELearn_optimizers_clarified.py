@@ -435,7 +435,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             
             x_pred, x_truth = spm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
 
-            loss, xyloss, vloss, scoreloss = spm_ut.calcLoss(SP_SDEwrapper, x_pred, x_truth, vLoss_weight, scoreLoss_weight, t_learn_span, device)
+            loss, xyloss, vloss, scoreloss = spm_ut.calcLoss(SP_SDEwrapper, x_pred, x_truth, vLoss_weight, scoreLoss_weight, t_learn_span, device, useScore)
                 
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
