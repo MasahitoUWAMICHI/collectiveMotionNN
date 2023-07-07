@@ -97,10 +97,10 @@ def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test,
     valid_dataset = spm.batchedSubset(dataset, [i for i in range_split[1]])
     test_dataset = spm.batchedSubset(dataset, [i for i in range_split[2]])
     
-    train_loader = GraphDataLoader(train_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
-    valid_loader = GraphDataLoader(valid_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
+    train_loader = GraphDataLoader(train_dataset, batch_size=batch_size, drop_last=False, shuffle=True, pin_memory=True)
+    valid_loader = GraphDataLoader(valid_dataset, batch_size=batch_size, drop_last=False, shuffle=True, pin_memory=True)
     if len(test_dataset) > 0:
-        test_loader = GraphDataLoader(test_dataset, batch_size=N_train_batch, drop_last=False, shuffle=True, pin_memory=True)
+        test_loader = GraphDataLoader(test_dataset, batch_size=batch_size, drop_last=False, shuffle=True, pin_memory=True)
 
     return train_loader, valid_loader, test_loader
 
