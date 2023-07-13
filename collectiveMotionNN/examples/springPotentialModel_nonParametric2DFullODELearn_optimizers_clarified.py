@@ -334,6 +334,8 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
         y = spm_ut.run_SDEsimulate(SP_SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy)
 
+        y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim))
+        
         torch.save(y, os.path.join(save_directory_simulation, save_x_SDE))
 
         torch.save(t_save.to('cpu'), os.path.join(save_directory_simulation, save_t_SDE))
