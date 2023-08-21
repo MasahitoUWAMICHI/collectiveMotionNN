@@ -86,14 +86,8 @@ class J_contactInhibitionOfLocomotion(nn.Module):
     
     def forward(self,xy, d):
         return ((self.r/d) - 1) * xy
-    
 
-## prepare distance metric
 
-def periodic_distance(x, y, L):
-    dr = torch.remainder((x - y), L)
-    dr[dr > L/2] = dr[dr > L/2] - L
-    return dr
 
 ## make module
 
@@ -155,19 +149,6 @@ class multitypedCMsimulate(mo.dynamicGNDEmodule):
 
 
 
-class continuousTimeVicsek2D(nn.Module):
-    def __init__(self, c, d=1.0):
-        super().__init__()
-        
-        self.logc = nn.Parameter(torch.tensor(np.log(c), requires_grad=True))
-
-        self.d = d
-        
-    def c(self):
-        return torch.exp(self.logc)
-    
-    def torque(self, dtheta):
-        return self.c() * torch.sin(dtheta * self.d)
 
     
 class interactionModule(nn.Module):
