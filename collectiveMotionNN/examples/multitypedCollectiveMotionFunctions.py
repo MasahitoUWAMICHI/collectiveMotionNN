@@ -92,17 +92,29 @@ class J_contactInhibitionOfLocomotion(nn.Module):
 ## make module
 
 class interactionModule(nn.Module):
-    def __init__(self, u0, c, d=1.0, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
+    def __init__(self, params, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
         super().__init__()
         
-        self.u0 = nn.Parameter(torch.tensor(u0, requires_grad=True))
         self.sigma = nn.Parameter(torch.tensor(sigma, requires_grad=True))
         
         self.N_dim = N_dim
         
         self.prepare_sigma()
+
         
-        self.ctv = continuousTimeVicsek2D(c, d)
+        self.J_chem = J_chemoattractant2D(params['kappa'], params['cutoff'])
+        self.J_CF = J_contactFollowing()
+        self.J_CIL = J_contactInhibitionOfLocomotion(params['r'])
+
+        self.v0 = nn.Parameter(torch.tensor(params['v0'], requires_grad=True))
+        self.beta = nn.Parameter(torch.tensor(params['beta'], requires_grad=True))
+        
+        self.A_CFs = nn.Parameter(torch.tensor(params['A_CFs'], requires_grad=True))
+        self.A_CIL = nn.Parameter(torch.tensor(params['A_CIL'], requires_grad=True))
+        self.A_chem = nn.Parameter(torch.tensor(params['A_chem'], requires_grad=True))
+
+        self.A_ext = nn.Parameter(torch.tensor(params['A_ext'], requires_grad=True))
+
         
         self.positionName = ut.variableInitializer(positionName, 'x')
         self.velocityName = ut.variableInitializer(velocityName, 'v')
@@ -111,7 +123,12 @@ class interactionModule(nn.Module):
         self.noiseName = ut.variableInitializer(noiseName, 'sigma')
         
         self.messageName = ut.variableInitializer(messageName, 'm')
-        
+
+    def reset_param_func(self, target, value):
+        if value is None:
+            nn.init.uniform_(target)
+        else:
+            nn.init.constant_(target, value)
         
     def reset_parameter(self, u0=None, c=None, sigma=None):
         if c is None:
