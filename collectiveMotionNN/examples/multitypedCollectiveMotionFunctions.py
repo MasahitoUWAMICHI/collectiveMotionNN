@@ -5,8 +5,13 @@ from torch import nn
 from scipy import special
 from torch.autograd import Function
 
+import collectiveMotionNN.utils as ut
 import collectiveMotionNN.graph_utils as gu
 import collectiveMotionNN.module as mo
+
+import collections
+
+
 
 ## prepare functions
 
@@ -143,3 +148,89 @@ class multitypedCMsimulate(mo.dynamicGNDEmodule):
     def g(self, t, y, gr, dynamicName, batchIDName):
         return None
 
+
+
+
+
+
+
+
+class continuousTimeVicsek2D(nn.Module):
+    def __init__(self, c, d=1.0):
+        super().__init__()
+        
+        self.logc = nn.Parameter(torch.tensor(np.log(c), requires_grad=True))
+
+        self.d = d
+        
+    def c(self):
+        return torch.exp(self.logc)
+    
+    def torque(self, dtheta):
+        return self.c() * torch.sin(dtheta * self.d)
+
+    
+class interactionModule(nn.Module):
+    def __init__(self, u0, c, d=1.0, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
+        super().__init__()
+        
+        self.u0 = nn.Parameter(torch.tensor(u0, requires_grad=True))
+        self.sigma = nn.Parameter(torch.tensor(sigma, requires_grad=True))
+        
+        self.N_dim = N_dim
+        
+        self.prepare_sigma()
+        
+        self.ctv = continuousTimeVicsek2D(c, d)
+        
+        self.positionName = ut.variableInitializer(positionName, 'x')
+        self.velocityName = ut.variableInitializer(velocityName, 'v')
+        self.polarityName = ut.variableInitializer(polarityName, 'theta')
+        self.torqueName = ut.variableInitializer(torqueName, 'w')
+        self.noiseName = ut.variableInitializer(noiseName, 'sigma')
+        
+        self.messageName = ut.variableInitializer(messageName, 'm')
+        
+        
+    def reset_parameter(self, u0=None, c=None, sigma=None):
+        if c is None:
+            nn.init.uniform_(self.ctv.logc)
+        else:
+            nn.init.constant_(self.ctv.logc, np.log(c))
+            
+        if u0 is None:
+            nn.init.uniform_(self.u0)
+        else:
+            nn.init.constant_(self.u0, u0)
+        
+        if sigma is None:
+            nn.init.uniform_(self.sigma)
+        else:
+            nn.init.constant_(self.sigma, sigma)
+
+        self.prepare_sigma()
+        
+    def prepare_sigma(self):
+        self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim-1], device=self.sigma.device), self.sigma*torch.eye(self.N_dim-1, device=self.sigma.device)), dim=0)
+            
+    def calc_message(self, edges):
+        dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
+
+        return {self.messageName: self.ctv.torque(dtheta)}
+    
+    def aggregate_message(self, nodes):
+        sum_torque = torch.mean(nodes.mailbox[self.messageName], 1)
+        return {self.torqueName : sum_torque}
+        
+    def polarity2velocity(self, theta):
+        return self.u0 * torch.cat((torch.cos(theta), torch.sin(theta)), dim=-1)
+        
+    def f(self, t, g, args=None):
+        g.update_all(self.calc_message, self.aggregate_message)
+        g.ndata[self.velocityName] = self.polarity2velocity(g.ndata[self.polarityName])
+        return g
+      
+    def g(self, t, g, args=None):
+        self.prepare_sigma()
+        g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.positionName].shape[0], 1, 1).to(g.device)
+        return g
