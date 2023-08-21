@@ -91,66 +91,6 @@ class J_contactInhibitionOfLocomotion(nn.Module):
 
 ## make module
 
-class multitypedCMsimulate(mo.dynamicGNDEmodule):
-    def __init__(self, params):
-        super().__init__()
-
-        self.J_chem = J_chemoattractant2D(params['kappa'], params['cutoff'])
-        self.J_CF = J_contactFollowing()
-        self.J_CIL = J_contactInhibitionOfLocomotion(params['r'])
-
-        self.v0 = nn.Parameter(torch.tensor(params['v0'], requires_grad=True))
-        self.beta = nn.Parameter(torch.tensor(params['beta'], requires_grad=True))
-        
-        self.A_CFs = nn.Parameter(torch.tensor(params['A_CFs'], requires_grad=True))
-        self.A_CIL = nn.Parameter(torch.tensor(params['A_CIL'], requires_grad=True))
-        self.A_chem = nn.Parameter(torch.tensor(params['A_chem'], requires_grad=True))
-
-        self.A_ext = nn.Parameter(torch.tensor(params['A_ext'], requires_grad=True))
-
-        self.L = params['L']
-        self.D = params['D']
-        
-    def forward(self, edges):
-        dx = periodic_distance(edges.dst['x'], edges.src['x'], self.L)
-
-        costheta = torch.cos(edges.dst['theta'])
-        sintheta = torch.sin(edges.dst['theta'])
-
-        dx_para = costheta * dx[..., :1] + sintheta * dx[..., 1:]
-        dx_perp = costheta * dx[..., 1:] - sintheta * dx[..., :1]
-
-        p_para_src = torch.cos(edges.src['theta'] - edges.dst['theta'])
-        p_perp_src = torch.sin(edges.src['theta'] - edges.dst['theta'])
-
-        rot_m_v = self.interactNN(torch.concat((dx_para, dx_perp, 
-                                                p_para_src, p_perp_src,
-                                                edges.dst['type'], edges.src['type']), -1))
-
-        m_v = torch.concat((costheta * rot_m_v[..., :1] - sintheta * rot_m_v[..., 1:],
-                            costheta * rot_m_v[..., 1:] + sintheta * rot_m_v[..., :1]), -1)
-
-        m_theta = self.thetaDotNN(torch.concat((dx_para, dx_perp, 
-                                                p_para_src, p_perp_src, 
-                                                edges.dst['type'], edges.src['type']), -1))
-        
-        return {'m': torch.concat((m_v, m_theta), -1)}
-
-    def f(self, t, y, gr, dynamicName, batchIDName):
-        return None
-
-    def g(self, t, y, gr, dynamicName, batchIDName):
-        return None
-
-
-
-
-
-
-
-
-
-    
 class interactionModule(nn.Module):
     def __init__(self, u0, c, d=1.0, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
         super().__init__()
@@ -215,3 +155,65 @@ class interactionModule(nn.Module):
         self.prepare_sigma()
         g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.positionName].shape[0], 1, 1).to(g.device)
         return g
+
+
+class multitypedCMsimulate(mo.dynamicGNDEmodule):
+    def __init__(self, params):
+        super().__init__()
+
+        self.J_chem = J_chemoattractant2D(params['kappa'], params['cutoff'])
+        self.J_CF = J_contactFollowing()
+        self.J_CIL = J_contactInhibitionOfLocomotion(params['r'])
+
+        self.v0 = nn.Parameter(torch.tensor(params['v0'], requires_grad=True))
+        self.beta = nn.Parameter(torch.tensor(params['beta'], requires_grad=True))
+        
+        self.A_CFs = nn.Parameter(torch.tensor(params['A_CFs'], requires_grad=True))
+        self.A_CIL = nn.Parameter(torch.tensor(params['A_CIL'], requires_grad=True))
+        self.A_chem = nn.Parameter(torch.tensor(params['A_chem'], requires_grad=True))
+
+        self.A_ext = nn.Parameter(torch.tensor(params['A_ext'], requires_grad=True))
+
+        self.L = params['L']
+        self.D = params['D']
+        
+    def forward(self, edges):
+        dx = periodic_distance(edges.dst['x'], edges.src['x'], self.L)
+
+        costheta = torch.cos(edges.dst['theta'])
+        sintheta = torch.sin(edges.dst['theta'])
+
+        dx_para = costheta * dx[..., :1] + sintheta * dx[..., 1:]
+        dx_perp = costheta * dx[..., 1:] - sintheta * dx[..., :1]
+
+        p_para_src = torch.cos(edges.src['theta'] - edges.dst['theta'])
+        p_perp_src = torch.sin(edges.src['theta'] - edges.dst['theta'])
+
+        rot_m_v = self.interactNN(torch.concat((dx_para, dx_perp, 
+                                                p_para_src, p_perp_src,
+                                                edges.dst['type'], edges.src['type']), -1))
+
+        m_v = torch.concat((costheta * rot_m_v[..., :1] - sintheta * rot_m_v[..., 1:],
+                            costheta * rot_m_v[..., 1:] + sintheta * rot_m_v[..., :1]), -1)
+
+        m_theta = self.thetaDotNN(torch.concat((dx_para, dx_perp, 
+                                                p_para_src, p_perp_src, 
+                                                edges.dst['type'], edges.src['type']), -1))
+        
+        return {'m': torch.concat((m_v, m_theta), -1)}
+
+    def f(self, t, y, gr, dynamicName, batchIDName):
+        return None
+
+    def g(self, t, y, gr, dynamicName, batchIDName):
+        return None
+
+
+
+
+
+
+
+
+
+    
