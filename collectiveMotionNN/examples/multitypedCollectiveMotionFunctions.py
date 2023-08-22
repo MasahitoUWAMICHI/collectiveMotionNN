@@ -80,22 +80,22 @@ class J_contactFollowing(nn.Module):
         super().__init__()
     
     def forward(self, xy, p):
-        return (1 + xy[...,:1] * p[..., :1] + xy[...,1:2] * p[..., 1:2]) * xy / 2
+        return (1 + torch.sum(xy * p, dim=-1, keepdim=True)) / 2
 
 class J_contactInhibitionOfLocomotion(nn.Module):
     def __init__(self, r):
         super().__init__()
         self.r = nn.Parameter(torch.tensor(r, requires_grad=True))
     
-    def forward(self, xy, d):
-        return ((self.r/d) - 1) * xy
+    def forward(self, d):
+        return (self.r/d) - 1
 
 
 
 ## make module
 
 class interactionModule(nn.Module):
-    def __init__(self, params, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None, periodic=None):
+    def __init__(self, params, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, torquemessageName=None, velocitymessageName=None, periodic=None):
         super().__init__()
         
         self.sigma = nn.Parameter(torch.tensor(sigma, requires_grad=True))
@@ -137,7 +137,8 @@ class interactionModule(nn.Module):
         self.torqueName = ut.variableInitializer(torqueName, 'w')
         self.noiseName = ut.variableInitializer(noiseName, 'sigma')
         
-        self.messageName = ut.variableInitializer(messageName, 'm')
+        self.torquemessageName = ut.variableInitializer(torquemessageName, 'm_t')
+        self.velocitymessageName = ut.variableInitializer(velocitymessageName, 'm_v')
 
     def prepare_paramList(self):
         self.paramList = {'kappa': self.J_chem.kappa,
@@ -192,13 +193,14 @@ class interactionModule(nn.Module):
         unit_dr = nn.functional.normalize(dr, dim=-1)
 
         drp_inner = torch.sum(unit_dr * p, dim=-1, keepdim=True)
-        drp_cross = 
+        drp_cross = unit_dr[..., :1] * p[..., 1:2] - unit_dr[..., 1:2] * p[..., :1]
 
-        J_CIL = self.J_CIL(unit_dr, abs_dr) * 
+        J_CIL = self.J_CIL(abs_dr)
         J_CF = self.J_CF(unit_dr, p)
         J_chem = self.J_chem(abs_dr)
 
-        return {self.messageName: self.ctv.torque(dtheta)}
+        return {self.velocitymessageName: self.
+                self.torquemessageName: self.ctv.torque(dtheta)}
     
     def aggregate_message(self, nodes):
         sum_torque = torch.mean(nodes.mailbox[self.messageName], 1)
