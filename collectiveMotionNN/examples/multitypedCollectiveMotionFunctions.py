@@ -91,16 +91,17 @@ class J_contactInhibitionOfLocomotion(nn.Module):
         return (self.r/d) - 1
 
 
-
 ## make module
 
 class interactionModule(nn.Module):
-    def __init__(self, params, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, torquemessageName=None, velocitymessageName=None, periodic=None):
+    def __init__(self, params, sigma=0.1, N_dim=2, N_celltypes=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, celltypeName=None, torquemessageName=None, velocitymessageName=None, periodic=None):
         super().__init__()
         
         self.sigma = nn.Parameter(torch.tensor(sigma, requires_grad=True))
         
         self.N_dim = N_dim
+
+        self.N_celltypes = N_celltypes
         
         self.prepare_sigma()
 
@@ -112,12 +113,14 @@ class interactionModule(nn.Module):
         self.v0 = nn.Parameter(torch.tensor(params['v0'], requires_grad=True))
         self.beta = nn.Parameter(torch.tensor(params['beta'], requires_grad=True))
         
-        self.A_CFs = nn.Parameter(torch.tensor(params['A_CFs'], requires_grad=True))
         self.A_CIL = nn.Parameter(torch.tensor(params['A_CIL'], requires_grad=True))
-        self.A_chem = nn.Parameter(torch.tensor(params['A_chem'], requires_grad=True))
+        
+        self.A_CFs = torch.reshape(torch.tensor(params['A_CFs'], requires_grad=True), (-1,1))
+        self.A_chems = torch.reshape(torch.tensor(params['A_chems'], requires_grad=True), (-1,1))
 
         self.A_ext = nn.Parameter(torch.tensor(params['A_ext'], requires_grad=True))
 
+        self.celltypeModules()
 
         self.prepare_paramList()
 
@@ -137,9 +140,15 @@ class interactionModule(nn.Module):
         self.torqueName = ut.variableInitializer(torqueName, 'w')
         self.noiseName = ut.variableInitializer(noiseName, 'sigma')
         
+        self.celltypeName = ut.variableInitializer(celltypeName, 'celltype')
+        
         self.torquemessageName = ut.variableInitializer(torquemessageName, 'm_t')
         self.velocitymessageName = ut.variableInitializer(velocitymessageName, 'm_v')
 
+    def celltypeModules(self):
+        self.A_CFs_module = nn.Embedding(self.N_celltypes, 1, _weight=self.A_CFs)
+        self.A_chem_module = nn.Embedding(self.N_celltypes, 1, _weight=self.A_chem)        
+    
     def prepare_paramList(self):
         self.paramList = {'kappa': self.J_chem.kappa,
                           'cutoff': self.J_chem.cutoff,
@@ -148,7 +157,7 @@ class interactionModule(nn.Module):
                           'beta': self.beta,
                           'A_CFs': self.A_CFs,
                           'A_CIL': self.A_CIL,
-                          'A_chem': self.A_chem,
+                          'A_chems': self.A_chems,
                           'A_ext': self.A_ext }
     
     def reset_param_func(self, target, value):
@@ -162,6 +171,8 @@ class interactionModule(nn.Module):
             self.reset_param_func(self.paramList[key], params[key])
 
         self.J_chem.set_k1()
+
+        self.celltypeModules()
         
         self.reset_param_func(self.sigma, sigma)
 
@@ -199,8 +210,11 @@ class interactionModule(nn.Module):
         J_CF = self.J_CF(unit_dr, p_neighbor)
         J_chem = self.J_chem(abs_dr)
 
+        A_CF = self.A_CFs_module(edges.dst[self.celltypeName])
+        A_chem = self.A_chem_module(edges.dst[self.celltypeName])
+
         return {self.velocitymessageName: -self.beta*J_CIL*unit_dr,
-                self.torquemessageName: (self.A_CF*J_CF - self.A_CIL*J_CIL)*drp_cross + self.A_chem*J_chem*drp_inner}
+                self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL)*drp_cross + A_chem*J_chem*drp_inner}
     
     def aggregate_message(self, nodes):
         return {self.velocityName: torch.mean(nodes.mailbox[self.velocitymessageName], 1),
