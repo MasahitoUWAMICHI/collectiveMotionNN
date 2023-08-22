@@ -21,12 +21,13 @@ import collectiveMotionNN.sample_modules as sm
 import collectiveMotionNN.examples.multitypedCollectiveMotionFunctions as mcmf
 
 
-def init_graph(L, v0, N_particles, N_dim, N_batch):
+def init_graph(L, v0, N_particles, N_dim, N_batch, N_celltypes):
     x0 = []
     graph_init = []
+    celltypes = torch.cat([torch.ones([N_ct, 1], dtype=int)*i_ct for i_ct, N_ct in enumerate(N_celltypes)], dim=0)
     for i in range(N_batch):
-        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim-1]) * (2*np.pi))), dim=-1))
-        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1])))
+        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim-1]) * (2*np.pi)), celltypes), dim=-1))
+        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'theta', 'celltype'], [N_dim, N_dim-1, 1])))
     x0 = torch.concat(x0, dim=0)
     graph_init = dgl.batch(graph_init)
     return x0, graph_init
@@ -38,10 +39,10 @@ def init_SDEwrappers(Module, edgeModule, graph_init, device, noise_type, sde_typ
                                      N_multiBatch=N_batch_edgeUpdate).to(device)
 
     SDEwrapper = wm.dynamicGSDEwrapper(SDEmodule, copy.deepcopy(graph_init).to(device), 
-                                       ndataInOutModule=gu.multiVariableNdataInOut([Module.positionName, Module.velocityName], 
-                                                                                   [Module.N_dim, Module.N_dim]), 
-                                       derivativeInOutModule=gu.multiVariableNdataInOut([Module.velocityName, Module.accelerationName], 
-                                                                                        [Module.N_dim, Module.N_dim]),
+                                       ndataInOutModule=gu.multiVariableNdataInOut([Module.positionName, Module.polarityName], 
+                                                                                   [Module.N_dim, Module.N_dim-1]), 
+                                       derivativeInOutModule=gu.multiVariableNdataInOut([Module.velocityName, Module.torqueName], 
+                                                                                        [Module.N_dim, Module.N_dim-1]),
                                        noise_type=noise_type, sde_type=sde_type).to(device)
     return SDEmodule, SDEwrapper
 
@@ -51,7 +52,7 @@ def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy
     peri = SDEwrapper.dynamicGNDEmodule.calc_module.periodic
     
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
-                          size=(x0.shape[0], Nd), dt=dt_step, levy_area_approximation=bm_levy, device=device)
+                          size=(x0.shape[0], Nd-1), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
     with torch.no_grad():
         y = sdeint(SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
@@ -83,8 +84,87 @@ def run_ODEsimulate(neuralDE, SDEwrapper, graph, x_truth, device, t_learn_span, 
     return x_pred, x_truth
 
 
+class myDataset(torch.utils.data.Dataset):
+    def __init__(self, dataPath, N_dim=2, len=None, delayTruth=1):
+        super().__init__()
+        
+        self.dataPath = dataPath
+        
+        self.delayTruth = delayTruth
+        
+        self.N_dim = N_dim
+                
+        if len is None:
+            self.initialize()
+        else:
+            self.len = len
+        
+    def __len__(self):
+        return self.len
+      
+    def loadData(self):
+        x = torch.load(self.dataPath)
+        return x.shape, x
+      
+    def initialize(self):
+        self.extractDataLength = 1 + self.delayTruth
+        
+        xshape, _ = self.loadData()
+        N_t, N_batch, N_particles, _ = xshape
+        
+        self.N_t = N_t
+        self.N_batch = N_batch
+        self.N_particles = N_particles
+        
+        self.t_max = self.N_t - self.extractDataLength + 1
+        
+        self.len = self.t_max * self.N_batch
+    
+    def calc_t_batch(self, index):
+        return divmod(index, self.t_max)
+    
+    def calc_t_batch_subset(self, index, batchIndices_subset):
+        batch_sub, t = divmod(index, self.t_max)
+        return batchIndices_subset[batch_sub], t
+    
+    def from_t_batch(self, batch, t):
+        _, x = self.loadData()
+        
+        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'v'], [self.N_dim, self.N_dim]))
+        
+        x_truth = x[t+self.delayTruth, batch]
+        
+        return gr, x_truth
+    
+    def __getitem__(self, index):
+        batch, t = self.calc_t_batch(index)
+        return self.from_t_batch(batch, t)
+
+
+
+class batchedSubset(torch.utils.data.Subset):
+    """
+    Subset of a dataset at specified indices.
+
+    Arguments:
+        dataset (Dataset): The whole Dataset
+        indices (sequence): Indices of batch in the whole set selected for subset
+    """
+    def __init__(self, dataset, indices):
+        super().__init__(dataset, indices)
+
+    def __getitem__(self, idx):
+        batch, t = self.dataset.calc_t_batch_subset(idx, self.indices)
+        return self.dataset.from_t_batch(batch, t)
+
+    def __len__(self):
+        return len(self.indices) * self.dataset.t_max
+    
+    
+
+
 def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test, split_seed=None, batch_size=1, drop_last=False, shuffle=True, pin_memory=True):
-    dataset = spm.myDataset(data_path, N_dim=N_dim, delayTruth=delayPredict)
+    dataset = myDataset(data_path, N_dim=N_dim, delayTruth=delayPredict)
     dataset.initialize()
     
     N_valid = int(dataset.N_batch * ratio_valid)
