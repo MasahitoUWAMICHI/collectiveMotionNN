@@ -87,7 +87,7 @@ class J_contactInhibitionOfLocomotion(nn.Module):
         super().__init__()
         self.r = nn.Parameter(torch.tensor(r, requires_grad=True))
     
-    def forward(self,xy, d):
+    def forward(self, xy, d):
         return ((self.r/d) - 1) * xy
 
 
@@ -95,7 +95,7 @@ class J_contactInhibitionOfLocomotion(nn.Module):
 ## make module
 
 class interactionModule(nn.Module):
-    def __init__(self, params, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None):
+    def __init__(self, params, sigma=0.1, N_dim=2, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, messageName=None, periodic=None):
         super().__init__()
         
         self.sigma = nn.Parameter(torch.tensor(sigma, requires_grad=True))
@@ -120,6 +120,15 @@ class interactionModule(nn.Module):
 
 
         self.prepare_paramList()
+
+        self.flg_periodic = not(periodic is None)
+        
+        if self.flg_periodic:
+            self.periodic = torch.tensor(periodic)
+        else:
+            self.periodic = periodic
+            
+        self.def_dr()
 
         
         self.positionName = ut.variableInitializer(positionName, 'x')
@@ -162,8 +171,32 @@ class interactionModule(nn.Module):
     def prepare_sigma(self):
         self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim-1], device=self.sigma.device), self.sigma*torch.eye(self.N_dim-1, device=self.sigma.device)), dim=0)
         
+    def def_nonPeriodic(self):
+        self.distanceCalc = ut.euclidDistance_nonPeriodic()
+        
+    def def_periodic(self):
+        self.distanceCalc = ut.euclidDistance_periodic(self.periodic)
+        
+    def def_dr(self):
+        if self.periodic is None:
+            self.def_nonPeriodic()
+        else:
+            self.def_periodic()
+            
     def calc_message(self, edges):
         dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
+        p = torch.cat([torch.cos(dtheta), torch.sin(dtheta)], dim=-1)
+        
+        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+        abs_dr = torch.norm(dr, dim=-1, keepdim=True)
+        unit_dr = nn.functional.normalize(dr, dim=-1)
+
+        drp_inner = torch.sum(unit_dr * p, dim=-1, keepdim=True)
+        drp_cross = 
+
+        J_CIL = self.J_CIL(unit_dr, abs_dr) * 
+        J_CF = self.J_CF(unit_dr, p)
+        J_chem = self.J_chem(abs_dr)
 
         return {self.messageName: self.ctv.torque(dtheta)}
     
@@ -183,6 +216,13 @@ class interactionModule(nn.Module):
         self.prepare_sigma()
         g.ndata[self.noiseName] = self.sigmaMatrix.repeat(g.ndata[self.positionName].shape[0], 1, 1).to(g.device)
         return g
+
+
+
+
+
+
+
 
 
 class multitypedCMsimulate(mo.dynamicGNDEmodule):
