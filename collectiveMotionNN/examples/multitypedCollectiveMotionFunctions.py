@@ -186,7 +186,7 @@ class interactionModule(nn.Module):
             
     def calc_message(self, edges):
         dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
-        p = torch.cat([torch.cos(dtheta), torch.sin(dtheta)], dim=-1)
+        p = self.polarity2vector(self, dtheta)
         
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
         abs_dr = torch.norm(dr, dim=-1, keepdim=True)
@@ -199,19 +199,21 @@ class interactionModule(nn.Module):
         J_CF = self.J_CF(unit_dr, p)
         J_chem = self.J_chem(abs_dr)
 
-        return {self.velocitymessageName: self.
-                self.torquemessageName: self.ctv.torque(dtheta)}
+        return {self.velocitymessageName: -self.beta*J_CIL*unit_dr,
+                self.torquemessageName: (self.A_CF*J_CF - self.A_CIL*J_CIL)*drp_cross + self.A_chem*J_chem*drp_inner}
     
     def aggregate_message(self, nodes):
-        sum_torque = torch.mean(nodes.mailbox[self.messageName], 1)
-        return {self.torqueName : sum_torque}
+        return {self.velocityName: torch.mean(nodes.mailbox[self.velocitymessageName], 1),
+                self.torqueName : torch.mean(nodes.mailbox[self.torquemessageName], 1) }
         
-    def polarity2velocity(self, theta):
-        return self.u0 * torch.cat((torch.cos(theta), torch.sin(theta)), dim=-1)
+    def polarity2vector(self, theta):
+        return torch.cat((torch.cos(theta), torch.sin(theta)), dim=-1)
         
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
-        g.ndata[self.velocityName] = self.polarity2velocity(g.ndata[self.polarityName])
+        p = self.polarity2vector(g.ndata[self.polarityName])
+        g.ndata[self.velocityName] = g.ndata[self.velocityName] + self.v0 * p
+        g.ndata[self.torqueName] = g.ndata[self.torqueName] + self.A_ext * p[..., :1]
         return g
       
     def g(self, t, g, args=None):
