@@ -155,9 +155,7 @@ class interactionModule(nn.Module):
                           'r': self.J_CIL.r,
                           'v0': self.v0,
                           'beta': self.beta,
-                          'A_CFs': self.A_CFs,
                           'A_CIL': self.A_CIL,
-                          'A_chems': self.A_chems,
                           'A_ext': self.A_ext }
     
     def reset_param_func(self, target, value):
@@ -166,11 +164,16 @@ class interactionModule(nn.Module):
         else:
             nn.init.constant_(target, value)
         
-    def reset_parameter(self, params={}, sigma=None):
+    def reset_parameter(self, params={}, sigma=None, A_CFs=None, A_chems=None):
         for key in params.keys():
             self.reset_param_func(self.paramList[key], params[key])
 
         self.J_chem.set_k1()
+        
+        if not A_CFs is None:
+            self.A_CFs = torch.reshape(torch.tensor(params['A_CFs'], requires_grad=True), (-1,1))
+        if not A_chems is None:
+            self.A_chems = torch.reshape(torch.tensor(params['A_chems'], requires_grad=True), (-1,1))
 
         self.celltypeModules()
         
