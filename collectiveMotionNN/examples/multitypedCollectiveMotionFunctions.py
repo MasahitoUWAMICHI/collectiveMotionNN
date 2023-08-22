@@ -64,6 +64,9 @@ class J_chemoattractant2D(nn.Module):
         self.kappa = nn.Parameter(torch.tensor(kappa, requires_grad=True))
         
         self.cutoff = cutoff
+        self.set_k1()
+
+    def set_k1(self):
         if self.cutoff > 0:
             self.k1 = torch_kn_cutoff(1, self.cutoff)
         else:
@@ -115,6 +118,9 @@ class interactionModule(nn.Module):
 
         self.A_ext = nn.Parameter(torch.tensor(params['A_ext'], requires_grad=True))
 
+
+        self.prepare_paramList()
+
         
         self.positionName = ut.variableInitializer(positionName, 'x')
         self.velocityName = ut.variableInitializer(velocityName, 'v')
@@ -124,33 +130,38 @@ class interactionModule(nn.Module):
         
         self.messageName = ut.variableInitializer(messageName, 'm')
 
+    def prepare_paramList(self):
+        self.paramList = {'kappa': self.J_chem.kappa,
+                          'cutoff': self.J_chem.cutoff,
+                          'r': self.J_CIL.r,
+                          'v0': self.v0,
+                          'beta': self.beta,
+                          'A_CFs': self.A_CFs,
+                          'A_CIL': self.A_CIL,
+                          'A_chem': self.A_chem,
+                          'A_ext': self.A_ext }
+    
     def reset_param_func(self, target, value):
         if value is None:
             nn.init.uniform_(target)
         else:
             nn.init.constant_(target, value)
         
-    def reset_parameter(self, u0=None, c=None, sigma=None):
-        if c is None:
-            nn.init.uniform_(self.ctv.logc)
-        else:
-            nn.init.constant_(self.ctv.logc, np.log(c))
-            
-        if u0 is None:
-            nn.init.uniform_(self.u0)
-        else:
-            nn.init.constant_(self.u0, u0)
+    def reset_parameter(self, params={}, sigma=None):
+        for key in params.keys():
+            self.reset_param_func(self.paramList[key], params[key])
+
+        self.J_chem.set_k1()
         
-        if sigma is None:
-            nn.init.uniform_(self.sigma)
-        else:
-            nn.init.constant_(self.sigma, sigma)
+        self.reset_param_func(self.sigma, sigma)
 
         self.prepare_sigma()
+
+        self.prepare_paramList()
         
     def prepare_sigma(self):
         self.sigmaMatrix = torch.cat((torch.zeros([self.N_dim,self.N_dim-1], device=self.sigma.device), self.sigma*torch.eye(self.N_dim-1, device=self.sigma.device)), dim=0)
-            
+        
     def calc_message(self, edges):
         dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
 
