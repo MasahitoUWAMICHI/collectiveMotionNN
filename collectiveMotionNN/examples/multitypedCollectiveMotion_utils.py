@@ -18,15 +18,15 @@ import collectiveMotionNN.graph_utils as gu
 import collectiveMotionNN.wrapper_modules as wm
 import collectiveMotionNN.sample_modules as sm
 
-import collectiveMotionNN.examples.springPotentialModel as spm
+import collectiveMotionNN.examples.multitypedCollectiveMotionFunctions as mcmf
 
 
 def init_graph(L, v0, N_particles, N_dim, N_batch):
     x0 = []
     graph_init = []
     for i in range(N_batch):
-        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim])-0.5) * (2*v0)), dim=-1))
-        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'v'], [N_dim, N_dim])))
+        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim-1]) * (2*np.pi))), dim=-1))
+        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1])))
     x0 = torch.concat(x0, dim=0)
     graph_init = dgl.batch(graph_init)
     return x0, graph_init
