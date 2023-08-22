@@ -185,18 +185,18 @@ class interactionModule(nn.Module):
             self.def_periodic()
             
     def calc_message(self, edges):
-        dtheta = edges.src[self.polarityName] - edges.dst[self.polarityName]
-        p = self.polarity2vector(self, dtheta)
+        p_neighbor = self.polarity2vector(self, edges.src[self.polarityName])
+        p_target = self.polarity2vector(self, edges.dst[self.polarityName])
         
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
         abs_dr = torch.norm(dr, dim=-1, keepdim=True)
         unit_dr = nn.functional.normalize(dr, dim=-1)
 
-        drp_inner = torch.sum(unit_dr * p, dim=-1, keepdim=True)
-        drp_cross = unit_dr[..., :1] * p[..., 1:2] - unit_dr[..., 1:2] * p[..., :1]
+        drp_inner = torch.sum(unit_dr * p_neighbor, dim=-1, keepdim=True)
+        drp_cross = unit_dr[..., :1] * p_target[..., 1:2] - unit_dr[..., 1:2] * p_target[..., :1]
 
         J_CIL = self.J_CIL(abs_dr)
-        J_CF = self.J_CF(unit_dr, p)
+        J_CF = self.J_CF(unit_dr, p_neighbor)
         J_chem = self.J_chem(abs_dr)
 
         return {self.velocitymessageName: -self.beta*J_CIL*unit_dr,
