@@ -142,7 +142,7 @@ class myDataset(torch.utils.data.Dataset):
         _, x, ct = self.loadData()
         
         gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'theta'], [self.N_dim, self.N_dim-1]))
-        gr.ndata['celltype'] = ct
+        gr.ndata['celltype'] = ct[batch]
         
         x_truth = x[t+self.delayTruth, batch]
         
