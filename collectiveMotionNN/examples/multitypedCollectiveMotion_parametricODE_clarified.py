@@ -12,8 +12,8 @@ import collectiveMotionNN.graph_utils as gu
 import collectiveMotionNN.wrapper_modules as wm
 import collectiveMotionNN.sample_modules as sm
 
-import collectiveMotionNN.examples.springPotentialModel as spm
-import collectiveMotionNN.examples.springPotentialModel_utils as spm_ut
+import collectiveMotionNN.examples.multitypedCollectiveMotionFunctions as mcmf
+import collectiveMotionNN.examples.multitypedCollectiveMotion_utils as mcm_ut
 
 import argparse
 from distutils.util import strtobool
@@ -193,9 +193,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     device = ut.variableInitializer(device, 'cuda' if torch.cuda.is_available() else 'cpu')
     
     save_directory_simulation = ut.variableInitializer(save_directory_simulation, '.')
-    save_x_SDE = ut.variableInitializer(save_x_SDE, 'Spring_SDE_traj.pt')
-    save_t_SDE = ut.variableInitializer(save_t_SDE, 'Spring_SDE_t_eval.pt')
-    save_model = ut.variableInitializer(save_model, 'Spring_SDE_model.pt')
+    save_x_SDE = ut.variableInitializer(save_x_SDE, 'Mcm_SDE_traj.pt')
+    save_t_SDE = ut.variableInitializer(save_t_SDE, 'Mcm_SDE_t_eval.pt')
+    save_model = ut.variableInitializer(save_model, 'Mcm_SDE_model.pt')
     
     method_SDE = ut.variableInitializer(method_SDE, 'euler')
     noise_type = ut.variableInitializer(noise_type, 'general')
@@ -245,13 +245,13 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     save_directory_learning = ut.variableInitializer(save_directory_learning, '.')
     
-    save_learned_model = ut.variableInitializer(save_learned_model, 'Spring_parametric_learned_model.pt')
-    save_loss_history = ut.variableInitializer(save_loss_history, 'Spring_parametric_loss_history.pt')
-    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Spring_parametric_validloss_history.pt')
-    save_lr_history = ut.variableInitializer(save_lr_history, 'Spring_parametric_lr_history.pt')
+    save_learned_model = ut.variableInitializer(save_learned_model, 'Mcm_parametric_learned_model.pt')
+    save_loss_history = ut.variableInitializer(save_loss_history, 'Mcm_parametric_loss_history.pt')
+    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Mcm_parametric_validloss_history.pt')
+    save_lr_history = ut.variableInitializer(save_lr_history, 'Mcm_parametric_lr_history.pt')
     
-    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Spring_parametric_run_time_history.npy')
-    save_params = ut.variableInitializer(save_params, 'Spring_parametric_parameters.npy')
+    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Mcm_parametric_run_time_history.npy')
+    save_params = ut.variableInitializer(save_params, 'Mcm_parametric_parameters.npy')
         
     if not skipSimulate:
         os.makedirs(save_directory_simulation, exist_ok=True)
@@ -270,14 +270,14 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
 
     save_history = os.path.join(save_directory_learning, os.path.splitext(save_loss_history)[0]+'.txt')
     
-    SP_Module = spm.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
+    SP_Module = mcmf.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
     
     
-    x0, graph_init = spm_ut.init_graph(L, v0, N_particles, N_dim, N_batch)
+    x0, graph_init = mcm_ut.init_graph(L, v0, N_particles, N_dim, N_batch)
         
 
-    SP_SDEmodule, SP_SDEwrapper = spm_ut.init_SDEwrappers(SP_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
+    SP_SDEmodule, SP_SDEwrapper = mcm_ut.init_SDEwrappers(SP_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
                                                           scorePostProcessModule=sm.pAndLogit2KLdiv(), 
                                                           scoreIntegrationModule=sm.scoreListModule())
     
@@ -286,7 +286,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     if not skipSimulate:
     
-        y = spm_ut.run_SDEsimulate(SP_SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy)
+        y = mcm_ut.run_SDEsimulate(SP_SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy)
         
         y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim))
 
@@ -336,7 +336,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     
 
-    train_loader, valid_loader, test_loader = spm_ut.makeGraphDataLoader(os.path.join(save_directory_simulation, save_x_SDE),
+    train_loader, valid_loader, test_loader = mcm_ut.makeGraphDataLoader(os.path.join(save_directory_simulation, save_x_SDE),
                                                                          N_dim, delayPredict, ratio_valid, ratio_test, 
                                                                          split_seed=split_seed, batch_size=N_train_batch, 
                                                                          drop_last=False, shuffle=True, pin_memory=True)
@@ -344,7 +344,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     print('Number of snapshots in training data : ', train_loader.dataset.__len__())
 
 
-    lossFunc = spm_ut.makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss)
+    lossFunc = mcm_ut.makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss)
 
     best_valid_loss = np.inf
     
@@ -373,9 +373,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             if flg_zerograd:
                 optimizer.zero_grad()
             
-            x_pred, x_truth = spm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
+            x_pred, x_truth = mcm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
 
-            loss, xyloss, vloss, scoreloss = spm_ut.calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore, SP_SDEwrapper, scoreLoss_weight, t_learn_span)
+            loss, xyloss, vloss, scoreloss = mcm_ut.calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore, SP_SDEwrapper, scoreLoss_weight, t_learn_span)
                 
             loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
@@ -404,9 +404,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             for graph, x_truth in valid_loader:
                 graph_batchsize = len(graph.batch_num_nodes())
                 
-                x_pred, x_truth = spm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
+                x_pred, x_truth = mcm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
 
-                valid_loss_batch, valid_xyloss, valid_vloss, valid_scoreloss = spm_ut.calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore, SP_SDEwrapper, scoreLoss_weight, t_learn_span)
+                valid_loss_batch, valid_xyloss, valid_vloss, valid_scoreloss = mcm_ut.calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore, SP_SDEwrapper, scoreLoss_weight, t_learn_span)
                     
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
                 valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
