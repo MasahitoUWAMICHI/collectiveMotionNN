@@ -351,7 +351,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
 
     best_valid_loss = np.inf
     
-    text_for_print = 'epoch:, trainLoss, (xy, theta, score), validLoss, (xy, theta, score), kappa, cutoff, r, u0, beta, A_CIL, A_CFs, A_chems, A_ext, sigma, time[sec.]'
+    text_for_print = 'epoch:, trainLoss, (xy, theta, score), validLoss, (xy, theta, score), kappa, cutoff, r, u0, beta, A_CIL, A_ext, sigma, A_CFs'+','*N_celltypes+' A_chems'+','*N_celltypes+' time[sec.]'
     with open(save_history, 'w') as f:
         f.write(text_for_print)
     print(text_for_print)
@@ -430,10 +430,22 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
                                                                              thetaloss.item(), scoreloss.item())
             info_txt = info_txt + '{:.3f} ({:.3f}, {:.3f}, {:.2e}), '.format(valid_loss.item(), valid_xyloss_total.item(), 
                                                                              valid_thetaloss_total.item(), valid_scoreloss_total.item())
-            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(MCM_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
-                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
-                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
+            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(MCM_SDEwrapper.dynamicGNDEmodule.calc_module.J_chem.kappa.item(),
+                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.J_chem.cutoff.item(),
+                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.J_CIL.r.item(),
+                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.u0.item())
+            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(MCM_SDEwrapper.dynamicGNDEmodule.calc_module.beta.item(),
+                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_CIL.item(),
+                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_ext.item(),
                                                                             MCM_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item())
+            info_txt = info_txt + '['
+            for ACF in A_CFs.detach().cpu(),reshape([-1]):
+                info_txt = info_txt + '{:.3f}, '.format(ACF.item())
+            info_txt = info_txt + ']['
+            for Achem in A_chems.detach().cpu(),reshape([-1]):
+                info_txt = info_txt + '{:.3f}, '.format(Achem.item())
+            info_txt = info_txt + ']'
+            
             info_txt = info_txt + '{:.3f}'.format(run_time_history[-1])
             
             if valid_loss < best_valid_loss:
