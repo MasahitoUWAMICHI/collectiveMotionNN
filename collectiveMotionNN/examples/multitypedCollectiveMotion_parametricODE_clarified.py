@@ -93,7 +93,7 @@ def main_parser():
     parser.add_argument('--lrSchedulerName', type=str)
     parser.add_argument('--lrSchedulerArgs', type=dict)
     
-    parser.add_argument('--vLoss_weight', type=float)
+    parser.add_argument('--thetaLoss_weight', type=float)
     parser.add_argument('--scoreLoss_weight', type=float)
     parser.add_argument('--useScore', type=strtobool)
     parser.add_argument('--nondimensionalLoss', type=strtobool)
@@ -128,7 +128,7 @@ def parser2main(args):
          split_seed_val=args.split_seed_val,
          lr=args.lr, optimName=args.optimName, optimArgs=args.optimArgs, highOrderGrad=args.highOrderGrad,
          lrSchedulerName=args.lrSchedulerName, lrSchedulerArgs=args.lrSchedulerArgs,
-         vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
+         thetaLoss_weight=args.thetaLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
          useScore=args.useScore,
          nondimensionalLoss=args.nondimensionalLoss,
          save_directory_learning=args.save_directory_learning,
@@ -157,7 +157,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          split_seed_val=None,
          lr=None, optimName=None, optimArgs=None, highOrderGrad=None,
          lrSchedulerName=None, lrSchedulerArgs=None,
-         vLoss_weight=None, scoreLoss_weight=None, 
+         thetaLoss_weight=None, scoreLoss_weight=None, 
          useScore=None,
          nondimensionalLoss=None,
          save_directory_learning=None,
@@ -237,7 +237,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     lrSchedulerName = ut.variableInitializer(lrSchedulerName, None)
     lrSchedulerArgs =  ut.variableInitializer(lrSchedulerArgs, {})
     
-    vLoss_weight = ut.variableInitializer(vLoss_weight, 1.0)
+    thetaLoss_weight = ut.variableInitializer(thetaLoss_weight, 1.0)
     scoreLoss_weight = ut.variableInitializer(scoreLoss_weight, 1.0)
     useScore = ut.variableInitializer(useScore, False)
 
@@ -269,15 +269,18 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         ut.dict2txt(os.path.join(save_directory_simulation, os.path.splitext(save_params)[0]+'.txt'), args_of_main)
 
     save_history = os.path.join(save_directory_learning, os.path.splitext(save_loss_history)[0]+'.txt')
+
+    MCM_params = {'kappa': kappa, 'cutoff': cutoff, 'r': r, 'u0': u0, 'beta': beta,
+                  'A_CIL': A_CIL, 'A_CFs': A_CFs, 'A_chems': A_chems, 'A_ext': A_ext}
+    MCM_Module = mcmf.interactionModule(MCM_params, sigma=sigma, N_dim=N_dim, N_celltypes=N_celltypes, periodic=periodic).to(device)
     
-    SP_Module = mcmf.interactionModule(c, r_c, p, gamma, sigma, N_dim, periodic).to(device)
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
     
     
-    x0, graph_init = mcm_ut.init_graph(L, v0, N_particles, N_dim, N_batch)
+    x0, graph_init = mcm_ut.init_graph(L, N_particles, N_dim, N_batch)
         
 
-    SP_SDEmodule, SP_SDEwrapper = mcm_ut.init_SDEwrappers(SP_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
+    MCM_SDEmodule, MCM_SDEwrapper = mcm_ut.init_SDEwrappers(MCM_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
                                                           scorePostProcessModule=sm.pAndLogit2KLdiv(), 
                                                           scoreIntegrationModule=sm.scoreListModule())
     
@@ -286,28 +289,30 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     if not skipSimulate:
     
-        y = mcm_ut.run_SDEsimulate(SP_SDEwrapper, x0, t_save, dt_step, N_batch, N_particles, device, method_SDE, bm_levy)
+        y = mcm_ut.run_SDEsimulate(MCM_SDEwrapper, x0, t_save, dt_step, N_batch, N_particles, device, method_SDE, bm_levy)
         
         torch.save(y, os.path.join(save_directory_simulation, save_x_SDE))
 
         torch.save(t_save.to('cpu'), os.path.join(save_directory_simulation, save_t_SDE))
         
-        SP_SDEwrapper.deleteGraph()
+        MCM_SDEwrapper.deleteGraph()
 
         with open(os.path.join(save_directory_simulation, save_model), mode='wb') as f:
-            cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
+            cloudpickle.dump(MCM_SDEwrapper.to('cpu'), f)
     
 
+    MCM_params_init = {'kappa': kappa_init, 'cutoff': cutoff_init, 'r': r_init, 'u0': u0_init, 'beta': beta_init,
+                       'A_CIL': A_CIL_init, 'A_ext': A_ext_init}
     
-    SP_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(c_init, r_c_init, gamma_init, sigma_init)
+    MCM_SDEwrapper.dynamicGNDEmodule.calc_module.reset_parameter(params=MCM_params_init, sigma=sigma_init, A_CFs=A_CFs_init, A_chems=A_chems_init)
     
-    SP_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(useScore)
+    MCM_SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_returnScoreMode(useScore)
     
     
     
-    print('Module before training : ', SP_SDEwrapper.state_dict())
+    print('Module before training : ', MCM_SDEwrapper.state_dict())
     
-    optim_str = 't_opt.' + optimName + '(SP_SDEwrapper.parameters(),lr={},'.format(lr)
+    optim_str = 't_opt.' + optimName + '(MCM_SDEwrapper.parameters(),lr={},'.format(lr)
     for key in optimArgs.keys():
         optim_str = optim_str + key + '=optimArgs["' + key + '"],'
     optim_str = optim_str[:-1] + ')'
@@ -323,7 +328,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         scheduler = eval(schedulerStr)
     
     
-    neuralDE = NeuralODE(SP_SDEwrapper, solver=method_ODE).to(device)
+    neuralDE = NeuralODE(MCM_SDEwrapper, solver=method_ODE).to(device)
     
     
     
@@ -346,7 +351,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
 
     best_valid_loss = np.inf
     
-    text_for_print = 'epoch: trainLoss (xy, v, score), validLoss (xy, v, score), c, r_c, gamma, sigma, time[sec.]'
+    text_for_print = 'epoch:, trainLoss, (xy, theta, score), validLoss, (xy, theta, score), kappa, cutoff, r, u0, beta, A_CIL, A_CFs, A_chems, A_ext, sigma, time[sec.]'
     with open(save_history, 'w') as f:
         f.write(text_for_print)
     print(text_for_print)
@@ -363,7 +368,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     for epoch in range(N_epoch):
         i_minibatch = 0
         flg_zerograd = True
-        SP_SDEwrapper.train()
+        MCM_SDEwrapper.train()
         lrs = [pg["lr"] for pg in optimizer.param_groups]
         lr_history.append(lrs)
         for i_minibatch, gx in enumerate(train_loader, 1):
@@ -371,11 +376,11 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
             if flg_zerograd:
                 optimizer.zero_grad()
             
-            x_pred, x_truth = mcm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
+            x_pred, x_truth = mcm_ut.run_ODEsimulate(neuralDE, MCM_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
 
-            loss, xyloss, vloss, scoreloss = mcm_ut.calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore, SP_SDEwrapper, scoreLoss_weight, t_learn_span)
+            loss, xyloss, thetaLoss, scoreloss = mcm_ut.calcLoss(lossFunc, x_pred, x_truth, thetaLoss_weight, device, useScore, MCM_SDEwrapper, scoreLoss_weight, t_learn_span)
                 
-            loss_history.append([xyloss.item(), vloss.item(), scoreloss.item()])
+            loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
             loss.backward(create_graph=highOrderGrad)
             if i_minibatch % N_train_minibatch_integrated == 0:
@@ -388,60 +393,59 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
         if flg_scheduled:
             scheduler.step()
         
-        SP_SDEwrapper.eval()
+        MCM_SDEwrapper.eval()
         
         torch.cuda.empty_cache()
         
         with torch.no_grad():
             valid_loss = 0
             valid_xyloss_total = 0
-            valid_vloss_total = 0
+            valid_thetaloss_total = 0
             valid_scoreloss_total = 0
             data_count = 0
             
             for graph, x_truth in valid_loader:
                 graph_batchsize = len(graph.batch_num_nodes())
                 
-                x_pred, x_truth = mcm_ut.run_ODEsimulate(neuralDE, SP_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
+                x_pred, x_truth = mcm_ut.run_ODEsimulate(neuralDE, MCM_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
 
-                valid_loss_batch, valid_xyloss, valid_vloss, valid_scoreloss = mcm_ut.calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore, SP_SDEwrapper, scoreLoss_weight, t_learn_span)
+                valid_loss_batch, valid_xyloss, valid_thetaloss, valid_scoreloss = mcm_ut.calcLoss(lossFunc, x_pred, x_truth, thetaLoss_weight, device, useScore, MCM_SDEwrapper, scoreLoss_weight, t_learn_span)
                     
                 valid_xyloss_total = valid_xyloss_total + valid_xyloss * graph_batchsize
-                valid_vloss_total = valid_vloss_total + valid_vloss * graph_batchsize
+                valid_thetaloss_total = valid_thetaloss_total + valid_thetaloss * graph_batchsize
                 valid_scoreloss_total = valid_scoreloss_total + valid_scoreloss * graph_batchsize
                 valid_loss = valid_loss + valid_loss_batch * graph_batchsize
                 data_count = data_count + graph_batchsize
                 
             valid_loss = valid_loss / data_count
             valid_xyloss_total = valid_xyloss_total / data_count
-            valid_vloss_total = valid_vloss_total / data_count
+            valid_thetaloss_total = valid_thetaloss_total / data_count
             valid_scoreloss_total = valid_scoreloss_total / data_count
-            valid_loss_history[-1] = [valid_xyloss_total.item(), valid_vloss_total.item(), valid_scoreloss_total.item()]
+            valid_loss_history[-1] = [valid_xyloss_total.item(), valid_thetaloss_total.item(), valid_scoreloss_total.item()]
             
             run_time_history.append(time.time() - start)
 
             info_txt = '{}: '.format(epoch)
             info_txt = info_txt + '{:.3f} ({:.3f}, {:.3f}, {:.2e}), '.format(loss.item(), xyloss.item(), 
-                                                                             vloss.item(), scoreloss.item())
+                                                                             thetaloss.item(), scoreloss.item())
             info_txt = info_txt + '{:.3f} ({:.3f}, {:.3f}, {:.2e}), '.format(valid_loss.item(), valid_xyloss_total.item(), 
-                                                                             valid_vloss_total.item(), valid_scoreloss_total.item())
-            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
-                                                                            SP_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
-                                                                            SP_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
-                                                                            SP_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item())
+                                                                             valid_thetaloss_total.item(), valid_scoreloss_total.item())
+            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(MCM_SDEwrapper.dynamicGNDEmodule.calc_module.sp.c().item(),
+                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.sp.r_c().item(),
+                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.gamma.item(),
+                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item())
             info_txt = info_txt + '{:.3f}'.format(run_time_history[-1])
             
             if valid_loss < best_valid_loss:
-                SP_SDEwrapper.deleteGraph()
+                MCM_SDEwrapper.deleteGraph()
                 with open(os.path.join(save_directory_learning, save_learned_model), mode='wb') as f:
-                    cloudpickle.dump(SP_SDEwrapper.to('cpu'), f)
-                SP_SDEwrapper.to(device)
+                    cloudpickle.dump(MCM_SDEwrapper.to('cpu'), f)
+                MCM_SDEwrapper.to(device)
                 best_valid_loss = valid_loss
                 info_txt = info_txt + ' Best'
 
             print(info_txt)
-            with open(save_history, 'w') as f:
-                f.write(info_txt)
+            ut.append_to_file(save_history, info_txt)
      
             torch.cuda.empty_cache()
         
