@@ -254,7 +254,7 @@ class myLoss(nn.Module):
         self.useScore = useScore
                 
         self.xyLoss = nn.MSELoss()
-        self.vLoss = nn.MSELoss()
+        self.thetaLoss = thetaLoss()
         
         self.N_dim = N_dim
         
@@ -263,15 +263,15 @@ class myLoss(nn.Module):
     def forward_score(self, x, y, score_x, score_y):
         dxy = self.distanceCalc(x[...,:self.N_dim], y[...,:self.N_dim])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
-        vLoss = self.xyLoss(x[...,self.N_dim:(2*self.N_dim)], y[...,self.N_dim:(2*self.N_dim)])
+        thetaLoss = self.thetaLoss(x[...,self.N_dim:(2*self.N_dim-1)], y[...,self.N_dim:(2*self.N_dim-1)])
         scoreLoss = torch.mean(torch.square(torch.sum(score_x, dim=-1, keepdim=True) - score_y))
-        return xyLoss, vLoss, scoreLoss
+        return xyLoss, thetaLoss, scoreLoss
        
     def forward_noScore(self, x, y):
         dxy = self.distanceCalc(x[...,:self.N_dim], y[...,:self.N_dim])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
-        vLoss = self.xyLoss(x[...,self.N_dim:(2*self.N_dim)], y[...,self.N_dim:(2*self.N_dim)])
-        return xyLoss, vLoss
+        thetaLoss = self.thetaLoss(x[...,self.N_dim:(2*self.N_dim-1)], y[...,self.N_dim:(2*self.N_dim-1)])
+        return xyLoss, thetaLoss
        
     def def_forward(self):
         if self.useScore:
@@ -279,6 +279,8 @@ class myLoss(nn.Module):
         else:
             self.forward = self.forward_noScore
         
+
+
      
 class myLoss_normalized(nn.Module):
     def __init__(self, distanceCalc, N_dim=2, useScore=True):
@@ -288,7 +290,7 @@ class myLoss_normalized(nn.Module):
         self.useScore = useScore
                 
         self.xyLoss = nn.MSELoss()
-        self.vLoss = nn.MSELoss()
+        self.thetaLoss = thetaLoss()
         
         self.N_dim = N_dim
         
@@ -297,23 +299,23 @@ class myLoss_normalized(nn.Module):
     def forward_score(self, x_pred, x_truth, score_pred, score_truth):
         dxy = self.distanceCalc(x_pred[...,:self.N_dim], x_truth[...,:self.N_dim])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
-        vLoss = self.xyLoss(x_pred[...,self.N_dim:(2*self.N_dim)], x_truth[...,self.N_dim:(2*self.N_dim)])
+        thetaLoss = self.thetaLoss(x_pred[...,self.N_dim:(2*self.N_dim-1)], x_truth[...,self.N_dim:(2*self.N_dim-1)])
         scoreLoss = torch.mean(torch.square(torch.sum(score_pred, dim=-1, keepdim=True) - score_truth))
 
         x_truth_zero = self.distanceCalc(torch.zeros_like(x_pred[...,:self.N_dim]), x_truth[...,:self.N_dim])
         xyNorm = self.xyLoss(x_truth_zero, torch.zeros_like(dxy))
-        vNorm = self.xyLoss(torch.zeros_like(x_pred[...,self.N_dim:(2*self.N_dim)]), x_truth[...,self.N_dim:(2*self.N_dim)])
+        thetaNorm = self.thetaLoss(torch.zeros_like(x_pred[...,self.N_dim:(2*self.N_dim-1)]), x_truth[...,self.N_dim:(2*self.N_dim-1)])
         scoreNorm = torch.mean(torch.square(score_truth))
         return xyLoss/xyNorm, vLoss/vNorm, scoreLoss/scoreNorm
        
     def forward_noScore(self, x_pred, x_truth):
         dxy = self.distanceCalc(x_pred[...,:self.N_dim], x_truth[...,:self.N_dim])
         xyLoss = self.xyLoss(dxy, torch.zeros_like(dxy))
-        vLoss = self.xyLoss(x_pred[...,self.N_dim:(2*self.N_dim)], x_truth[...,self.N_dim:(2*self.N_dim)])
+        thetaLoss = self.thetaLoss(x_pred[...,self.N_dim:(2*self.N_dim-1)], x_truth[...,self.N_dim:(2*self.N_dim-1)])
 
         x_truth_zero = self.distanceCalc(torch.zeros_like(x_pred[...,:self.N_dim]), x_truth[...,:self.N_dim])
         xyNorm = self.xyLoss(x_truth_zero, torch.zeros_like(dxy))
-        vNorm = self.xyLoss(torch.zeros_like(x_pred[...,self.N_dim:(2*self.N_dim)]), x_truth[...,self.N_dim:(2*self.N_dim)])
+        thetaNorm = self.thetaLoss(torch.zeros_like(x_pred[...,self.N_dim:(2*self.N_dim-1)]), x_truth[...,self.N_dim:(2*self.N_dim-1)])
         return xyLoss/xyNorm, vLoss/vNorm
         
     def def_forward(self):
