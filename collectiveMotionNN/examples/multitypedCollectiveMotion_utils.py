@@ -185,9 +185,9 @@ def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test,
     
     range_split = torch.utils.data.random_split(range(dataset.N_batch), [N_train, N_valid, N_test], generator=split_seed)
     
-    train_dataset = spm.batchedSubset(dataset, [i for i in range_split[0]])
-    valid_dataset = spm.batchedSubset(dataset, [i for i in range_split[1]])
-    test_dataset = spm.batchedSubset(dataset, [i for i in range_split[2]])
+    train_dataset = batchedSubset(dataset, [i for i in range_split[0]])
+    valid_dataset = batchedSubset(dataset, [i for i in range_split[1]])
+    test_dataset = batchedSubset(dataset, [i for i in range_split[2]])
     
     train_loader = GraphDataLoader(train_dataset, batch_size=batch_size, drop_last=False, shuffle=True, pin_memory=True)
     valid_loader = GraphDataLoader(valid_dataset, batch_size=batch_size, drop_last=False, shuffle=True, pin_memory=True)
@@ -201,9 +201,9 @@ def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test,
 
 def makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss):
     if nondimensionalLoss:
-        lossMakeFunc = spm.myLoss_normalized
+        lossMakeFunc = mcmf.myLoss_normalized
     else:
-        lossMakeFunc = spm.myLoss
+        lossMakeFunc = mcmf.myLoss
     
     if periodic is None:
         lossFunc = lossMakeFunc(ut.euclidDistance_nonPeriodic(), N_dim=N_dim, useScore=useScore)
