@@ -21,7 +21,7 @@ import collectiveMotionNN.sample_modules as sm
 import collectiveMotionNN.examples.multitypedCollectiveMotionFunctions as mcmf
 
 
-def init_graph(L, v0, N_particles, N_dim, N_batch, N_celltypes):
+def init_graph(L, N_particles, N_dim, N_batch, N_celltypes):
     x0 = []
     graph_init = []
     celltypes = []
