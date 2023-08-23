@@ -24,13 +24,17 @@ import collectiveMotionNN.examples.multitypedCollectiveMotionFunctions as mcmf
 def init_graph(L, v0, N_particles, N_dim, N_batch, N_celltypes):
     x0 = []
     graph_init = []
-    celltypes = torch.cat([torch.ones([N_ct, 1], dtype=int)*i_ct for i_ct, N_ct in enumerate(N_celltypes)], dim=0)
+    celltypes = []
+    celltype = torch.cat([torch.ones([N_ct, 1], dtype=int)*i_ct for i_ct, N_ct in enumerate(N_celltypes)], dim=0)
     for i in range(N_batch):
-        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim-1]) * (2*np.pi)), celltypes), dim=-1))
-        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'theta', 'celltype'], [N_dim, N_dim-1, 1])))
+        x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim-1]) * (2*np.pi))), dim=-1))
+        celltypes.append(celltype)
+        graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1])))
+        graph_init.ndata['celltype'] = celltype
     x0 = torch.concat(x0, dim=0)
+    celltypes = torch.concat(celltypes, dim=0)
     graph_init = dgl.batch(graph_init)
-    return x0, graph_init
+    return x0, celltypes, graph_init
 
 
 def init_SDEwrappers(Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, scorePostProcessModule=sm.pAndLogit2KLdiv(), scoreIntegrationModule=sm.scoreListModule()):
@@ -47,7 +51,7 @@ def init_SDEwrappers(Module, edgeModule, graph_init, device, noise_type, sde_typ
     return SDEmodule, SDEwrapper
 
 
-def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy='none'):
+def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, N_batch, N_particles, device, method_SDE, bm_levy='none'):
     Nd = SDEwrapper.dynamicGNDEmodule.calc_module.N_dim
     peri = SDEwrapper.dynamicGNDEmodule.calc_module.periodic
     
@@ -60,8 +64,13 @@ def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, device, method_SDE, bm_levy
     y = y.to('cpu')
     if not(peri is None):
         y[..., :N_dim] = torch.remainder(y[..., :N_dim], peri)
+    y[..., N_dim] = torch.remainder(y[..., N_dim], 2*np.pi)
+    y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*Nd-1))
+    
+    ct = SDEwrapper.graph.ndata['celltype']
+    ct = ct.reshape((N_batch, N_particles, 1))
 
-    return y
+    return {'xtheta': y, 'celltype': ct}
 
 
 def run_ODEsimulate(neuralDE, SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore=False):
@@ -103,13 +112,15 @@ class myDataset(torch.utils.data.Dataset):
         return self.len
       
     def loadData(self):
-        x = torch.load(self.dataPath)
-        return x.shape, x
+        d = torch.load(self.dataPath)
+        x = d['xtheta']
+        ct = d['celltype']
+        return x.shape, x, ct
       
     def initialize(self):
         self.extractDataLength = 1 + self.delayTruth
         
-        xshape, _ = self.loadData()
+        xshape, _, _ = self.loadData()
         N_t, N_batch, N_particles, _ = xshape
         
         self.N_t = N_t
@@ -128,9 +139,10 @@ class myDataset(torch.utils.data.Dataset):
         return batchIndices_subset[batch_sub], t
     
     def from_t_batch(self, batch, t):
-        _, x = self.loadData()
+        _, x, ct = self.loadData()
         
-        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'v'], [self.N_dim, self.N_dim]))
+        gr = gu.make_disconnectedGraph(x[t, batch], gu.multiVariableNdataInOut(['x', 'theta'], [self.N_dim, self.N_dim-1]))
+        gr.ndata['celltype'] = ct
         
         x_truth = x[t+self.delayTruth, batch]
         
