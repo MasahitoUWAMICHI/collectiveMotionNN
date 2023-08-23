@@ -87,6 +87,15 @@ def dict2txt(savePath, savedDict):
 
     print(*txtstring, sep="\n", file=codecs.open(savePath, 'w', 'utf-8'))
 
+def append_to_file(file_path, new_line):
+    with open(file_path, 'r') as file:
+        content = file.read()
+    
+    with open(file_path, 'w') as file:
+        file.write(content)
+        file.write('\n')
+        file.write(new_line)
+
 def flattenInList(x, sample):
     if x is None:
         return torch.empty([1], dtype=sample.dtype, device=sample.device)
