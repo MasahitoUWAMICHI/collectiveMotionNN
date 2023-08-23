@@ -110,7 +110,7 @@ class interactionModule(nn.Module):
         self.J_CF = J_contactFollowing()
         self.J_CIL = J_contactInhibitionOfLocomotion(params['r'])
 
-        self.v0 = nn.Parameter(torch.tensor(params['v0'], requires_grad=True))
+        self.u0 = nn.Parameter(torch.tensor(params['u0'], requires_grad=True))
         self.beta = nn.Parameter(torch.tensor(params['beta'], requires_grad=True))
         
         self.A_CIL = nn.Parameter(torch.tensor(params['A_CIL'], requires_grad=True))
@@ -153,7 +153,7 @@ class interactionModule(nn.Module):
         self.paramList = {'kappa': self.J_chem.kappa,
                           'cutoff': self.J_chem.cutoff,
                           'r': self.J_CIL.r,
-                          'v0': self.v0,
+                          'u0': self.u0,
                           'beta': self.beta,
                           'A_CIL': self.A_CIL,
                           'A_ext': self.A_ext }
@@ -229,7 +229,7 @@ class interactionModule(nn.Module):
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
         p = self.polarity2vector(g.ndata[self.polarityName])
-        g.ndata[self.velocityName] = g.ndata[self.velocityName] + self.v0 * p
+        g.ndata[self.velocityName] = g.ndata[self.velocityName] + self.u0 * p
         g.ndata[self.torqueName] = g.ndata[self.torqueName] + self.A_ext * p[..., :1]
         return g
       
@@ -339,7 +339,7 @@ class multitypedCMsimulate(mo.dynamicGNDEmodule):
         self.J_CF = J_contactFollowing()
         self.J_CIL = J_contactInhibitionOfLocomotion(params['r'])
 
-        self.v0 = nn.Parameter(torch.tensor(params['v0'], requires_grad=True))
+        self.u0 = nn.Parameter(torch.tensor(params['u0'], requires_grad=True))
         self.beta = nn.Parameter(torch.tensor(params['beta'], requires_grad=True))
         
         self.A_CFs = nn.Parameter(torch.tensor(params['A_CFs'], requires_grad=True))
