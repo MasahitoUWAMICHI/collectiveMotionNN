@@ -26,18 +26,24 @@ import os
 
 def main_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--c', type=float)
-    parser.add_argument('--r_c', type=float)
-    parser.add_argument('--p', type=float)
+    parser.add_argument('--kappa', type=float)
+    parser.add_argument('--cutoff', type=float)
+    parser.add_argument('--r', type=float)
+    parser.add_argument('--u0', type=float)
+    parser.add_argument('--beta', type=float)
+    parser.add_argument('--A_CIL', type=float)
+    parser.add_argument('--A_ext', type=float)
     parser.add_argument('--sigma', type=float)
-    parser.add_argument('--gamma', type=float)
-    
+
+    parser.add_argument('--A_CFs', type=list)
+    parser.add_argument('--A_chems', type=list)
+    parser.add_argument('--ratio_celltypes', type=list)
+
     parser.add_argument('--N_dim', type=int)
     
     parser.add_argument('--r0', type=float)
     
     parser.add_argument('--L', type=float)
-    parser.add_argument('--v0', type=float)
     
     parser.add_argument('--N_particles', type=int)
     parser.add_argument('--N_batch', type=int)
@@ -65,10 +71,17 @@ def main_parser():
 
     parser.add_argument('--skipSimulate', type=strtobool)
     
-    parser.add_argument('--c_init', type=float)
-    parser.add_argument('--r_c_init', type=float)
-    parser.add_argument('--gamma_init', type=float)
+    parser.add_argument('--kappa_init', type=float)
+    parser.add_argument('--cutoff_init', type=float)
+    parser.add_argument('--r_init', type=float)
+    parser.add_argument('--u0_init', type=float)
+    parser.add_argument('--beta_init', type=float)
+    parser.add_argument('--A_CIL_init', type=float)
+    parser.add_argument('--A_ext_init', type=float)
     parser.add_argument('--sigma_init', type=float)
+
+    parser.add_argument('--A_CFs_init', type=list)
+    parser.add_argument('--A_chems_init', type=list)
     
     parser.add_argument('--bm_levy', type=str)
     
@@ -109,7 +122,7 @@ def main_parser():
     return parser
 
 def parser2main(args):
-    main(c=args.c, r_c=args.r_c, p=args.p, gamma=args.gamma, sigma=args.sigma, r0=args.r0, L=args.L, v0=args.v0,
+    main(kappa=args.kappa, r_c=args.r_c, p=args.p, gamma=args.gamma, sigma=args.sigma, r0=args.r0, L=args.L, v0=args.v0,
          N_dim=args.N_dim, N_particles=args.N_particles, N_batch=args.N_batch, 
          t_max=args.t_max, dt_step=args.dt_step, dt_save=args.dt_save, 
          periodic=args.periodic, selfloop=args.selfloop, 
@@ -138,7 +151,7 @@ def parser2main(args):
          save_run_time_history=args.save_run_time_history,
          save_params=args.save_params)
     
-def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=None,
+def main(kappa=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=None,
          N_dim=None, N_particles=None, N_batch=None, 
          t_max=None, dt_step=None, dt_save=None, 
          periodic=None, selfloop=None, 
@@ -167,7 +180,7 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          save_run_time_history=None,
          save_params=None):
 
-    c = ut.variableInitializer(c, 0.01)
+    kappa = ut.variableInitializer(kappa, 0.01)
     r_c = ut.variableInitializer(r_c, 1.0)
     p = ut.variableInitializer(p, 2.0)
     
@@ -276,8 +289,10 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
     
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
     
-    
-    x0, graph_init = mcm_ut.init_graph(L, N_particles, N_dim, N_batch)
+    N_celltypes = [int(rct * N_particles) for rct in ratio_celltypes]
+    N_celltypes[-1] = N_particles - sum(N_celltypes[:-1])
+          
+    x0, graph_init = mcm_ut.init_graph(L, N_particles, N_dim, N_batch, N_celltypes)
         
 
     MCM_SDEmodule, MCM_SDEwrapper = mcm_ut.init_SDEwrappers(MCM_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
