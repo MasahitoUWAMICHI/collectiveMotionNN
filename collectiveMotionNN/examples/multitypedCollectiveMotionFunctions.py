@@ -21,7 +21,7 @@ class torch_knFunction(Function):
         ctx.n = n
         numpy_input = input.cpu().detach().numpy()
         result = special.kn(n, numpy_input)
-        return torch.tensor(result, device=input.device)
+        return torch.tensor(result, device=input.device, dtype=input.dtype)
     
     @staticmethod
     def backward(ctx, grad_output):
@@ -34,7 +34,7 @@ class torch_knFunction(Function):
         else:
             grad_kn = -(special.kn(n-1, numpy_input) + special.kn(n+1, numpy_input))/2
         result = numpy_go * grad_kn
-        return torch.from_numpy(result).to(grad_output.device), None
+        return torch.tensor(result, device=grad_output.device, dtype=grad_output.dtype), None
 
 class torch_kn(nn.Module):
     def __init__(self, n):
