@@ -212,7 +212,7 @@ def makeLossFunc(N_dim, useScore, periodic, nondimensionalLoss):
     return lossFunc
 
 
-def calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore=False, SDEwrapper=None, scoreLoss_weight=None, t_learn_span=None):
+def calcLoss(lossFunc, x_pred, x_truth, thetaLoss_weight, device, useScore=False, SDEwrapper=None, scoreLoss_weight=None, t_learn_span=None):
     if useScore:
         if len(SDEwrapper.score())==0:
             SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
@@ -220,10 +220,10 @@ def calcLoss(lossFunc, x_pred, x_truth, vLoss_weight, device, useScore=False, SD
             
         score_pred = torch.stack(SDEwrapper.score(), dim=1)
     
-        xyloss, vloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
-        loss = xyloss + vLoss_weight * vloss + scoreLoss_weight * scoreloss
+        xyloss, thetaloss, scoreloss = lossFunc(x_pred[0], x_truth, score_pred, score_truth)
+        loss = xyloss + thetaLoss_weight * thetaloss + scoreLoss_weight * scoreloss
     else:
-        xyloss, vloss = lossFunc(x_pred[0], x_truth)
+        xyloss, thetaloss = lossFunc(x_pred[0], x_truth)
         scoreloss = torch.full([1], torch.nan)
-        loss = xyloss + vLoss_weight * vloss
-    return loss, xyloss, vloss, scoreloss
+        loss = xyloss + thetaLoss_weight * thetaloss
+    return loss, xyloss, thetaloss, scoreloss
