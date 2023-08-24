@@ -122,8 +122,10 @@ def main_parser():
     return parser
 
 def parser2main(args):
-    main(kappa=args.kappa, r_c=args.r_c, p=args.p, gamma=args.gamma, sigma=args.sigma, r0=args.r0, L=args.L, v0=args.v0,
-         N_dim=args.N_dim, N_particles=args.N_particles, N_batch=args.N_batch, 
+    main(kappa=args.kappa, cutoff=args.cutoff, r=args.r, u0=args.u0, beta=args.beta, A_CIL=args.A_CIL, A_ext=args.A_ext,
+         A_CFs=args.A_CFs, A_chems=args.A_chems,
+         sigma=args.sigma, r0=args.r0, L=args.L,
+         ratio_celltypes=args.ratio_celltypes, N_dim=args.N_dim, N_particles=args.N_particles, N_batch=args.N_batch, 
          t_max=args.t_max, dt_step=args.dt_step, dt_save=args.dt_save, 
          periodic=args.periodic, selfloop=args.selfloop, 
          device=args.device,
@@ -151,8 +153,10 @@ def parser2main(args):
          save_run_time_history=args.save_run_time_history,
          save_params=args.save_params)
     
-def main(kappa=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=None,
-         N_dim=None, N_particles=None, N_batch=None, 
+def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=None,
+         A_CFs=None, A_chems=None,
+         sigma=None, r0=None, L=None,
+         ratio_celltypes=None, N_dim=None, N_particles=None, N_batch=None, 
          t_max=None, dt_step=None, dt_save=None, 
          periodic=None, selfloop=None, 
          device=None,
@@ -180,18 +184,25 @@ def main(kappa=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, 
          save_run_time_history=None,
          save_params=None):
 
-    kappa = ut.variableInitializer(kappa, 0.01)
-    r_c = ut.variableInitializer(r_c, 1.0)
-    p = ut.variableInitializer(p, 2.0)
+    kappa = ut.variableInitializer(kappa, 0.5)
+    cutoff = ut.variableInitializer(cutoff, 3.5)
+    r = ut.variableInitializer(r, 1.0)
+    u0 = ut.variableInitializer(u0, 1.0)
+    beta = ut.variableInitializer(beta, 1.0)
+    A_CIL = ut.variableInitializer(A_CIL, 0.0)
+    A_ext = ut.variableInitializer(A_ext, 0.0)
     
-    gamma = ut.variableInitializer(gamma, 0.1)
+    A_CFs = ut.variableInitializer(A_CFs, [0.1, 0.9])
+    A_chems = ut.variableInitializer(A_chems, [2.0, 0.2])
+    
     sigma = ut.variableInitializer(sigma, 0.01)
     
     
     r0 = ut.variableInitializer(r0, 5.0)
     L = ut.variableInitializer(L, 5.0)
     v0 = ut.variableInitializer(v0, 0.01)
-    
+
+    ratio_celltypes = ut.variableInitializer(ratio_celltypes, [0.5, 0.5])
     N_dim = ut.variableInitializer(N_dim, int(2))
     N_particles = ut.variableInitializer(N_particles, int(100))
     N_batch = ut.variableInitializer(N_batch, int(5))
@@ -283,16 +294,17 @@ def main(kappa=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, 
 
     save_history = os.path.join(save_directory_learning, os.path.splitext(save_loss_history)[0]+'.txt')
 
+    N_celltypes = len(ratio_celltypes)
+    N_particles_ct = [int(rct * N_particles) for rct in ratio_celltypes]
+    N_particles_ct[-1] = N_particles - sum(N_particles_ct[:-1])
+          
     MCM_params = {'kappa': kappa, 'cutoff': cutoff, 'r': r, 'u0': u0, 'beta': beta,
                   'A_CIL': A_CIL, 'A_CFs': A_CFs, 'A_chems': A_chems, 'A_ext': A_ext}
     MCM_Module = mcmf.interactionModule(MCM_params, sigma=sigma, N_dim=N_dim, N_celltypes=N_celltypes, periodic=periodic).to(device)
     
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
-    
-    N_celltypes = [int(rct * N_particles) for rct in ratio_celltypes]
-    N_celltypes[-1] = N_particles - sum(N_celltypes[:-1])
-          
-    x0, graph_init = mcm_ut.init_graph(L, N_particles, N_dim, N_batch, N_celltypes)
+              
+    x0, graph_init = mcm_ut.init_graph(L, N_particles, N_dim, N_batch, N_particles_ct)
         
 
     MCM_SDEmodule, MCM_SDEwrapper = mcm_ut.init_SDEwrappers(MCM_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
