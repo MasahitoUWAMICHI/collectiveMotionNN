@@ -58,7 +58,7 @@ def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, N_batch, N_particles, devic
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
                           size=(x0.shape[0], Nd-1), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
-    for keys in SDEwrapper.state_dict().keys():
+    for key in SDEwrapper.state_dict().keys():
         print(key, SDEwrapper.state_dict()[key].dtype)
 
     with torch.no_grad():
