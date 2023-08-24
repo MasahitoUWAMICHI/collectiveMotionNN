@@ -7,7 +7,6 @@ from torch.autograd import Function
 
 import collectiveMotionNN.utils as ut
 import collectiveMotionNN.graph_utils as gu
-import collectiveMotionNN.module as mo
 
 import collections
 
@@ -328,7 +327,7 @@ class myLoss_normalized(nn.Module):
 
 
 
-
+'''
 
 
 class multitypedCMsimulate(mo.dynamicGNDEmodule):
@@ -384,7 +383,7 @@ class multitypedCMsimulate(mo.dynamicGNDEmodule):
 
 
 
-
+'''
 
 
 
