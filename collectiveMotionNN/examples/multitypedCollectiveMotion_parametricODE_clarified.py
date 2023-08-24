@@ -313,7 +313,7 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
     
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
               
-    x0, graph_init = mcm_ut.init_graph(L, N_particles, N_dim, N_batch, N_particles_ct)
+    x0, _, graph_init = mcm_ut.init_graph(L, N_particles, N_dim, N_batch, N_particles_ct)
         
 
     MCM_SDEmodule, MCM_SDEwrapper = mcm_ut.init_SDEwrappers(MCM_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
