@@ -21,11 +21,11 @@ import collectiveMotionNN.sample_modules as sm
 import collectiveMotionNN.examples.multitypedCollectiveMotionFunctions as mcmf
 
 
-def init_graph(L, N_particles, N_dim, N_batch, N_celltypes):
+def init_graph(L, N_particles, N_dim, N_batch, N_particles_ct):
     x0 = []
     graph_init = []
     celltypes = []
-    celltype = torch.cat([torch.ones([N_ct, 1], dtype=int)*i_ct for i_ct, N_ct in enumerate(N_celltypes)], dim=0)
+    celltype = torch.cat([torch.ones([N_ct, 1], dtype=int)*i_ct for i_ct, N_ct in enumerate(N_particles_ct)], dim=0)
     for i in range(N_batch):
         x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim-1]) * (2*np.pi))), dim=-1))
         celltypes.append(celltype)
