@@ -202,7 +202,6 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
     
     r0 = ut.variableInitializer(r0, 5.0)
     L = ut.variableInitializer(L, 5.0)
-    v0 = ut.variableInitializer(v0, 0.01)
 
     ratio_celltypes = ut.variableInitializer(ratio_celltypes, [0.5, 0.5])
     N_dim = ut.variableInitializer(N_dim, int(2))
