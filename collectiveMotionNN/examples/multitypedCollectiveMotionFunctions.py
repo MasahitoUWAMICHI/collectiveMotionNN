@@ -305,7 +305,7 @@ class myLoss_normalized(nn.Module):
         xyNorm = self.xyLoss(x_truth_zero, torch.zeros_like(dxy))
         thetaNorm = self.thetaLoss(torch.zeros_like(x_pred[...,self.N_dim:(2*self.N_dim-1)]), x_truth[...,self.N_dim:(2*self.N_dim-1)])
         scoreNorm = torch.mean(torch.square(score_truth))
-        return xyLoss/xyNorm, vLoss/vNorm, scoreLoss/scoreNorm
+        return xyLoss/xyNorm, thetaLoss/thetaNorm, scoreLoss/scoreNorm
        
     def forward_noScore(self, x_pred, x_truth):
         dxy = self.distanceCalc(x_pred[...,:self.N_dim], x_truth[...,:self.N_dim])
@@ -315,7 +315,7 @@ class myLoss_normalized(nn.Module):
         x_truth_zero = self.distanceCalc(torch.zeros_like(x_pred[...,:self.N_dim]), x_truth[...,:self.N_dim])
         xyNorm = self.xyLoss(x_truth_zero, torch.zeros_like(dxy))
         thetaNorm = self.thetaLoss(torch.zeros_like(x_pred[...,self.N_dim:(2*self.N_dim-1)]), x_truth[...,self.N_dim:(2*self.N_dim-1)])
-        return xyLoss/xyNorm, vLoss/vNorm
+        return xyLoss/xyNorm, thetaLoss/thetaNorm
         
     def def_forward(self):
         if self.useScore:
