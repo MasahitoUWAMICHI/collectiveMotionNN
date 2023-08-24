@@ -133,8 +133,9 @@ def parser2main(args):
          save_x_SDE=args.save_x_SDE, save_t_SDE=args.save_t_SDE, save_model=args.save_model,
          method_SDE=args.method_SDE, noise_type=args.noise_type, sde_type=args.sde_type, bm_levy=args.bm_levy,
          skipSimulate=args.skipSimulate,
-         c_init=args.c_init, r_c_init=args.r_c_init, 
-         gamma_init=args.gamma_init, sigma_init=args.sigma_init, 
+         kappa_init=args.kappa_init, cutoff_init=args.cutoff_init, r_init=args.r_init, u0_init=args.u0_init, beta_init=args.beta_init, A_CIL_init=args.A_CIL_init, A_ext_init=args.A_ext_init,
+         A_CFs_init=args.A_CFs_init, A_chems_init=args.A_chems_init,
+         sigma_init=args.sigma_init,
          delayPredict=args.delayPredict, dt_train=args.dt_train, 
          method_ODE=args.method_ODE, 
          N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
@@ -164,8 +165,9 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
          save_x_SDE=None, save_t_SDE=None, save_model=None,
          method_SDE=None, noise_type=None, sde_type=None, bm_levy=None,
          skipSimulate=None,
-         c_init=None, r_c_init=None,
-         gamma_init=None, sigma_init=None,
+         kappa_init=None, cutoff_init=None, r_init=None, u0_init=None, beta_init=None, A_CIL_init=None, A_ext_init=None,
+         A_CFs_init=None, A_chems_init=None,
+         sigma_init=None,
          delayPredict=None, dt_train=None, 
          method_ODE=None, 
          N_epoch=None, N_train_batch=None, N_batch_edgeUpdate=None,
@@ -231,9 +233,17 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
     skipSimulate = ut.variableInitializer(skipSimulate, False)
     
     
-    c_init = ut.variableInitializer(c_init, None)    
-    r_c_init = ut.variableInitializer(r_c_init, None)
-    gamma_init = ut.variableInitializer(gamma_init, None)    
+    kappa_init = ut.variableInitializer(kappa_init, None)
+    cutoff_init = ut.variableInitializer(cutoff_init, None)
+    r_init = ut.variableInitializer(r_init, None)
+    u0_init = ut.variableInitializer(u0_init, None)
+    beta_init = ut.variableInitializer(beta_init, None)
+    A_CIL_init = ut.variableInitializer(A_CIL_init, None)
+    A_ext_init = ut.variableInitializer(A_ext_init, None)
+    
+    A_CFs_init = ut.variableInitializer(A_CFs_init, None)
+    A_chems_init = ut.variableInitializer(A_chems_init, None)
+    
     sigma_init = ut.variableInitializer(sigma_init, None)
     
     delayPredict = ut.variableInitializer(delayPredict, 1)
