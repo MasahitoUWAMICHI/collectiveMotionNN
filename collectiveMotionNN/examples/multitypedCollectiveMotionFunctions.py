@@ -146,7 +146,7 @@ class interactionModule(nn.Module):
 
     def celltypeModules(self):
         self.A_CFs_module = nn.Embedding(self.N_celltypes, 1, _weight=self.A_CFs)
-        self.A_chem_module = nn.Embedding(self.N_celltypes, 1, _weight=self.A_chem)        
+        self.A_chems_module = nn.Embedding(self.N_celltypes, 1, _weight=self.A_chems)        
     
     def prepare_paramList(self):
         self.paramList = {'kappa': self.J_chem.kappa,
@@ -213,7 +213,7 @@ class interactionModule(nn.Module):
         J_chem = self.J_chem(abs_dr)
 
         A_CF = self.A_CFs_module(edges.dst[self.celltypeName])
-        A_chem = self.A_chem_module(edges.dst[self.celltypeName])
+        A_chem = self.A_chems_module(edges.dst[self.celltypeName])
 
         return {self.velocitymessageName: -self.beta*J_CIL*unit_dr,
                 self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL)*drp_cross + A_chem*J_chem*drp_inner}
