@@ -226,7 +226,6 @@ class interactionModule(nn.Module):
         return torch.cat((torch.cos(theta), torch.sin(theta)), dim=-1)
         
     def f(self, t, g, args=None):
-        print('calc')
         g.update_all(self.calc_message, self.aggregate_message)
         p = self.polarity2vector(g.ndata[self.polarityName])
         g.ndata[self.velocityName] = g.ndata[self.velocityName] + self.u0 * p
