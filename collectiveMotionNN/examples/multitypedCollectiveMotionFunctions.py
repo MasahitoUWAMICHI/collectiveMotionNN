@@ -198,8 +198,8 @@ class interactionModule(nn.Module):
             self.def_periodic()
             
     def calc_message(self, edges):
-        p_neighbor = self.polarity2vector(self, edges.src[self.polarityName])
-        p_target = self.polarity2vector(self, edges.dst[self.polarityName])
+        p_neighbor = self.polarity2vector(edges.src[self.polarityName])
+        p_target = self.polarity2vector(edges.dst[self.polarityName])
         
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
         abs_dr = torch.norm(dr, dim=-1, keepdim=True)
