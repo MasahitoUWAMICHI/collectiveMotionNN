@@ -414,7 +414,7 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
             
             x_pred, x_truth = mcm_ut.run_ODEsimulate(neuralDE, MCM_SDEwrapper, graph, x_truth, device, t_learn_span, t_learn_save, useScore)
 
-            loss, xyloss, thetaLoss, scoreloss = mcm_ut.calcLoss(lossFunc, x_pred, x_truth, thetaLoss_weight, device, useScore, MCM_SDEwrapper, scoreLoss_weight, t_learn_span)
+            loss, xyloss, thetaloss, scoreloss = mcm_ut.calcLoss(lossFunc, x_pred, x_truth, thetaLoss_weight, device, useScore, MCM_SDEwrapper, scoreLoss_weight, t_learn_span)
                 
             loss_history.append([xyloss.item(), thetaloss.item(), scoreloss.item()])
             valid_loss_history.append([np.nan, np.nan, np.nan])
