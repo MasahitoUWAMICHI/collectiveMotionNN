@@ -63,8 +63,8 @@ def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, N_batch, N_particles, devic
 
     y = y.to('cpu')
     if not(peri is None):
-        y[..., :N_dim] = torch.remainder(y[..., :N_dim], peri)
-    y[..., N_dim] = torch.remainder(y[..., N_dim], 2*np.pi)
+        y[..., :Nd] = torch.remainder(y[..., :Nd], peri)
+    y[..., Nd] = torch.remainder(y[..., Nd], 2*np.pi)
     y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*Nd-1))
     
     ct = SDEwrapper.graph.ndata['celltype'].detach().cpu()
