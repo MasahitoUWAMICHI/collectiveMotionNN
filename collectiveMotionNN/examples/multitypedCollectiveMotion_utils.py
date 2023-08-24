@@ -30,7 +30,7 @@ def init_graph(L, N_particles, N_dim, N_batch, N_particles_ct):
         x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim-1]) * (2*np.pi))), dim=-1))
         celltypes.append(celltype)
         graph_init.append(gu.make_disconnectedGraph(x0[i], gu.multiVariableNdataInOut(['x', 'theta'], [N_dim, N_dim-1])))
-        graph_init.ndata['celltype'] = celltype
+        graph_init[-1].ndata['celltype'] = celltype
     x0 = torch.concat(x0, dim=0)
     celltypes = torch.concat(celltypes, dim=0)
     graph_init = dgl.batch(graph_init)
