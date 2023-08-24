@@ -60,7 +60,8 @@ def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, N_batch, N_particles, devic
 
     for key in SDEwrapper.state_dict().keys():
         print(key, SDEwrapper.state_dict()[key].dtype)
-
+    print(x0.dtype)
+    
     with torch.no_grad():
         y = sdeint(SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
 
