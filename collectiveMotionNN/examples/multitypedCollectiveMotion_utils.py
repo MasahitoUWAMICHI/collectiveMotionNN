@@ -58,9 +58,6 @@ def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, N_batch, N_particles, devic
     bm = BrownianInterval(t0=t_save[0], t1=t_save[-1], 
                           size=(x0.shape[0], Nd-1), dt=dt_step, levy_area_approximation=bm_levy, device=device)
 
-    print(SDEwrapper.graph.ndata['x'])
-    print(x0)
-    
     with torch.no_grad():
         y = sdeint(SDEwrapper, x0.to(device), t_save, bm=bm, dt=dt_step, method=method_SDE)
 
