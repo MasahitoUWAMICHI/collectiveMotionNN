@@ -62,7 +62,7 @@ class J_chemoattractant2D(nn.Module):
         super().__init__()
         self.kappa = nn.Parameter(torch.tensor(kappa, requires_grad=True))
         
-        self.cutoff = torch.tensor(cutoff)
+        self.cutoff = torch.tensor(cutoff, dtype=float)
         self.set_k1()
 
     def set_k1(self):
