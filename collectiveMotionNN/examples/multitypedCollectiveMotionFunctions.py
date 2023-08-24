@@ -215,8 +215,6 @@ class interactionModule(nn.Module):
         A_CF = self.A_CFs_module(edges.dst[self.celltypeName])
         A_chem = self.A_chems_module(edges.dst[self.celltypeName])
 
-        print(edges.dst[self.celltypeName].shape, A_chem.shape)
-
         return {self.velocitymessageName: -self.beta*J_CIL*unit_dr,
                 self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL)*drp_cross + A_chem*J_chem*drp_inner}
     
