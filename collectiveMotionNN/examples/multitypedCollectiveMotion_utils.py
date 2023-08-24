@@ -68,7 +68,7 @@ def run_SDEsimulate(SDEwrapper, x0, t_save, dt_step, N_batch, N_particles, devic
     y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*Nd-1))
     
     ct = SDEwrapper.graph.ndata['celltype'].detach().cpu()
-    ct = ct.reshape((N_batch, N_particles, 1))
+    ct = ct.reshape((N_batch, N_particles))
 
     return {'xtheta': y, 'celltype': ct}
 
