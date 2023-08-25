@@ -209,7 +209,7 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
     N_batch = ut.variableInitializer(N_batch, int(5))
     
     t_max = ut.variableInitializer(t_max, 50.0)
-    dt_step = ut.variableInitializer(dt_step, 0.1)
+    dt_step = ut.variableInitializer(dt_step, 0.01)
     dt_save = ut.variableInitializer(dt_save, 1.0)
     
     periodic = ut.variableInitializer(periodic, None)
