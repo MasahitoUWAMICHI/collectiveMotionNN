@@ -174,14 +174,14 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         return dr
     
     def def_noSelfLoop(self):
-        self.edgeCandsCalc = lambda bg: gu.sameBatchEdgeCandidateNodePairs_selfloop(bg)
+        self.edgeCandsCalc = lambda bg: gu.sameBatchEdgeCandidateNodePairs_noSelfloop(bg)
         if not self.multiBatch:
             self.distance2edge = distance2edge_noSelfLoop(self.r0)
             self.calc_abs_distance = self.calc_abs_distance_nonBatch
             self.pass_dr = self.pass_dr_nonBatch
         
     def def_selfLoop(self):
-        self.edgeCandsCalc = lambda bg: gu.sameBatchEdgeCandidateNodePairs_noSelfloop(bg)
+        self.edgeCandsCalc = lambda bg: gu.sameBatchEdgeCandidateNodePairs_selfloop(bg)
         if not self.multiBatch:
             self.distance2edge = distance2edge_selfLoop(self.r0)
             self.calc_abs_distance = self.calc_abs_distance_nonBatch
