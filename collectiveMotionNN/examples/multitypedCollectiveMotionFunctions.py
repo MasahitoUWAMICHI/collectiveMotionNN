@@ -172,11 +172,11 @@ class interactionModule(nn.Module):
         if A_CFs is None:
             nn.init.uniform_(self.A_CFs)
         else:
-            self.A_CFs = torch.reshape(torch.tensor(params['A_CFs'], requires_grad=True), (-1,1))
+            self.A_CFs = torch.reshape(torch.tensor(A_CFs, requires_grad=True), (-1,1))
         if A_chems is None:
             nn.init.uniform_(self.A_chems)
         else:
-            self.A_chems = torch.reshape(torch.tensor(params['A_chems'], requires_grad=True), (-1,1))
+            self.A_chems = torch.reshape(torch.tensor(A_chems, requires_grad=True), (-1,1))
 
         self.celltypeModules()
         
