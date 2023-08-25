@@ -232,18 +232,18 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
     skipSimulate = ut.variableInitializer(skipSimulate, False)
     
     
-    kappa_init = ut.variableInitializer(kappa_init, None)
-    cutoff_init = ut.variableInitializer(cutoff_init, None)
-    r_init = ut.variableInitializer(r_init, None)
-    u0_init = ut.variableInitializer(u0_init, None)
-    beta_init = ut.variableInitializer(beta_init, None)
-    A_CIL_init = ut.variableInitializer(A_CIL_init, None)
-    A_ext_init = ut.variableInitializer(A_ext_init, None)
+    kappa_init = ut.variableInitializer(kappa_init, kappa)
+    cutoff_init = ut.variableInitializer(cutoff_init, cutoff)
+    r_init = ut.variableInitializer(r_init, r)
+    u0_init = ut.variableInitializer(u0_init, u0)
+    beta_init = ut.variableInitializer(beta_init, beta)
+    A_CIL_init = ut.variableInitializer(A_CIL_init, A_CIL)
+    A_ext_init = ut.variableInitializer(A_ext_init, A_ext)
     
-    A_CFs_init = ut.variableInitializer(A_CFs_init, None)
-    A_chems_init = ut.variableInitializer(A_chems_init, None)
+    A_CFs_init = ut.variableInitializer(A_CFs_init, A_CFs)
+    A_chems_init = ut.variableInitializer(A_chems_init, A_chems)
     
-    sigma_init = ut.variableInitializer(sigma_init, None)
+    sigma_init = ut.variableInitializer(sigma_init, sigma)
     
     delayPredict = ut.variableInitializer(delayPredict, 1)
     dt_train = ut.variableInitializer(dt_train, dt_step)
