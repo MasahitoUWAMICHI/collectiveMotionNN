@@ -159,6 +159,7 @@ class radiusgraphEdge(wm.edgeScoreCalculationModule):
         return self.norm_dr(dr), None
 
     def calc_abs_distance_batch(self, bg, args=None):
+        print(self.judge_reCalc_edgeCands(bg))
         if self.judge_reCalc_edgeCands(bg):
             self.bnn = bg.batch_num_nodes()
             self.savedSelfLoop = self.selfLoop
