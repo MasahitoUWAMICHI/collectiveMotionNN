@@ -205,7 +205,7 @@ class interactionModule(nn.Module):
         p_neighbor = self.polarity2vector(edges.src[self.polarityName])
         p_target = self.polarity2vector(edges.dst[self.polarityName])
         
-        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+        dr = self.distanceCalc(edges.src[self.positionName], edges.dst[self.positionName])
         abs_dr = torch.norm(dr, dim=-1, keepdim=True)
         unit_dr = nn.functional.normalize(dr, dim=-1)
 
