@@ -220,7 +220,8 @@ class interactionModule(nn.Module):
         A_chem = self.A_chems_module(edges.dst[self.celltypeName])
 
         return {self.velocitymessageName: -self.beta*J_CIL*unit_dr,
-                self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL)*drp_cross + A_chem*J_chem*drp_inner}
+                self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL - A_chem*J_chem)*drp_cross}
+                #self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL)*drp_cross + A_chem*J_chem*drp_inner}
     
     def aggregate_message(self, nodes):
         return {self.velocityName: torch.mean(nodes.mailbox[self.velocitymessageName], 1),
