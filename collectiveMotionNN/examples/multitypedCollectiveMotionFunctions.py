@@ -210,7 +210,7 @@ class interactionModule(nn.Module):
         unit_dr = nn.functional.normalize(dr, dim=-1)
 
         drp_inner = torch.sum(unit_dr * p_neighbor, dim=-1, keepdim=True)
-        drp_cross = unit_dr[..., :1] * p_target[..., 1:2] - unit_dr[..., 1:2] * p_target[..., :1]
+        drp_cross = unit_dr[..., 1:2] * p_target[..., :1] - unit_dr[..., :1] * p_target[..., 1:2]
 
         J_CIL = self.J_CIL(abs_dr)
         J_CF = self.J_CF(unit_dr, p_neighbor)
@@ -220,7 +220,7 @@ class interactionModule(nn.Module):
         A_chem = self.A_chems_module(edges.dst[self.celltypeName])
 
         return {self.velocitymessageName: -self.beta*J_CIL*unit_dr,
-                self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL - A_chem*J_chem)*drp_cross}
+                self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL + A_chem*J_chem)*drp_cross}
                 #self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL)*drp_cross + A_chem*J_chem*drp_inner}
     
     def aggregate_message(self, nodes):
