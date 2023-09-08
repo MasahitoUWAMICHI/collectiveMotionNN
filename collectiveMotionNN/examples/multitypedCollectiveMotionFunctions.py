@@ -224,8 +224,8 @@ class interactionModule(nn.Module):
                 #self.torquemessageName: (A_CF*J_CF - self.A_CIL*J_CIL)*drp_cross + A_chem*J_chem*drp_inner}
     
     def aggregate_message(self, nodes):
-        return {self.velocityName: torch.mean(nodes.mailbox[self.velocitymessageName], 1),
-                self.torqueName : torch.mean(nodes.mailbox[self.torquemessageName], 1) }
+        return {self.velocityName: torch.sum(nodes.mailbox[self.velocitymessageName], 1),
+                self.torqueName : torch.sum(nodes.mailbox[self.torquemessageName], 1) }
         
     def polarity2vector(self, theta):
         return torch.cat((torch.cos(theta), torch.sin(theta)), dim=-1)
