@@ -243,6 +243,138 @@ class interactionModule(nn.Module):
         return g
 
 
+class interactionModule_nonParametric_acceleration(interactionModule):
+    def __init__(self, params, sigma=0.1, N_dim=2, N_celltypes=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, celltypeName=None, torquemessageName=None, velocitymessageName=None, useScaling=False, scalingBias=None):
+        super().__init__(params, sigma, N_dim, N_celltypes, positionName, velocityName, polarityName, torqueName, noiseName, celltypeName, torquemessageName, velocitymessageName, periodic)
+        
+        self.fNNshape = ut.variableInitializer(fNNshape, [128, 128, 128])
+        
+        self.fBias = ut.variableInitializer(fBias, True)
+        
+        self.init_f(activationName, activationArgs, useScaling, scalingBias)
+        
+    def createLayer(self, layer_name, args={}):
+        args_str = ''
+        key_exist = False
+        for key in args.keys():
+            key_exist = True
+            args_str = args_str + key + '=args["' + key + '"],'
+
+        if key_exist:
+            args_str = args_str[:-1]
+
+        return eval('nn.' + layer_name + '(' + args_str + ')')
+        
+    def createNNsequence(self, N_in, NNshape, N_out, bias, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
+        activationName = ut.variableInitializer(activationName, 'ReLU')
+        activationArgs = ut.variableInitializer(activationArgs, {})
+        
+        self.activationName = activationName
+        self.useScaling = useScaling
+        
+        NNseq = collections.OrderedDict([])
+        for i, NN_inout in enumerate(zip([N_in]+NNshape, NNshape+[N_out])):
+            NNseq['Linear'+str(i)] = nn.Linear(NN_inout[0], NN_inout[1], bias=bias)
+            NNseq[activationName+str(i)] = self.createLayer(activationName, activationArgs)
+        NNseq.pop(activationName+str(i))
+        
+        if self.useScaling:
+            NNseq['Scaling'] = ut.scalingLayer(scalingBias)
+        
+        return nn.Sequential(NNseq)
+    
+    def init_f(self, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
+        self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs, useScaling, scalingBias)
+        
+    def make_reset_str(self, method, args, argsName, NNname='fNN'):
+        initFunc_prefix = 'nn.init.{}(self.{}.'.format(method, NNname)
+        initFunc_surfix = ''
+        for key in args.keys():
+            initFunc_surfix = initFunc_surfix + ','+key+'='+argsName+'["'+key+'"]'
+        initFunc_surfix = initFunc_surfix + ')'
+        return initFunc_prefix, initFunc_surfix        
+        
+    def reset_fNN(self, method_w=None, method_b=None, method_o=None, args_w={}, args_b={}, args_o={}, NNnames=['fNN'], zeroFinalLayer=False, zeroFinalLayer_o=False):
+        for NNname in NNnames:
+            if not method_w is None:
+                initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str(method_w, args_w, 'args_w', NNname)
+            if not method_b is None:
+                initFunc_prefix_b, initFunc_surfix_b = self.make_reset_str(method_b, args_b, 'args_b', NNname)
+            if not method_o is None:
+                initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str(method_o, args_o, 'args_o', NNname)
+            for key in eval('self.{}.state_dict().keys()'.format(NNname)):
+                if key.endswith('weight'):
+                    if not method_w is None:
+                        eval(initFunc_prefix_w + key + initFunc_surfix_w)
+                elif key.endswith('bias'):
+                    if not method_b is None:
+                        eval(initFunc_prefix_b + key + initFunc_surfix_b)
+                else:
+                    if not method_o is None:
+                        eval(initFunc_prefix_o + key + initFunc_surfix_o)
+            if zeroFinalLayer:
+                print(NNname, 'zero initializing')
+                initFunc_prefix_w, initFunc_surfix_w = self.make_reset_str('zeros_', {}, 'args_w', NNname+'[-1]')
+                initFunc_prefix_b, initFunc_surfix_b = self.make_reset_str('zeros_', {}, 'args_b', NNname+'[-1]')
+                initFunc_prefix_o, initFunc_surfix_o = self.make_reset_str('zeros_', {}, 'args_o', NNname+'[-1]')
+                for key in eval('self.{}[-1].state_dict().keys()'.format(NNname)):
+                    if key.endswith('weight'):
+                        eval(initFunc_prefix_w + key + initFunc_surfix_w)
+                    elif key.endswith('bias'):
+                        eval(initFunc_prefix_b + key + initFunc_surfix_b)
+                    else:
+                        if zeroFinalLayer_o:
+                            eval(initFunc_prefix_o + key + initFunc_surfix_o)
+            
+        
+    def calc_message(self, edges):
+        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+        abs_dr = torch.norm(dr, dim=-1, keepdim=True)
+        unit_dr = nn.functional.normalize(dr, dim=-1)
+        
+        return {self.messageName: self.fNN(abs_dr) * unit_dr}
+        
+        
+        
+        
+class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParametric_acceleration):
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
+        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, useScaling, scalingBias)
+        
+        self.init_f(activationName, activationArgs, useScaling, scalingBias)
+    
+    def init_f(self, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
+        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs, useScaling, scalingBias)
+                
+    def calc_message(self, edges):
+        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
+        
+        return {self.messageName: self.fNN(dr)}
+    
+    
+    
+    
+class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Dacceleration):
+    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
+        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, useScaling, scalingBias)
+        
+        self.f2NNshape = ut.variableInitializer(f2NNshape, [128, 128, 128])
+        
+        self.f2Bias = ut.variableInitializer(f2Bias, True)
+        
+        self.init_f2(activationName, activationArgs, useScaling, scalingBias)
+    
+    def init_f2(self, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
+        self.f2NN = self.createNNsequence(self.N_dim, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs, useScaling, scalingBias)
+    
+    def f(self, t, g, args=None):
+        g.update_all(self.calc_message, self.aggregate_message)
+        g.ndata[self.accelerationName] = g.ndata[self.accelerationName] + self.f2NN(g.ndata[self.velocityName])
+        return g
+
+
+
+
 class thetaLoss(nn.Module):
     def __init__(self):
         super().__init__()
