@@ -284,7 +284,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         return nn.Sequential(NNseq)
     
     def init_f(self, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
-        self.fNN = self.createNNsequence(1, self.fNNshape, 1, self.fBias, activationName, activationArgs, useScaling, scalingBias)
+        self.fNN = self.createNNsequence(3*self.N_dim - 2, self.fNNshape, self.N_dim-1, self.fBias, activationName, activationArgs, useScaling, scalingBias)
         
     def make_reset_str(self, method, args, argsName, NNname='fNN'):
         initFunc_prefix = 'nn.init.{}(self.{}.'.format(method, NNname)
