@@ -363,8 +363,8 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
         schedulerStr = schedulerStr + ')'
         scheduler = eval(schedulerStr)
     
-    
-    neuralDE = NeuralODE(MCM_SDEwrapper, solver=method_ODE).to(device)
+    MCM_SDEwrapper.to(device)
+    neuralDE = NeuralODE(MCM_SDEwrapper, solver=method_ODE)
     
     
     
