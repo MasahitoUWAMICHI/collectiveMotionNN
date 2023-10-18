@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 
+import optuna
+
 from torchdyn.core import NeuralODE
 
 import dgl.function as fn
@@ -194,6 +196,17 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
          save_lr_history=None,
          save_run_time_history=None,
          save_params=None):
+
+
+          
+    study = optuna.create_study(
+        direction="maximize", pruner=optuna.pruners.SuccessiveHalvingPruner()
+    )
+    study.optimize(objective, n_trials=20)          
+
+
+
+def objective(trial)
 
     c = ut.variableInitializer(c, 0.01)
     r_c = ut.variableInitializer(r_c, 1.0)
@@ -517,7 +530,9 @@ def main(c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=N
 
             np.save(os.path.join(save_directory_learning, save_lr_history), lr_history)
     
-    
+            trial.report(valid_loss, epoch)
+
+
 if __name__ == '__main__':
 
     parser = main_parser()
