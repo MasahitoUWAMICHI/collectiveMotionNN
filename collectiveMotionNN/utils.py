@@ -5,6 +5,8 @@ import inspect
 
 import codecs
 
+import argparse
+
 
 def variableInitializer(val, defaultVal):
     if val is None:
@@ -106,3 +108,33 @@ def loss_grad_norm(loss, params, p_GR):
     loss_grad = torch.autograd.grad(loss, params, create_graph=True, allow_unused=True)
     return torch.cat(tuple(map(lambda x: flattenInList(x, loss), loss_grad))).norm(p=p_GR)
     
+
+def function_factory(name, args, operation):
+    defaults = {arg: info['default'] for arg, info in args.items() if 'default' in info}
+    arg_names = list(args.keys())
+
+    def dynamic_function(*args, **kwargs):
+        bound_args = dict(zip(arg_names, args))
+        bound_args.update(kwargs)
+        for arg, default in defaults.items():
+            bound_args.setdefault(arg, default)
+        result = operation(**bound_args)
+        return result
+
+    dynamic_function.__name__ = name
+    return dynamic_function
+
+
+class main_parser():
+    def __init__(self, args):
+        self.args = args
+
+    def add_argument(self, parser, name, **kwargs):
+        parser.add_argument(name, **kwargs)
+        
+    def run(self, parser):
+        #parser = argparse.ArgumentParser()
+        for key in self.args.keys():
+            parser = self.add_argument(parser, args[key])
+        return parser
+
