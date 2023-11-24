@@ -109,6 +109,18 @@ def loss_grad_norm(loss, params, p_GR):
     return torch.cat(tuple(map(lambda x: flattenInList(x, loss), loss_grad))).norm(p=p_GR)
     
 
+
+def getArgs_from_func(func):
+    signature = inspect.signature(func)    
+    arguments = {}
+    for name, param in signature.parameters.items():
+        if param.default is param.empty:
+            arguments[name] = None
+        else:
+            arguments[name] = param.default
+    return arguments
+
+
 def function_factory(name, args, operation):
     defaults = {arg: info['default'] for arg, info in args.items() if 'default' in info}
     arg_names = list(args.keys())
@@ -126,15 +138,18 @@ def function_factory(name, args, operation):
 
 
 class main_parser():
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.kw_add_argument = getArgs_from_func(argparse.ArgumentParser().add_argument)
+        del self.kw_add_argument['name']
 
     def add_argument(self, parser, name, **kwargs):
-        parser.add_argument(name, **kwargs)
+        kwargs_tmp = {key: kwargs[key] for key in kwargs if key in self.kw_add_argument}
+        parser.add_argument(name, **kwargs_tmp)
         
-    def run(self, parser):
-        #parser = argparse.ArgumentParser()
-        for key in self.args.keys():
-            parser = self.add_argument(parser, args[key])
+    def make(self):
+        parser = argparse.ArgumentParser()
+        for key in self.kwargs.keys():
+            parser = self.add_argument(parser, key, **self.kwargs[key])
         return parser
 
