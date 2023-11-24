@@ -337,42 +337,6 @@ def main_parser():
     
     return parser
 
-def parser2main(args):
-    main(c=args.c, r_c=args.r_c, p=args.p, gamma=args.gamma, sigma=args.sigma, r0=args.r0, L=args.L, v0=args.v0,
-         N_dim=args.N_dim, N_particles=args.N_particles, N_batch=args.N_batch, 
-         t_max=args.t_max, dt_step=args.dt_step, dt_save=args.dt_save, 
-         periodic=args.periodic, selfloop=args.selfloop, 
-         device=args.device,
-         save_directory_simulation=args.save_directory_simulation,
-         save_x_SDE=args.save_x_SDE, save_t_SDE=args.save_t_SDE, save_model=args.save_model,
-         method_SDE=args.method_SDE, noise_type=args.noise_type, sde_type=args.sde_type, bm_levy=args.bm_levy,
-         skipSimulate=args.skipSimulate,
-         gamma_init=args.gamma_init, sigma_init=args.sigma_init, 
-         NNshape=args.NNshape, NNbias=args.NNbias, NN2shape=args.NN2shape, NN2bias=args.NN2bias,
-         NNactivationName=args.NNactivationName, NNactivationArgs=args.NNactivationArgs,
-         NNscalingLayer=args.NNscalingLayer, NNscalingBias=args.NNscalingBias,
-         NNreset_weight_method=args.NNreset_weight_method, NNreset_weight_args=args.NNreset_weight_args,
-         NNreset_bias_method=args.NNreset_bias_method, NNreset_bias_args=args.NNreset_bias_args,
-         NNreset_others_method=args.NNreset_others_method, NNreset_others_args=args.NNreset_others_args,
-         NN_zeroFinalLayer=args.NN_zeroFinalLayer, NN2_zeroFinalLayer=args.NN2_zeroFinalLayer,
-         delayPredict=args.delayPredict, dt_train=args.dt_train, 
-         method_ODE=args.method_ODE, 
-         N_epoch=args.N_epoch, N_train_batch=args.N_train_batch, N_batch_edgeUpdate=args.N_batch_edgeUpdate,
-         N_train_minibatch_integrated=args.N_train_minibatch_integrated, 
-         ratio_valid=args.ratio_valid, ratio_test=args.ratio_test,
-         split_seed_val=args.split_seed_val,
-         lr=args.lr, optimName=args.optimName, optimArgs=args.optimArgs, highOrderGrad=args.highOrderGrad,
-         lrSchedulerName=args.lrSchedulerName, lrSchedulerArgs=args.lrSchedulerArgs,
-         vLoss_weight=args.vLoss_weight, scoreLoss_weight=args.scoreLoss_weight, 
-         useScore=args.useScore,
-         nondimensionalLoss=args.nondimensionalLoss,
-         save_directory_learning=args.save_directory_learning,
-         save_learned_model=args.save_learned_model, 
-         save_loss_history=args.save_loss_history, save_validloss_history=args.save_validloss_history,
-         save_lr_history=args.save_lr_history,
-         save_run_time_history=args.save_run_time_history,
-         save_params=args.save_params)
-
 
 def main(study_directory, studyWrapperName, studyName, device=None, makeStudy=None, replaceParams=None,
          c=None, r_c=None, p=None, gamma=None, sigma=None, r0=None, L=None, v0=None,
@@ -788,6 +752,6 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    parser2main(args)
+    main(**vars(args))
     
         
