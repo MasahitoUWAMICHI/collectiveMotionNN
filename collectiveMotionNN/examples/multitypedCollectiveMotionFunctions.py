@@ -349,6 +349,7 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule):
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
         theta = torch.remainder(torch.concatenate((edges.dst[self.polarityName], edges.src[self.polarityName]), -1), 2*np.pi)
+        print(self.celltypeName)
         emb = torch.concatenate((self.embedding(edges.dst[self.celltypeName]), self.embedding(edges.src[self.celltypeName])), -1)
         
         return {self.velocitymessageName: self.fNN(torch.cat((dr, theta, emb), -1)),
