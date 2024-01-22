@@ -204,7 +204,7 @@ def main(sigma=None, L=None,
     if not(periodic is None):
         y[..., :N_dim] = torch.remainder(y[..., :N_dim], periodic)
 
-    y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim))
+    y = y.reshape((t_save.shape[0], N_batch, N_particles, 2*N_dim-1))
 
     ct = MCM_SDEwrapper.graph.ndata['celltype'].detach().cpu()
     ct = ct.reshape((N_batch, N_particles))
