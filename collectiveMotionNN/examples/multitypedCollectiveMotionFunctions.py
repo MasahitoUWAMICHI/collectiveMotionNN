@@ -349,7 +349,6 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule):
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
         theta = torch.remainder(torch.concatenate((edges.dst[self.polarityName], edges.src[self.polarityName]), -1), 2*np.pi)
-        print(self.celltypeName)
         emb = torch.concatenate((self.embedding(edges.dst[self.celltypeName]), self.embedding(edges.src[self.celltypeName])), -1)
         
         return {self.velocitymessageName: self.fNN(torch.cat((dr, theta, emb), -1)),
@@ -359,8 +358,8 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule):
     
     
 class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Dacceleration):
-    def __init__(self, params=None, sigma=None, N_dim=2, N_celltypes=2, N_embedding=None, fNNshape=None, f2NNshape=None, f3NNshape=None, f4NNshape=None, fBias=None, f2Bias=None, f3Bias=None, f4Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, useScaling=False, usescalingBias=None):
-        super().__init__(params, sigma, N_dim, N_celltypes, N_embedding, fNNshape, fBias, f2NNshape, f2Bias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, useScaling, usescalingBias)
+    def __init__(self, params, sigma=0.1, N_dim=2, N_celltypes=2, N_embedding=None, fNNshape=None, f2NNshape=None, f3NNshape=None, f4NNshape=None, fBias=None, f2Bias=None, f3Bias=None, f4Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, celltypeName=None, torquemessageName=None, velocitymessageName=None, useScaling=False, usescalingBias=None):
+        super().__init__(params, sigma, N_dim, N_celltypes, N_embedding, fNNshape, f2NNshape, fBias, f2Bias, periodic, activationName, activationArgs, positionName, velocityName, polarityName, torqueName, noiseName, celltypeName, torquemessageName, velocitymessageName, useScaling, usescalingBias)
         
         self.f3NNshape = ut.variableInitializer(f3NNshape, [128, 128, 128])
         
