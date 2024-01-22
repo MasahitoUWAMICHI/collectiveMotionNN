@@ -81,7 +81,7 @@ def run_ODEsimulate(neuralDE, SDEwrapper, graph, x_truth, device, t_learn_span, 
     if useScore:
         SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(True)
         SDEwrapper.loadGraph(copy.deepcopy(graph).to(device))
-        _ = SP_SDEwrapper.f(1, x_truth)
+        _ = SDEwrapper.f(1, x_truth)
         score_truth = torch.stack(SDEwrapper.score(), dim=1)
         SDEwrapper.dynamicGNDEmodule.edgeRefresher.reset_forceUpdateMode(False)
     
