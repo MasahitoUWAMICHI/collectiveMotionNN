@@ -243,16 +243,26 @@ class interactionModule(nn.Module):
         return g
 
 
-class interactionModule_nonParametric_acceleration(interactionModule):
-    def __init__(self, params, sigma=0.1, N_dim=2, N_celltypes=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, celltypeName=None, torquemessageName=None, velocitymessageName=None, useScaling=False, scalingBias=None):
+class interactionModule_nonParametric_2Dacceleration(interactionModule):
+    def __init__(self, params, sigma=0.1, N_dim=2, N_celltypes=2, N_embedding=None, fNNshape=None, f2NNshape=None, fBias=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, polarityName=None, torqueName=None, noiseName=None, celltypeName=None, torquemessageName=None, velocitymessageName=None, useScaling=False, usescalingBias=None):
         super().__init__(params, sigma, N_dim, N_celltypes, positionName, velocityName, polarityName, torqueName, noiseName, celltypeName, torquemessageName, velocitymessageName, periodic)
-        
+
+        self.N_embedding = ut.variableInitializer(N_embedding, N_celltypes)
+
+        self.init_embedding()
+
         self.fNNshape = ut.variableInitializer(fNNshape, [128, 128, 128])
         
         self.fBias = ut.variableInitializer(fBias, True)
         
-        self.init_f(activationName, activationArgs, useScaling, scalingBias)
+        self.init_f(activationName, activationArgs, useScaling, usescalingBias)
         
+        self.f2NNshape = ut.variableInitializer(f2NNshape, [128, 128, 128])
+        
+        self.f2Bias = ut.variableInitializer(f2Bias, True)
+        
+        self.init_f2(activationName, activationArgs, useScaling, usescalingBias)
+
     def createLayer(self, layer_name, args={}):
         args_str = ''
         key_exist = False
@@ -265,7 +275,7 @@ class interactionModule_nonParametric_acceleration(interactionModule):
 
         return eval('nn.' + layer_name + '(' + args_str + ')')
         
-    def createNNsequence(self, N_in, NNshape, N_out, bias, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
+    def createNNsequence(self, N_in, NNshape, N_out, bias, activationName=None, activationArgs=None, useScaling=False, usescalingBias=False):
         activationName = ut.variableInitializer(activationName, 'ReLU')
         activationArgs = ut.variableInitializer(activationArgs, {})
         
@@ -279,13 +289,22 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         NNseq.pop(activationName+str(i))
         
         if self.useScaling:
-            NNseq['Scaling'] = ut.scalingLayer(scalingBias)
+            if usescalingBias:
+                NNseq['Scaling'] = ut.scalingLayer(N_out)
+            else:
+                NNseq['Scaling'] = ut.scalingLayer(None)
         
         return nn.Sequential(NNseq)
     
-    def init_f(self, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
-        self.fNN = self.createNNsequence(3*self.N_dim - 2, self.fNNshape, self.N_dim-1, self.fBias, activationName, activationArgs, useScaling, scalingBias)
+    def init_embedding(self):
+        self.embedding = nn.Embedding(self.N_celltypes, self.N_embedding)
+    
+    def init_f(self, activationName=None, activationArgs=None, useScaling=False, usescalingBias=None):
+        self.fNN = self.createNNsequence(3*self.N_dim - 2 + 2*self.N_embedding, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs, useScaling, usescalingBias)
         
+    def init_f2(self, activationName=None, activationArgs=None, useScaling=False, usescalingBias=None):
+        self.f2NN = self.createNNsequence(3*self.N_dim - 2 + 2*self.N_embedding, self.f2NNshape, self.N_dim-1, self.f2Bias, activationName, activationArgs, useScaling, usescalingBias)
+
     def make_reset_str(self, method, args, argsName, NNname='fNN'):
         initFunc_prefix = 'nn.init.{}(self.{}.'.format(method, NNname)
         initFunc_surfix = ''
@@ -329,49 +348,44 @@ class interactionModule_nonParametric_acceleration(interactionModule):
         
     def calc_message(self, edges):
         dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
-        abs_dr = torch.norm(dr, dim=-1, keepdim=True)
-        unit_dr = nn.functional.normalize(dr, dim=-1)
+        theta = torch.remainder(torch.concatenate((edges.dst[self.polarityName], edges.src[self.polarityName]), -1), 2*np.pi)
+        emb = torch.concatenate((self.embedding(edges.dst[self.celltypeName]), self.embedding(edges.src[self.celltypeName])), -1)
         
-        return {self.messageName: self.fNN(abs_dr) * unit_dr}
+        return {self.velocitymessageName: self.fNN(torch.cat((dr, theta, emb), -1)),
+                self.torquemessageName: self.f2NN(torch.cat((dr, theta, emb), -1))}
         
-        
-        
-        
-class interactionModule_nonParametric_2Dacceleration(interactionModule_nonParametric_acceleration):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
-        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, useScaling, scalingBias)
-        
-        self.init_f(activationName, activationArgs, useScaling, scalingBias)
-    
-    def init_f(self, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
-        self.fNN = self.createNNsequence(self.N_dim, self.fNNshape, self.N_dim, self.fBias, activationName, activationArgs, useScaling, scalingBias)
-                
-    def calc_message(self, edges):
-        dr = self.distanceCalc(edges.dst[self.positionName], edges.src[self.positionName])
-        
-        return {self.messageName: self.fNN(dr)}
-    
     
     
     
 class interactionModule_nonParametric_2Dfull(interactionModule_nonParametric_2Dacceleration):
-    def __init__(self, gamma=None, sigma=None, N_dim=2, fNNshape=None, fBias=None, f2NNshape=None, f2Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, useScaling=False, scalingBias=None):
-        super().__init__(gamma, sigma, N_dim, fNNshape, fBias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, useScaling, scalingBias)
+    def __init__(self, params=None, sigma=None, N_dim=2, N_celltypes=2, N_embedding=None, fNNshape=None, f2NNshape=None, f3NNshape=None, f4NNshape=None, fBias=None, f2Bias=None, f3Bias=None, f4Bias=None, periodic=None, activationName=None, activationArgs=None, positionName=None, velocityName=None, accelerationName=None, noiseName=None, messageName=None, useScaling=False, usescalingBias=None):
+        super().__init__(params, sigma, N_dim, N_celltypes, N_embedding, fNNshape, fBias, f2NNshape, f2Bias, periodic, activationName, activationArgs, positionName, velocityName, accelerationName, noiseName, messageName, useScaling, usescalingBias)
         
-        self.f2NNshape = ut.variableInitializer(f2NNshape, [128, 128, 128])
+        self.f3NNshape = ut.variableInitializer(f3NNshape, [128, 128, 128])
         
-        self.f2Bias = ut.variableInitializer(f2Bias, True)
+        self.f3Bias = ut.variableInitializer(f3Bias, True)
         
-        self.init_f2(activationName, activationArgs, useScaling, scalingBias)
+        self.init_f3(activationName, activationArgs, useScaling, usescalingBias)
+
+        self.f4NNshape = ut.variableInitializer(f4NNshape, [128, 128, 128])
+
+        self.f4Bias = ut.variableInitializer(f4Bias, True)
+
+        self.init_f4(activationName, activationArgs, useScaling, usescalingBias)
     
-    def init_f2(self, activationName=None, activationArgs=None, useScaling=False, scalingBias=None):
-        self.f2NN = self.createNNsequence(self.N_dim, self.f2NNshape, self.N_dim, self.f2Bias, activationName, activationArgs, useScaling, scalingBias)
+    def init_f3(self, activationName=None, activationArgs=None, useScaling=False, usescalingBias=None):
+        self.f3NN = self.createNNsequence(self.N_dim-1+self.N_embedding, self.f3NNshape, self.N_dim, self.f3Bias, activationName, activationArgs, useScaling, usescalingBias)
+
+    def init_f4(self, activationName=None, activationArgs=None, useScaling=False, usescalingBias=None):
+        self.f4NN = self.createNNsequence(self.N_dim-1+self.N_embedding, self.f4NNshape, self.N_dim-1, self.f4Bias, activationName, activationArgs, useScaling, usescalingBias)
     
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
-        g.ndata[self.accelerationName] = g.ndata[self.accelerationName] + self.f2NN(g.ndata[self.velocityName])
+        theta = torch.remainder((g.ndata[self.polarityName]), 2*np.pi)
+        emb = self.embedding(g.ndata[self.celltypeName])
+        g.ndata[self.velocityName] = g.ndata[self.velocityName] + self.f3NN(torch.cat((theta, emb), -1))
+        g.ndata[self.torqueName] = g.ndata[self.torqueName] + self.f4NN(torch.cat((theta, emb), -1))
         return g
-
 
 
 
