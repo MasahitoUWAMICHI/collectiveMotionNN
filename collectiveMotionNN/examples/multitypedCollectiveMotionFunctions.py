@@ -300,7 +300,7 @@ class interactionModule_nonParametric_2Dacceleration(interactionModule):
     
     def init_embedding(self):
         self.init_embedding_number()
-        self.embedding = [nn.Embedding(self.N_celltypes, self.N_embedding) for i in range(self.N_seperate_embed)]
+        self.embedding = nn.ModuleList([nn.Embedding(self.N_celltypes, self.N_embedding) for i in range(self.N_seperate_embed)])
     
     def init_embedding_number(self):
         if self.seperate_embed:
