@@ -460,8 +460,8 @@ class interactionModule_nonParametric_2Dsym(interactionModule_nonParametric_2Dfu
     def f(self, t, g, args=None):
         g.update_all(self.calc_message, self.aggregate_message)
         theta = torch.remainder((g.ndata[self.polarityName]), 2*np.pi)
-        emb3 = self.embedding[self.embedding[self.i_embeddings['f3NN']]](g.ndata[self.celltypeName])
-        emb4 = self.embedding[self.embedding[self.i_embeddings['f4NN']]](g.ndata[self.celltypeName])
+        emb3 = self.embedding[self.i_embeddings['f3NN']](g.ndata[self.celltypeName])
+        emb4 = self.embedding[self.i_embeddings['f4NN']](g.ndata[self.celltypeName])
         g.ndata[self.velocityName] = self.rot_tensor(g.ndata[self.velocityName] + self.f3NN(torch.cat((emb3), -1)), theta)
         g.ndata[self.torqueName] = g.ndata[self.torqueName] + self.f4NN(torch.cat((emb4), -1))
         return g
