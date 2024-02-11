@@ -324,13 +324,13 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
     
     save_directory_learning = ut.variableInitializer(save_directory_learning, '.')
     
-    save_learned_model = ut.variableInitializer(save_learned_model, 'Mcm_nonParametric2Dfull_learned_model.pt')
-    save_loss_history = ut.variableInitializer(save_loss_history, 'Mcm_nonParametric2Dfull_loss_history.pt')
-    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Mcm_nonParametric2Dfull_validloss_history.pt')
-    save_lr_history = ut.variableInitializer(save_lr_history, 'Mcm_nonParametric2Dfull_lr_history.pt')
+    save_learned_model = ut.variableInitializer(save_learned_model, 'Mcm_nonParametric2Dsym_learned_model.pt')
+    save_loss_history = ut.variableInitializer(save_loss_history, 'Mcm_nonParametric2Dsym_loss_history.pt')
+    save_validloss_history = ut.variableInitializer(save_validloss_history, 'Mcm_nonParametric2Dsym_validloss_history.pt')
+    save_lr_history = ut.variableInitializer(save_lr_history, 'Mcm_nonParametric2Dsym_lr_history.pt')
     
-    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Mcm_nonParametric2Dfull_run_time_history.npy')
-    save_params = ut.variableInitializer(save_params, 'Mcm_nonParametric2Dfull_parameters.npy')
+    save_run_time_history = ut.variableInitializer(save_run_time_history, 'Mcm_nonParametric2Dsym_run_time_history.npy')
+    save_params = ut.variableInitializer(save_params, 'Mcm_nonParametric2Dsym_parameters.npy')
         
     if not skipSimulate:
         os.makedirs(save_directory_simulation, exist_ok=True)
@@ -383,7 +383,7 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
             cloudpickle.dump(MCM_SDEwrapper.to('cpu'), f)
     
 
-    MCM_Module = mcmf.interactionModule_nonParametric_2Dfull(MCM_params, sigma, N_dim, N_celltypes, N_embedding, seperate_embed, NNshape, NN2shape, NN3shape, NN4shape, NNbias, NN2bias, NN3bias, NN4bias, periodic, NNactivationName, NNactivationArgs, useScaling=NNscalingLayer, usescalingBias=NNscalingBias).to(device)
+    MCM_Module = mcmf.interactionModule_nonParametric_2Dsym(MCM_params, sigma, N_dim, N_celltypes, N_embedding, seperate_embed, NNshape, NN2shape, NN3shape, NN4shape, NNbias, NN2bias, NN3bias, NN4bias, periodic, NNactivationName, NNactivationArgs, useScaling=NNscalingLayer, usescalingBias=NNscalingBias).to(device)
     
     if ((NN_zeroFinalLayer or NN2_zeroFinalLayer) or (NN3_zeroFinalLayer or NN4_zeroFinalLayer)) or (not (NNreset_weight_method is None)) or ((not (NNreset_bias_method is None)) or (not (NNreset_others_method is None))):
         MCM_Module.reset_fNN(NNreset_weight_method, NNreset_bias_method, NNreset_others_method, 
