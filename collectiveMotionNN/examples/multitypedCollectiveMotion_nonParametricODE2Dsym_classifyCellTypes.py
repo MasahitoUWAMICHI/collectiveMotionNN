@@ -387,7 +387,8 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
         with open(os.path.join(save_directory_simulation, save_model), mode='wb') as f:
             cloudpickle.dump(MCM_SDEwrapper.to('cpu'), f)
     
-
+    MCM_params['A_CFs'] = [0.] * N_particles
+    MCM_params['A_chems'] = [0.] * N_particles
     MCM_Module = mcmf.interactionModule_nonParametric_2Dsym(MCM_params, sigma, N_dim, N_particles, N_embedding, seperate_embed, NNshape, NN2shape, NN3shape, NN4shape, NNbias, NN2bias, NN3bias, NN4bias, periodic, NNactivationName, NNactivationArgs, useScaling=NNscalingLayer, usescalingBias=NNscalingBias).to(device)
     
     if ((NN_zeroFinalLayer or NN2_zeroFinalLayer) or (NN3_zeroFinalLayer or NN4_zeroFinalLayer)) or (not (NNreset_weight_method is None)) or ((not (NNreset_bias_method is None)) or (not (NNreset_others_method is None))):
