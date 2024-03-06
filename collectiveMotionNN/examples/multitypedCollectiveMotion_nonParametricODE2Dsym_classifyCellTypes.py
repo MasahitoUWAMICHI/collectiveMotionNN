@@ -536,13 +536,13 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
 #                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_CIL.item(),
 #                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_ext.item(),
 #                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item())
-            info_txt = info_txt + '['
-            for ACF in MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_CFs.detach().cpu().reshape([-1]):
-                info_txt = info_txt + '{:.3f}, '.format(ACF.item())
-            info_txt = info_txt + ']['
-            for Achem in MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_chems.detach().cpu().reshape([-1]):
-                info_txt = info_txt + '{:.3f}, '.format(Achem.item())
-            info_txt = info_txt + ']'
+#            info_txt = info_txt + '['
+#            for ACF in MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_CFs.detach().cpu().reshape([-1]):
+#                info_txt = info_txt + '{:.3f}, '.format(ACF.item())
+#            info_txt = info_txt + ']['
+#            for Achem in MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_chems.detach().cpu().reshape([-1]):
+#                info_txt = info_txt + '{:.3f}, '.format(Achem.item())
+#            info_txt = info_txt + ']'
             
             info_txt = info_txt + '{:.3f}'.format(run_time_history[-1])
             
