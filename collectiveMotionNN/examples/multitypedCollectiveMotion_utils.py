@@ -21,11 +21,13 @@ import collectiveMotionNN.sample_modules as sm
 import collectiveMotionNN.examples.multitypedCollectiveMotionFunctions as mcmf
 
 
-def init_graph(L, N_particles, N_dim, N_batch, N_particles_ct):
+def init_graph(L, N_particles, N_dim, N_batch, N_particles_ct, shuffle_celltype=False):
     x0 = []
     graph_init = []
     celltypes = []
     celltype = torch.cat([torch.ones([N_ct], dtype=int)*i_ct for i_ct, N_ct in enumerate(N_particles_ct)], dim=0)
+    if shuffle_celltype:
+        celltype = celltype[torch.randperm(N_particles)]
     for i in range(N_batch):
         x0.append(torch.cat((torch.rand([N_particles, N_dim]) * L, (torch.rand([N_particles, N_dim-1]) * (2*np.pi))), dim=-1))
         celltypes.append(celltype)
@@ -152,6 +154,32 @@ class myDataset(torch.utils.data.Dataset):
         batch, t = self.calc_t_batch(index)
         return self.from_t_batch(batch, t)
 
+class myDataset_classify(myDataset):
+    def __init__(self, dataPath, N_dim=2, len=None, delayTruth=1):
+        super().__init__(dataPath, N_dim=N_dim, len=len, delayTruth=delayTruth)
+
+        self.hideCelltype = True
+        
+    def loadData(self):
+        d = torch.load(self.dataPath)
+        x = d['xtheta']
+        if self.hideCelltype:
+            ct = torch.stack([torch.arange(self.N_particles)]*self.N_batch, dim=0)
+        else:
+            ct = d['celltype']
+        return x.shape, x, ct
+    
+    def temporal_unhideCelltype(self, func):
+        def new_func(*args, **kwargs):
+            self.hideCelltype = False
+            res = func(*args, **kwargs)
+            self.hideCelltype = True
+            return res
+        return new_func
+
+    @temporal_unhideCelltype
+    def reInitialize(self):
+        self.initialize()
 
 
 class batchedSubset(torch.utils.data.Subset):
@@ -175,9 +203,13 @@ class batchedSubset(torch.utils.data.Subset):
     
 
 
-def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test, split_seed=None, batch_size=1, drop_last=False, shuffle=True, pin_memory=True):
-    dataset = myDataset(data_path, N_dim=N_dim, delayTruth=delayPredict)
-    dataset.initialize()
+def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test, split_seed=None, batch_size=1, drop_last=False, shuffle=True, pin_memory=True, hydeCelltype=False):
+    if hydeCelltype:
+        dataset = myDataset_classify(data_path, N_dim=N_dim, delayTruth=delayPredict)
+        dataset.reInitialize()
+    else:
+        dataset = myDataset(data_path, N_dim=N_dim, delayTruth=delayPredict)
+        dataset.initialize()
     
     N_valid = int(dataset.N_batch * ratio_valid)
     N_test = int(dataset.N_batch * ratio_test)
