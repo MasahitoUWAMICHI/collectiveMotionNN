@@ -203,7 +203,7 @@ class batchedSubset(torch.utils.data.Subset):
     
 
 
-def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test, split_seed=None, batch_size=1, drop_last=False, shuffle=True, pin_memory=True, hydeCelltype=False):
+def makeGraphDataLoader(data_path, N_dim, delayPredict, ratio_valid, ratio_test, split_seed=None, batch_size=1, drop_last=False, shuffle=True, pin_memory=True, hideCelltype=False):
     if hydeCelltype:
         dataset = myDataset_classify(data_path, N_dim=N_dim, delayTruth=delayPredict)
         dataset.reInitialize()
