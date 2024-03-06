@@ -155,9 +155,9 @@ class myDataset(torch.utils.data.Dataset):
         return self.from_t_batch(batch, t)
 
 class myDataset_classify(myDataset):
-    hideCelltype = True
+#    hideCelltype = True
     def __init__(self, dataPath, N_dim=2, len=None, delayTruth=1):
-        super().__init__(dataPath, N_dim=N_dim, len=len, delayTruth=delayTruth)
+        self.temporal_unhideCelltype(super().__init__)(dataPath, N_dim=N_dim, len=len, delayTruth=delayTruth)
         
     def loadData(self):
         d = torch.load(self.dataPath)
