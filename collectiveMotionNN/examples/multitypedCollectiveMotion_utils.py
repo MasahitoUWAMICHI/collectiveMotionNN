@@ -177,9 +177,9 @@ class myDataset_classify(myDataset):
             return res
         return new_func
 
-    @temporal_unhideCelltype
+    #@temporal_unhideCelltype
     def reInitialize(self):
-        self.initialize()
+        self.temporal_unhideCelltype(self.initialize)()
 
 
 class batchedSubset(torch.utils.data.Subset):
