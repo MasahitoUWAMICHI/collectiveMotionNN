@@ -449,7 +449,7 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
 
     best_valid_loss = np.inf
     
-    text_for_print = 'epoch:, trainLoss, (xy, theta, score), validLoss, (xy, theta, score), kappa, cutoff, r, u0, beta, A_CIL, A_ext, sigma, A_CFs'+','*N_celltypes+' A_chems'+','*N_celltypes+' time[sec.]'
+    text_for_print = 'epoch:, trainLoss, (xy, theta, score), validLoss, (xy, theta, score), time[sec.]'#, kappa, cutoff, r, u0, beta, A_CIL, A_ext, sigma, A_CFs'+','*N_celltypes+' A_chems'+','*N_celltypes+' time[sec.]'
     with open(save_history, 'w') as f:
         f.write(text_for_print)
     print(text_for_print)
@@ -528,14 +528,14 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
                                                                              thetaloss.item(), scoreloss.item())
             info_txt = info_txt + '{:.3f} ({:.3f}, {:.3f}, {:.2e}), '.format(valid_loss.item(), valid_xyloss_total.item(), 
                                                                              valid_thetaloss_total.item(), valid_scoreloss_total.item())
-            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(MCM_SDEwrapper.dynamicGNDEmodule.calc_module.J_chem.kappa.item(),
-                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.J_chem.cutoff.item(),
-                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.J_CIL.r.item(),
-                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.u0.item())
-            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(MCM_SDEwrapper.dynamicGNDEmodule.calc_module.beta.item(),
-                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_CIL.item(),
-                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_ext.item(),
-                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item())
+#            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(MCM_SDEwrapper.dynamicGNDEmodule.calc_module.J_chem.kappa.item(),
+#                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.J_chem.cutoff.item(),
+#                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.J_CIL.r.item(),
+#                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.u0.item())
+#            info_txt = info_txt + '{:.3f}, {:.3f}, {:.3f}, {:.3f}, '.format(MCM_SDEwrapper.dynamicGNDEmodule.calc_module.beta.item(),
+#                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_CIL.item(),
+#                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_ext.item(),
+#                                                                            MCM_SDEwrapper.dynamicGNDEmodule.calc_module.sigma.item())
             info_txt = info_txt + '['
             for ACF in MCM_SDEwrapper.dynamicGNDEmodule.calc_module.A_CFs.detach().cpu().reshape([-1]):
                 info_txt = info_txt + '{:.3f}, '.format(ACF.item())
