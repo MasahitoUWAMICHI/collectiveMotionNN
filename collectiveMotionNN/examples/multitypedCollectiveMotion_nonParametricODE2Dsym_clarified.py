@@ -352,6 +352,8 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
     N_celltypes = len(ratio_celltypes)
     N_particles_ct = [int(rct * N_particles) for rct in ratio_celltypes]
     N_particles_ct[-1] = N_particles - sum(N_particles_ct[:-1])
+
+    print(N_particles_ct)
           
     MCM_params = {'kappa': kappa, 'cutoff': cutoff, 'r': r, 'u0': u0, 'beta': beta,
                   'A_CIL': A_CIL, 'A_CFs': A_CFs, 'A_chems': A_chems, 'A_ext': A_ext}
