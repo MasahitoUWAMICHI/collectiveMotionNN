@@ -352,8 +352,6 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
     N_celltypes = len(ratio_celltypes)
     N_particles_ct = [int(rct * N_particles) for rct in ratio_celltypes]
     N_particles_ct[-1] = N_particles - sum(N_particles_ct[:-1])
-
-    print(N_particles_ct)
           
     MCM_params = {'kappa': kappa, 'cutoff': cutoff, 'r': r, 'u0': u0, 'beta': beta,
                   'A_CIL': A_CIL, 'A_CFs': A_CFs, 'A_chems': A_chems, 'A_ext': A_ext}
@@ -362,6 +360,8 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
     edgeModule = sm.radiusgraphEdge(r0, periodic, selfloop, multiBatch=N_batch_edgeUpdate>1).to(device)
               
     x0, _, graph_init = mcm_ut.init_graph(L, N_particles, N_dim, N_batch, N_particles_ct)
+
+    return graph_init
         
 
     MCM_SDEmodule, MCM_SDEwrapper = mcm_ut.init_SDEwrappers(MCM_Module, edgeModule, graph_init, device, noise_type, sde_type, N_batch_edgeUpdate=1, 
