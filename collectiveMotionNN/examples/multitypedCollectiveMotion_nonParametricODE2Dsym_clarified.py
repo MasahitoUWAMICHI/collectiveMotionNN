@@ -366,8 +366,6 @@ def main(kappa=None, cutoff=None, r=None, u0=None, beta=None, A_CIL=None, A_ext=
                                                           scorePostProcessModule=sm.pAndLogit2KLdiv(), 
                                                           scoreIntegrationModule=sm.scoreListModule())
 
-    return MCM_SDEwrapper
-    
     t_span = torch.arange(0, t_max+dt_step, dt_step)
     t_save = torch.arange(0, t_max+dt_step, dt_save)
     
