@@ -28,11 +28,16 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
 </script>
 
 
-
 <script>
 function playAllVideos(sectionId) {
+    console.log('playAllVideos called with sectionId:', sectionId); // Debugging line
+
     // Select the target section by ID
     const section = document.getElementById(sectionId);
+    if (!section) {
+        console.error('Section not found:', sectionId);
+        return;
+    }
     
     // Select the Training Data and Estimated Dynamics subsections within the section
     const subsections = Array.from(section.querySelectorAll('[data-subsection]')).filter(subsection => 
@@ -58,55 +63,54 @@ function playAllVideos(sectionId) {
 }
 </script>
 
-- ## Harmonic Interaction Model
-    <div id="harmonic-interaction-model" style="margin-top: 20px;">
-        <button onclick="playAllVideos('harmonic-interaction-model')">Play Open Videos</button>
-        
-        - ### Training Data
-            <div data-subsection="Training Data" style="display: flex; flex-wrap: wrap; gap: 20px;">
-                <div style="flex: 1;">
-                    <details>
-                        <summary>Supplemental Movie S1</summary>
-                        <video width="400" controls>
-                            <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </details>
-                </div>
-                <div style="flex: 1;">
-                    <details>
-                        <summary>Supplemental Movie S2</summary>
-                        <video width="400" controls>
-                            <source src="Supplemental_Movie_S2.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </details>
-                </div>
-            </div>
-        
-        - ### Estimated Dynamics
-            <div data-subsection="Estimated Dynamics" style="display: flex; flex-wrap: wrap; gap: 20px;">
-                <div style="flex: 1;">
-                    <details>
-                        <summary>Supplemental Movie S3</summary>
-                        <video width="400" controls>
-                            <source src="Supplemental_Movie_S3.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </details>
-                </div>
-                <div style="flex: 1;">
-                    <details>
-                        <summary>Supplemental Movie S4</summary>
-                        <video width="400" controls>
-                            <source src="Supplemental_Movie_S4.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </details>
-                </div>
-            </div>
+<h2>Harmonic Interaction Model</h2>
+<div id="harmonic-interaction-model" style="margin-top: 20px;">
+    <button onclick="playAllVideos('harmonic-interaction-model')">Play Open Videos</button>
+    
+    <h3>Training Data</h3>
+    <div data-subsection="Training Data" style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <div style="flex: 1;">
+            <details>
+                <summary>Supplemental Movie S1</summary>
+                <video width="400" controls>
+                    <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </details>
+        </div>
+        <div style="flex: 1;">
+            <details>
+                <summary>Supplemental Movie S2</summary>
+                <video width="400" controls>
+                    <source src="Supplemental_Movie_S2.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </details>
+        </div>
     </div>
-
+    
+    <h3>Estimated Dynamics</h3>
+    <div data-subsection="Estimated Dynamics" style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <div style="flex: 1;">
+            <details>
+                <summary>Supplemental Movie S3</summary>
+                <video width="400" controls>
+                    <source src="Supplemental_Movie_S3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </details>
+        </div>
+        <div style="flex: 1;">
+            <details>
+                <summary>Supplemental Movie S4</summary>
+                <video width="400" controls>
+                    <source src="Supplemental_Movie_S4.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </details>
+        </div>
+    </div>
+</div>
 
 
 
