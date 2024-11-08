@@ -72,6 +72,7 @@ function playAllVideos(sectionId) {
         <div style="flex: 1;">
             <details>
                 <summary>Supplemental Movie S1</summary>
+                Small friction constant \(\gamma = 1\times 10^{-2} \)
                 <video width="400" controls>
                     <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
                     Your browser does not support the video tag.
@@ -81,6 +82,7 @@ function playAllVideos(sectionId) {
         <div style="flex: 1;">
             <details>
                 <summary>Supplemental Movie S2</summary>
+                Large friction constant \(\gamma = 1\times 10^{-1} \).
                 <video width="400" controls>
                     <source src="Supplemental_Movie_S2.mp4" type="video/mp4">
                     Your browser does not support the video tag.
@@ -94,6 +96,7 @@ function playAllVideos(sectionId) {
         <div style="flex: 1;">
             <details>
                 <summary>Supplemental Movie S3</summary>
+                Small friction constant \(\gamma = 1\times 10^{-2} \); Many trials \(N_{tra} = 270\) in the training data.
                 <video width="400" controls>
                     <source src="Supplemental_Movie_S3.mp4" type="video/mp4">
                     Your browser does not support the video tag.
@@ -103,16 +106,77 @@ function playAllVideos(sectionId) {
         <div style="flex: 1;">
             <details>
                 <summary>Supplemental Movie S4</summary>
+                Small friction constant \(\gamma = 1\times 10^{-2} \); Few trials \(N_{tra} = 3\) in the training data.
                 <video width="400" controls>
                     <source src="Supplemental_Movie_S4.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </details>
         </div>
+        <div style="flex: 1;">
+            <details>
+                <summary>Supplemental Movie S5</summary>
+                Large friction constant \(\gamma = 1\times 10^{-1} \); Few trials \(N_{tra} = 3\) in the training data.
+                <video width="400" controls>
+                    <source src="Supplemental_Movie_S5.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </details>
     </div>
 </div>
 
 
+<h2>Mixed-Species Model</h2>
+<div id="mixed-species-model" style="margin-top: 20px;">
+    <button onclick="playAllVideos('mixed-species-model')">Play Open Videos</button>
+    
+    <h3>Training Data</h3>
+    <div data-subsection="Training Data" style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <div style="flex: 1;">
+            <details>
+                <summary>Supplemental Movie S6</summary>
+                Parameter set (i)
+                <video width="400" controls>
+                    <source src="Supplemental_Movie_S6.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </details>
+        </div>
+        <div style="flex: 1;">
+            <details>
+                <summary>Supplemental Movie S7</summary>
+                Parameter set (ii)
+                <video width="400" controls>
+                    <source src="Supplemental_Movie_S7.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </details>
+        </div>
+    </div>
+    
+    <h3>Estimated Dynamics</h3>
+    <div data-subsection="Estimated Dynamics" style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <div style="flex: 1;">
+            <details>
+                <summary>Supplemental Movie S8</summary>
+                Parameter set (i); Few trials \(N_{tra} = 3\) in the training data.
+                <video width="400" controls>
+                    <source src="Supplemental_Movie_S8.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </details>
+        </div>
+        <div style="flex: 1;">
+            <details>
+                <summary>Supplemental Movie S9</summary>
+                Parameter set (ii); Few trials \(N_{tra} = 3\) in the training data.
+                <video width="400" controls>
+                    <source src="Supplemental_Movie_S9.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </details>
+        </div>
+    </div>
 
 
 
