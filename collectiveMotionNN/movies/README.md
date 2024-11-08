@@ -64,38 +64,9 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
                         <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
-                </details>
-            </div>
-
-
-
-
-- ## Harmonic Interaction Model
-    <div style="margin-top: 20px;">
-        <button onclick="playAllVideos()">Play All Videos</button>
-    </div>
-
-    <script>
-    function playAllVideos() {
-        const videos = document.querySelectorAll('video');
-        videos.forEach(video => {
-            video.play();
-        });
-    }
-    </script>
-
-    - ### Training Data
-
-        - <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-            <div style="flex: 1;">
-                <details>
-                    <summary>Supplemental Movie S1</summary>
-                    <video width="400" controls>
-                        <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
                     <p><em>This code is a result of numerical simulation with a smaller strength of friction, \(\rho = 1 \times 10^{-2}\).</em></p>
                 </details>
+            </div>
             <div style="flex: 1;">
                 <details>
                     <summary>Supplemental Movie S2</summary>
@@ -106,38 +77,40 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
                     <p><em>This code is a result of numerical simulation with a larger strength of friction, <span>\(\rho = 1 \times 10^{-1}\)</span>.</em></p>
                 </details>
             </div>
-            
         </div>
 
     - ### Estimated Dynamics
 
-<div style="display: flex; flex-wrap: wrap; gap: 20px;">
-    <div style="flex: 1;">
-        <details>
-            <summary>Supplemental Movie S3</summary>
-            <video width="400" controls>
-                <source src="Supplemental_Movie_S3.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </details>
-    </div>
-    <div style="flex: 1;">
-        <details>
-            <summary>Supplemental Movie S4</summary>
-            <video width="400" controls>
-                <source src="Supplemental_Movie_S4.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </details>
-    </div>
-    <div style="flex: 1;">
-        <details>
-            <summary>Supplemental Movie S5</summary>
-            <video width="400" controls>
-                <source src="Supplemental_Movie_S5.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </details>
-    </div>
-</div>
+        - <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1;">
+                <details>
+                    <summary>Supplemental Movie S3</summary>
+                    <video width="400" controls>
+                        <source src="Supplemental_Movie_S3.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </details>
+            </div>
+            <div style="flex: 1;">
+                <details>
+                    <summary>Supplemental Movie S4</summary>
+                    <video width="400" controls>
+                        <source src="Supplemental_Movie_S4.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </details>
+            </div>
+            <div style="flex: 1;">
+                <details>
+                    <summary>Supplemental Movie S5</summary>
+                    <video width="400" controls>
+                        <source src="Supplemental_Movie_S5.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </details>
+            </div>
+        </div>
+
+
+
 
