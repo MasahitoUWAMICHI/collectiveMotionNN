@@ -35,8 +35,8 @@ function playAllVideos(sectionId) {
     const section = document.getElementById(sectionId);
     
     // Select the Training Data and Estimated Dynamics subsections within the section
-    const subsections = Array.from(section.querySelectorAll('h3')).filter(h3 => 
-        h3.textContent.includes("Training Data") || h3.textContent.includes("Estimated Dynamics")
+    const subsections = Array.from(section.querySelectorAll('[data-subsection]')).filter(subsection => 
+        subsection.dataset.subsection === "Training Data" || subsection.dataset.subsection === "Estimated Dynamics"
     );
     
     // Iterate through each subsection
@@ -68,7 +68,7 @@ function playAllVideos(sectionId) {
     <div id="harmonic-interaction-model" style="margin-top: 20px;">
         <button onclick="playAllVideos('harmonic-interaction-model')">Play Open Videos</button>
         
-        - ### Training Data
+        - ### <span data-subsection="Training Data">Training Data</span>
             <div style="display: flex; flex-wrap: wrap; gap: 20px;">
                 <div style="flex: 1;">
                     <details>
@@ -90,7 +90,7 @@ function playAllVideos(sectionId) {
                 </div>
             </div>
         
-        - ### Estimated Dynamics
+        - ### <span data-subsection="Estimated Dynamics">Estimated Dynamics</span>
             <div style="display: flex; flex-wrap: wrap; gap: 20px;">
                 <div style="flex: 1;">
                     <details>
