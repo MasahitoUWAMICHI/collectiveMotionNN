@@ -1,6 +1,6 @@
 # My Paper Title
 
-This is the official implementation of "Integrating GNN and Neural ODEs for Estimating Two-Body Interactions in Mixed-Species Collective Motion" submitted to NeurIPS2024. 
+This is the official implementation of "[Integrating GNN and Neural ODEs for Estimating Non-Reciprocal Two-Body Interactions in Mixed-Species Collective Motion](https://openreview.net/forum?id=qwl3EiDi9r)", a conference paper in NeurIPS2024. 
 
 
 ## Requirements
