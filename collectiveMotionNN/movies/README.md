@@ -23,6 +23,53 @@ function setVideoWidth(width) {
     </select>
 </div>
 
+<script type="text/javascript" async
+src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+- ## Harmonic Interaction Model
+    <div id="harmonic-interaction-model" style="margin-top: 20px;">
+        <button onclick="playAllVideos()">Play All Videos</button>
+    </div>
+
+    <script>
+    function playAllVideos() {
+        // Select the Harmonic Interaction Model section
+        const section = document.getElementById('harmonic-interaction-model');
+        
+        // Select all open <details> elements within the section
+        const openDetails = section.querySelectorAll('details[open]');
+        
+        // Iterate through each open <details> element
+        openDetails.forEach(details => {
+            // Find all <video> elements within the open <details> element
+            const videos = details.querySelectorAll('video');
+            
+            // Play each video
+            videos.forEach(video => {
+                video.play();
+            });
+        });
+    }
+    </script>
+    
+    - ### Training Data
+
+        - <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1;">
+                <details>
+                    <summary>Supplemental Movie S1</summary>
+                    <video width="400" controls>
+                        <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </details>
+            </div>
+
+
+
+
 - ## Harmonic Interaction Model
     <div style="margin-top: 20px;">
         <button onclick="playAllVideos()">Play All Videos</button>
@@ -36,7 +83,7 @@ function setVideoWidth(width) {
         });
     }
     </script>
-    
+
     - ### Training Data
 
         - <div style="display: flex; flex-wrap: wrap; gap: 20px;">
@@ -60,9 +107,6 @@ function setVideoWidth(width) {
                 </details>
             </div>
             
-            <script type="text/javascript" async
-            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
-            </script>
         </div>
 
     - ### Estimated Dynamics
