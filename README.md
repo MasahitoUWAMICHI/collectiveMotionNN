@@ -3,6 +3,8 @@ This is the official implementation of the paper "[Integrating GNN and Neural OD
 
 To see the presentation of the paper, please visit [here](https://neurips.cc/virtual/2024/poster/93465).
 
+To watch the supplementary movies, please visit [here](https://masahitouwamichi.github.io/collectiveMotionNN/collectiveMotionNN/movies).
+
 ## Requirements
 
 Before installing this library, make sure you have the deep graph library (DGL) installed. You can find the installation instructions [here](https://www.dgl.ai/pages/start.html).
