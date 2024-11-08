@@ -122,6 +122,7 @@ function playAllVideos(sectionId) {
                     Your browser does not support the video tag.
                 </video>
             </details>
+        </div>
     </div>
 </div>
 
