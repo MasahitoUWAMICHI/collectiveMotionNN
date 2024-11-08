@@ -30,58 +30,33 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
 
 - ## Harmonic Interaction Model
     <div id="harmonic-interaction-model" style="margin-top: 20px;">
-        <button onclick="playAllVideos()">Play All Videos</button>
-    </div>
-
-    <script>
-    function playAllVideos() {
-        // Select the Harmonic Interaction Model section
-        const section = document.getElementById('harmonic-interaction-model');
+        <button onclick="playAllVideos('harmonic-interaction-model')">Play Open Videos</button>
         
-        // Select all open <details> elements within the section
-        const openDetails = section.querySelectorAll('details[open]');
+        - ### Training Data
+            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                <div style="flex: 1;">
+                    <details>
+                        <summary>Supplemental Movie S1</summary>
+                        <video width="400" controls>
+                            <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </details>
+                </div>
+                <div style="flex: 1;">
+                    <details>
+                        <summary>Supplemental Movie S2</summary>
+                        <video width="400" controls>
+                            <source src="Supplemental_Movie_S2.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </details>
+                </div>
+            </div>
         
-        // Iterate through each open <details> element
-        openDetails.forEach(details => {
-            // Find all <video> elements within the open <details> element
-            const videos = details.querySelectorAll('video');
-            
-            // Play each video
-            videos.forEach(video => {
-                video.play();
-            });
-        });
-    }
-    </script>
-    
-    - ### Training Data
-
-        - <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-            <div style="flex: 1;">
-                <details>
-                    <summary>Supplemental Movie S1</summary>
-                    <video width="400" controls>
-                        <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <p><em>This code is a result of numerical simulation with a smaller strength of friction, \(\rho = 1 \times 10^{-2}\).</em></p>
-                </details>
-            </div>
-            <div style="flex: 1;">
-                <details>
-                    <summary>Supplemental Movie S2</summary>
-                    <video width="400" controls>
-                        <source src="Supplemental_Movie_S2.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <p><em>This code is a result of numerical simulation with a larger strength of friction, <span>\(\rho = 1 \times 10^{-1}\)</span>.</em></p>
-                </details>
-            </div>
-        </div>
-
     - ### Estimated Dynamics
 
-        - <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
             <div style="flex: 1;">
                 <details>
                     <summary>Supplemental Movie S3</summary>
@@ -110,6 +85,35 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
                 </details>
             </div>
         </div>
+    </div>
+
+    <script>
+    function playAllVideos(sectionId) {
+        // Select the target section by ID
+        const section = document.getElementById(sectionId);
+        
+        // Select the Training Data and Estimated Dynamics subsections within the section
+        const subsections = section.querySelectorAll('h3:contains("Training Data"), h3:contains("Estimated Dynamics")');
+        
+        // Iterate through each subsection
+        subsections.forEach(subsection => {
+            // Find all open <details> elements within the subsection
+            const openDetails = subsection.nextElementSibling.querySelectorAll('details[open]');
+            
+            // Iterate through each open <details> element
+            openDetails.forEach(details => {
+                // Find all <video> elements within the open <details> element
+                const videos = details.querySelectorAll('video');
+                
+                // Play each video
+                videos.forEach(video => {
+                    video.play();
+                });
+            });
+        });
+    }
+    </script>
+
 
 
 
