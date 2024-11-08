@@ -41,25 +41,19 @@ function playAllVideos(sectionId) {
     
     // Iterate through each subsection
     subsections.forEach(subsection => {
-        // Find the next sibling element which should be the container for the details
-        let nextElement = subsection.nextElementSibling;
+        // Find all open <details> elements within the subsection
+        const openDetails = subsection.querySelectorAll('details[open]');
         
-        // Ensure the next element is a div
-        if (nextElement && nextElement.tagName.toLowerCase() === 'div') {
-            // Find all open <details> elements within the div
-            const openDetails = nextElement.querySelectorAll('details[open]');
+        // Iterate through each open <details> element
+        openDetails.forEach(details => {
+            // Find all <video> elements within the open <details> element
+            const videos = details.querySelectorAll('video');
             
-            // Iterate through each open <details> element
-            openDetails.forEach(details => {
-                // Find all <video> elements within the open <details> element
-                const videos = details.querySelectorAll('video');
-                
-                // Play each video
-                videos.forEach(video => {
-                    video.play();
-                });
+            // Play each video
+            videos.forEach(video => {
+                video.play();
             });
-        }
+        });
     });
 }
 </script>
@@ -68,8 +62,8 @@ function playAllVideos(sectionId) {
     <div id="harmonic-interaction-model" style="margin-top: 20px;">
         <button onclick="playAllVideos('harmonic-interaction-model')">Play Open Videos</button>
         
-        - ### <span data-subsection="Training Data">Training Data</span>
-            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        - ### Training Data
+            <div data-subsection="Training Data" style="display: flex; flex-wrap: wrap; gap: 20px;">
                 <div style="flex: 1;">
                     <details>
                         <summary>Supplemental Movie S1</summary>
@@ -90,8 +84,8 @@ function playAllVideos(sectionId) {
                 </div>
             </div>
         
-        - ### <span data-subsection="Estimated Dynamics">Estimated Dynamics</span>
-            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        - ### Estimated Dynamics
+            <div data-subsection="Estimated Dynamics" style="display: flex; flex-wrap: wrap; gap: 20px;">
                 <div style="flex: 1;">
                     <details>
                         <summary>Supplemental Movie S3</summary>
