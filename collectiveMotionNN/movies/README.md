@@ -32,27 +32,27 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
     <div id="harmonic-interaction-model" style="margin-top: 20px;">
         <button onclick="playAllVideos('harmonic-interaction-model')">Play Open Videos</button>
         
-        - ### Training Data
-            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-                <div style="flex: 1;">
-                    <details>
-                        <summary>Supplemental Movie S1</summary>
-                        <video width="400" controls>
-                            <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </details>
-                </div>
-                <div style="flex: 1;">
-                    <details>
-                        <summary>Supplemental Movie S2</summary>
-                        <video width="400" controls>
-                            <source src="Supplemental_Movie_S2.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </details>
-                </div>
+    - ### Training Data
+        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1;">
+                <details>
+                    <summary>Supplemental Movie S1</summary>
+                    <video width="400" controls>
+                        <source src="Supplemental_Movie_S1.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </details>
             </div>
+            <div style="flex: 1;">
+                <details>
+                    <summary>Supplemental Movie S2</summary>
+                    <video width="400" controls>
+                        <source src="Supplemental_Movie_S2.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </details>
+            </div>
+        </div>
         
     - ### Estimated Dynamics
 
