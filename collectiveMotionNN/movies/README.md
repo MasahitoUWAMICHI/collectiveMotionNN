@@ -23,9 +23,13 @@ This is the page to show supplementary movies in the paper "[Integrating GNN and
                 <source src="Supplemental_Movie_S2.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
-            <p><em>This code is a result of numerical simulation with a larger strength of friction, \(\rho = 1 \times 10^{-1}\).</em></p>
+            <p><em>This code is a result of numerical simulation with a larger strength of friction, <span>\(\rho = 1 \times 10^{-1}\)</span>.</em></p>
         </details>
     </div>
+    
+    <script type="text/javascript" async
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
 </div>
 
 ### Estimated Dynamics
