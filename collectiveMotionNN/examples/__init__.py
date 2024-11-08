@@ -1,7 +1,7 @@
-__all__ = ["differentiableVicsekModel",
-           "differentiableVicsekModel_parametricODELearn",
-           "differentiableVicsekModel_parametricSDELearn",
-           "differentiableVicsekModel_nonParametricTorqueODELearn",
+__all__ = ["multitypedCollectiveMotion_nonParametricODE2Dsym_clarified",
+           "multitypedCollectiveMotion_reSimulate",
+           "multitypedCollectiveMotion_utils",
+           "multitypedCollectiveMotionFunctions",
            "springPotentialModel",
-           "springPotentialModel_parametricODELearn",
-           "springPotentialModel_parametricODELearn_optimizers_clarified"]
+           "springPotentialModel_nonParametric2DFullODELearn_optimizers",
+           "springPotentialModel_reSimulate"]
