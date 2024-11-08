@@ -11,7 +11,6 @@ This is the page to show supplementary movies in the paper "[Integrating GNN and
     Your browser does not support the video tag.
 </video>
 
-```markdown
 <div style="display: flex; flex-wrap: wrap; gap: 20px;">
     <div style="flex: 1;">
         <details>
@@ -74,5 +73,4 @@ This is the page to show supplementary movies in the paper "[Integrating GNN and
         </details>
     </div>
 </div>
-```
 
