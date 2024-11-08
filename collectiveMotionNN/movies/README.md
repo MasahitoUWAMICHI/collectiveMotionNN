@@ -29,18 +29,25 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
 
 
 
-    <script>
-    function playAllVideos(sectionId) {
-        // Select the target section by ID
-        const section = document.getElementById(sectionId);
+<script>
+function playAllVideos(sectionId) {
+    // Select the target section by ID
+    const section = document.getElementById(sectionId);
+    
+    // Select the Training Data and Estimated Dynamics subsections within the section
+    const subsections = Array.from(section.querySelectorAll('h3')).filter(h3 => 
+        h3.textContent.includes("Training Data") || h3.textContent.includes("Estimated Dynamics")
+    );
+    
+    // Iterate through each subsection
+    subsections.forEach(subsection => {
+        // Find the next sibling element which should be the container for the details
+        let nextElement = subsection.nextElementSibling;
         
-        // Select the Training Data and Estimated Dynamics subsections within the section
-        const subsections = section.querySelectorAll('h3:contains("Training Data"), h3:contains("Estimated Dynamics")');
-        
-        // Iterate through each subsection
-        subsections.forEach(subsection => {
-            // Find all open <details> elements within the subsection
-            const openDetails = subsection.nextElementSibling.querySelectorAll('details[open]');
+        // Ensure the next element is a div
+        if (nextElement && nextElement.tagName.toLowerCase() === 'div') {
+            // Find all open <details> elements within the div
+            const openDetails = nextElement.querySelectorAll('details[open]');
             
             // Iterate through each open <details> element
             openDetails.forEach(details => {
@@ -52,17 +59,17 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
                     video.play();
                 });
             });
-        });
-    }
-    </script>
-
+        }
+    });
+}
+</script>
 
 - ## Harmonic Interaction Model
     <div id="harmonic-interaction-model" style="margin-top: 20px;">
         <button onclick="playAllVideos('harmonic-interaction-model')">Play Open Videos</button>
         
         - ### Training Data
-            - <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
                 <div style="flex: 1;">
                     <details>
                         <summary>Supplemental Movie S1</summary>
@@ -82,10 +89,9 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
                     </details>
                 </div>
             </div>
-            
+        
         - ### Estimated Dynamics
-
-            - <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
                 <div style="flex: 1;">
                     <details>
                         <summary>Supplemental Movie S3</summary>
@@ -100,15 +106,6 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-
                         <summary>Supplemental Movie S4</summary>
                         <video width="400" controls>
                             <source src="Supplemental_Movie_S4.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    </details>
-                </div>
-                <div style="flex: 1;">
-                    <details>
-                        <summary>Supplemental Movie S5</summary>
-                        <video width="400" controls>
-                            <source src="Supplemental_Movie_S5.mp4" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
                     </details>
