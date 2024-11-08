@@ -177,6 +177,6 @@ function playAllVideos(sectionId) {
             </details>
         </div>
     </div>
-
+</div>
 
 
